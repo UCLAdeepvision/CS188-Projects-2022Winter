@@ -1,9 +1,9 @@
 ---
 layout: post
 comments: true
-title: Post Template # Your project ttitle
-author: UCLAdeepvision # Name of your group members
-date: 2022-01-18 # The date you post
+title: Post Template
+author: UCLAdeepvision
+date: 2022-01-18
 ---
 
 
@@ -11,10 +11,14 @@ date: 2022-01-18 # The date you post
 
 
 <!--more-->
+{: class="table-of-content"}
+* TOC
+{:toc}
+
 ## Main Content
 Your survey starts here. You can refer to source of ["lil's blog"](https://github.com/lilianweng/lil-log/tree/master/_posts) for article structure ideas or Markdown syntax. Blow we provide a sample post from Lilian Weng for your reference.
 
-# Image
+## Image
 Please create a folder with "firstname-lastname" under /assets/images/, put all your images into the folder and reference the images in your main content.
 
 ## Reference
