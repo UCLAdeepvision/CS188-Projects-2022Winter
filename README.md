@@ -23,11 +23,11 @@ You should see an address pop on the terminal (http://127.0.0.1:4000/ by default
 
 ## Working on the project
 
-1. Create a folder named "firstname-lastname" under ```./assets/images/firstname-lastname```, you will use this folder to store all the images you use in the project.
+1. Create a folder with your team id under ```./assets/images/```, you will use this folder to store all the images in your project.
 
-2. Create a file with format "year-month-date-your-project-name.md" under ```./_posts/```, for example 2022-01-19-my-final-project-name.md
+2. Copy the template at ```./_posts/2022-01-18-instruction-to-post.md``` and rename it with format "year-month-date-your-project-name.md" under ```./_posts/```, for example 2022-01-19-my-final-project-name.md
 
-3. Check out the sample post we provide at https://ucladeepvision.github.iol/ and their source code at https://github.com/UCLAdeepvision/UCLAdeepvision.github.io/tree/main/_posts as well as basic Markdown syntax at https://www.markdownguide.org/basic-syntax/ 
+3. Check out the sample post we provide at https://ucladeepvision.github.io/ and their source code at https://github.com/UCLAdeepvision/UCLAdeepvision.github.io/tree/main/_posts as well as basic Markdown syntax at https://www.markdownguide.org/basic-syntax/ 
 
 4. Start your work
 
