@@ -1,0 +1,22 @@
+title: UCLA CS188 Course Projects
+name: "UCLA CS188 Course Projects"
+author: UCLAdeepvision
+baseurl: "/projects"
+description: Course projects for UCLA CS188, Deep Learning in Compuver Vision
+profile_url: "http://UCLAdeepvision.github.io"
+
+# Build settings
+markdown: kramdown
+highlighter: rouge
+excerpt_separator: <!--more-->
+plugins:
+  - jekyll-feed
+  - jekyll-archives
+exclude:
+  - Gemfile
+  - Gemfile.lock
+kramdown:
+  input: GFM
+  auto_ids: true
+  syntax_highlighter: rouge
+  toc_levels: 1..3
