@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: Post Template # Your project ttitle
 author: UCLAdeepvision # Name of your group members
 date: 2022-01-18 # The date you post
