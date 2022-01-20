@@ -1,5 +1,7 @@
 # UCLA DLCV Course Project
 
+Project page: https://ucladeepvision.github.io/CS188-Projects-2022Winter/
+
 ## Instruction to run this site locally
 
 1. Clone this repo and enter
@@ -23,13 +25,13 @@ You should see an address pop on the terminal (http://127.0.0.1:4000/CS188-Proje
 
 ## Working on the project
 
-1. Create a folder with your team id under ```./assets/images/```, you will use this folder to store all the images in your project.
+1. Create a folder with your team id under ```./assets/images/your-teamid```, you will use this folder to store all the images in your project.
 
 2. Copy the template at ```./_posts/2022-01-18-instruction-to-post.md``` and rename it with format "year-month-date-your-project-name.md" under ```./_posts/```, for example 2022-01-19-my-final-project-name.md
 
-3. Check out the sample post we provide at https://ucladeepvision.github.io/ and their source code at https://github.com/UCLAdeepvision/UCLAdeepvision.github.io/tree/main/_posts as well as basic Markdown syntax at https://www.markdownguide.org/basic-syntax/
+3. Check out the sample post we provide at https://ucladeepvision.github.io/CS188-Projects-2022Winter/ and the source code at https://raw.githubusercontent.com/UCLAdeepvision/CS188-Projects-2022Winter/main/_posts/2022-01-18-instruction-to-post.md as well as basic Markdown syntax at https://www.markdownguide.org/basic-syntax/
 
-4. Start your work in your .md file, please do NOT edit any other file in this repo.
+4. Start your work in your .md file. You may only edit the .md file you just copied and renamed, and add images to ```./assets/images/your-teamid```. Please do NOT change any other file in this repo.
 
 Once you save the .md file, jekyll will synchronize the site.
 
