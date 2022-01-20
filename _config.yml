@@ -3,7 +3,7 @@ name: "UCLA CS188 Course Projects"
 author: UCLAdeepvision
 baseurl: "/CS188-Projects-2022Winter"
 description: Course projects for UCLA CS188, Deep Learning in Compuver Vision
-profile_url: "http://UCLAdeepvision.github.io/CS188-Projects-2022Winter"
+profile_url: "http://UCLAdeepvision.github.io"
 
 # Build settings
 markdown: kramdown
