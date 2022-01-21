@@ -36,11 +36,11 @@ Once you save the .md file, jekyll will synchronize the site and you can check t
 ## Submission
 We will use git pull request to manage submissions.
 
-Once you've done, follow steps 3 and 4 in [pull-request-instruction](pull-request-instruction.md) to make a pull request BEFORE the deadline. Please make sure not to modify any file except your .md file and your images folder. We will merge the request after all submissions are received, and you should able to check your work in the project page.
+Once you've done, follow steps 3 and 4 in [pull-request-instruction](pull-request-instruction.md) to make a pull request BEFORE the deadline. Please make sure not to modify any file except your .md file and your images folder. We will merge the request after all submissions are received, and you should able to check your work in the project page on next week of each deadline.
 
 ## Deadlines
 You should make three pull requests before the following deadlines:
 
 *    January 27: Each group should determine the topic and list the 3 most relevant papers and their code repo.
-*    February 24, each group should include technical details and algorithms/code
-*    March 12, finalize blog article, Colab demo, and recorded video
+*    February 24: Each group should include technical details and algorithms/code
+*    March 14: Finalize blog article, Colab demo, and recorded video
