@@ -31,7 +31,7 @@ This will lead you to this page:
 
 When you see "Able to merge", click "Create pull request" on the right. If your status is not "Able to merge", please double check you only modified .md file and your image folder.
 
-Enter the pull request title with format "teamid-weekN" where N is the week number of this quarter, and add a description if you want.
+Enter the pull request title with format "teamid-weekN" where N is the week number of this quarter (team01-week4 for example), and add a description if you want.
 ![pull2](/assets/images/UCLAdeepvision/comment_pull_request.png)
 
-Create pull request and we will respond your request in the following day.
+Create pull request and we will respond your request first week after each deadline.
