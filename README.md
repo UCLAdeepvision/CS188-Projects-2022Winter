@@ -29,9 +29,9 @@ You should see an address pop on the terminal (http://127.0.0.1:4000/CS188-Proje
 
 3. Check out the sample post we provide at https://ucladeepvision.github.io/CS188-Projects-2022Winter/ and the source code at https://raw.githubusercontent.com/UCLAdeepvision/CS188-Projects-2022Winter/main/_posts/2022-01-18-instruction-to-post.md as well as basic Markdown syntax at https://www.markdownguide.org/basic-syntax/
 
-4. Start your work in your .md file. You may only edit the .md file you just copied and renamed, and add images to ```./assets/images/your-teamid```. Please do NOT change any other file in this repo.
+4. Start your work in your .md file. You may only edit the .md file you just copied and renamed, and add images to ```./assets/images/your-teamid```. Please do NOT change any other files in this repo.
 
-Once you save the .md file, jekyll will synchronize the site and you can check the change on browser.
+Once you save the .md file, jekyll will synchronize the site and you can check the changes on browser.
 
 ## Submission
 We will use git pull request to manage submissions.
