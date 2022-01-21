@@ -6,16 +6,19 @@ Project page: https://ucladeepvision.github.io/CS188-Projects-2022Winter/
 
 1. Follow the first N steps in [pull-request-instruction](pull-request-instruction.md)
 
-2. Clone your forked repository and enter it
 
-3. Installing Ruby with version at least 3.0.0, check https://www.ruby-lang.org/en/documentation/installation/ for instruction.
-4. Installing Bundler and jekyll with
+```
+git clone git@github.com:UCLAdeepvision/CS188-Projects-2022Winter.git
+cd CS188-Projects-2022Winter
+```
+2. Installing Ruby with version at least 3.0.0, check https://www.ruby-lang.org/en/documentation/installation/ for instruction.
+3. Installing Bundler and jekyll with
 ```
 gem install --user-install bundler jekyll
 bundler install
 bundle add webrick
 ```
-5. Run your site with
+4. Run your site with
 ```
 bundle exec jekyll serve
 ```
@@ -34,13 +37,3 @@ You should see an address pop on the terminal (http://127.0.0.1:4000/CS188-Proje
 Once you save the .md file, jekyll will synchronize the site.
 
 ## Submission
-We will use git pull request to manage submissions.
-
-Once you've done, follow steps N to M in [pull-request-instruction](pull-request-instruction.md) to make a pull request BEFORE the deadline. Please make sure not to modify any file except your .md file and your images folder. We will merge the request after all submissions are received, and you should able to check your work in the project page.
-
-## Deadlines
-You should make three pull requests before the following deadlines:
-
-*    January 27: Each group should determine the topic and list the 3 most relevant papers and their code repo.
-*    February 24, each group should include technical details and algorithms/code
-*    March 12, finalize blog article, Colab demo, and recorded video
