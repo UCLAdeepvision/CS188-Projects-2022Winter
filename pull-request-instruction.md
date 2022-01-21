@@ -1,39 +1,37 @@
-# UCLA DLCV Course Project
+## Instruction of using git to manage your projects.
 
-Project page: https://ucladeepvision.github.io/CS188-Projects-2022Winter/
+### Step 1
 
-## Instruction for running this site locally
+Fork the project repository to your github account:
 
-1. Follow the first N steps in [pull-request-instruction](pull-request-instruction.md)
+![fork](/assets/images/UCLAdeepvision/fork.png)
 
+### Step 2
 
+Clone and enter the **forked** project repository under your github.
+
+### Step 3
+
+Start working on your project and use the folloing code to commit changes of your work. You can commit constantly or you can make one final commit before you want to make submission. But do not forget to commit your work.
 ```
-git clone git@github.com:UCLAdeepvision/CS188-Projects-2022Winter.git
-cd CS188-Projects-2022Winter
+git add .
+git commit -m "some changes"
+git push origin main
 ```
-2. Installing Ruby with version at least 3.0.0, check https://www.ruby-lang.org/en/documentation/installation/ for instruction.
-3. Installing Bundler and jekyll with
-```
-gem install --user-install bundler jekyll
-bundler install
-bundle add webrick
-```
-4. Run your site with
-```
-bundle exec jekyll serve
-```
-You should see an address pop on the terminal (http://127.0.0.1:4000/CS188-Projects-2022Winter/ by default), go to this address with your browser.
 
-## Working on the project
+### Step 5
 
-1. Create a folder with your team id under ```./assets/images/your-teamid```, you will use this folder to store all the images in your project.
+Once you are ready to submit, click "New pull request" under your **forked** repository (read block in image).
 
-2. Copy the template at ```./_posts/2022-01-18-instruction-to-post.md``` and rename it with format "year-month-date-your-project-name.md" under ```./_posts/```, for example 2022-01-19-my-final-project-name.md
+![pull1](/assets/images/UCLAdeepvision/pull_request.png)
 
-3. Check out the sample post we provide at https://ucladeepvision.github.io/CS188-Projects-2022Winter/ and the source code at https://raw.githubusercontent.com/UCLAdeepvision/CS188-Projects-2022Winter/main/_posts/2022-01-18-instruction-to-post.md as well as basic Markdown syntax at https://www.markdownguide.org/basic-syntax/
+This will lead you to this page:
 
-4. Start your work in your .md file. You may only edit the .md file you just copied and renamed, and add images to ```./assets/images/your-teamid```. Please do NOT change any other file in this repo.
+![pull2](/assets/images/UCLAdeepvision/make_request.png)
 
-Once you save the .md file, jekyll will synchronize the site.
+When you see "Able to merge", click "Create pull request" on the right. If your status is not "Able to merge", please double check you only modified .md file and your image folder.
 
-## Submission
+Enter the pull request title with format "teamid-weekN" where N is the week number of this quarter, and add a description if you want.
+![pull2](/assets/images/UCLAdeepvision/comment_pull_request.png)
+
+Create pull request and we will respond your request in the following day.
