@@ -19,7 +19,7 @@ git commit -m "some changes"
 git push origin main
 ```
 
-### Step 5
+### Step 4
 
 Once you are ready to submit, click "New pull request" under your **forked** repository (read block in image).
 
