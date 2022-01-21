@@ -36,3 +36,4 @@ You should see an address pop on the terminal (http://127.0.0.1:4000/CS188-Proje
 Once you save the .md file, jekyll will synchronize the site.
 
 ## Submission
+1
