@@ -25,7 +25,7 @@ You should see an address pop on the terminal (http://127.0.0.1:4000/CS188-Proje
 
 1. Create a folder with your team id under ```./assets/images/your-teamid```, you will use this folder to store all the images in your project.
 
-2. Copy the template at ```./_posts/2022-01-18-instruction-to-post.md``` and rename it with format "year-month-date-your-teamid.md" under ```./_posts/```, for example, **2022-01-19-team01.md**
+2. Copy the template at ```./_posts/2022-01-18-instruction-to-post.md``` and rename it with format "yourteamid-projectshortname.md" under ```./_posts/```, for example, **team01-object-detection.md**
 
 3. Check out the sample post we provide at https://ucladeepvision.github.io/CS188-Projects-2022Winter/ and the source code at https://raw.githubusercontent.com/UCLAdeepvision/CS188-Projects-2022Winter/main/_posts/2022-01-18-instruction-to-post.md as well as basic Markdown syntax at https://www.markdownguide.org/basic-syntax/
 
