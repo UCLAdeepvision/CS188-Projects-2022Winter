@@ -7,7 +7,7 @@ date: 2022-01-25
 ---
 
 
-> This block is a brief introduction of your project. You can put your abstract here or any headers you want the readers to know.
+> Our project mainly works on investigate and reproduce text-guided image generation model and procedure art creation model (or potentially other image transformer that has artistic values), and connect the two models together to build neuron network that can create artworks with only words. Some artists have already applied AI/Deep Learning in their art creation (VQGAN-CLIP), while the development of diffusion model and transformers may provide more stable and human-like output.
 
 
 <!--more-->
@@ -61,8 +61,19 @@ or you can write in-text formula $$y = wx + b$$.
 You can find more Markdown syntax at [this page](https://www.markdownguide.org/basic-syntax/).
 
 ## Reference
-Please make sure to cite properly in your work, for example:
+[1] Xu, Tao, et al. "Attngan: Fine-grained text to image generation with attentional generative adversarial networks." Proceedings of the IEEE conference on computer vision and pattern recognition. 2018.
 
-[1] Redmon, Joseph, et al. "You only look once: Unified, real-time object detection." *Proceedings of the IEEE conference on computer vision and pattern recognition*. 2016.
+[2] Liu, Songhua, et al. "Paint transformer: Feed forward neural painting with stroke prediction." Proceedings of the IEEE/CVF International Conference on Computer Vision. 2021.
+
+[3] Esser, Patrick, Robin Rombach, and Bjorn Ommer. "Taming transformers for high-resolution image synthesis." Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition. 2021.
+
+[4] Kim, Gwanghyun, and Jong Chul Ye. "Diffusionclip: Text-guided image manipulation using diffusion models." arXiv preprint arXiv:2110.02711 (2021).
+
+## Code Repository
+[1] [VQGAN + CLIP Art generation](https://github.com/nerdyrodent/VQGAN-CLIP)
+
+[2] [AttnGAN](https://github.com/taoxugit/AttnGAN)
+
+[3] [PaintTransformer](https://github.com/wzmsltw/PaintTransformer)
 
 ---
