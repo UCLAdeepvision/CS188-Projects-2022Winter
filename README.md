@@ -46,7 +46,7 @@ You should make three pull requests before the following deadlines:
 *    March 14: Finalize blog article, Colab demo, and recorded video
 
 
-## Team08 Inital Proposal
+## Team08 Inital Project Proposal
 
 # Group  Members: Chenda Duan, Zhengtong Liu
 
