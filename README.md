@@ -44,3 +44,36 @@ You should make three pull requests before the following deadlines:
 *    January 27: Each group should determine the topic and list the 3 most relevant papers and their code repo.
 *    February 24: Each group should include technical details and algorithms/code
 *    March 14: Finalize blog article, Colab demo, and recorded video
+
+
+## Team08 Inital Proposal
+
+# Group  Members: Chenda Duan, Zhengtong Liu
+
+# Topic: DeepFake Generation (with emphasis on image to image translation using GAN)
+
+# Relevant papers and their git repo:
+
+1. MaskGAN: Towards Diverse and Interactive Facial Image Manipulation
+	GitHub Link: https://github.com/switchablenorms/CelebAMask-HQ
+
+2. StarGAN: Unified Generative Adversarial Networks for Multi-Domain Image-to-Image Translation
+    GitHub Link: https://github.com/yunjey/StarGAN
+
+3. StarGAN v2: Diverse Image Synthesis for Multiple Domains
+    GitHub Link: https://github.com/clovaai/stargan-v2
+
+4. Unpaired Image-to-Image Translation using Cycle-Consistent Adversarial Networks
+    GitHub Link: https://github.com/junyanz/CycleGAN
+
+5. ESRGAN: Enhanced Super-Resolution Generative Adversarial Networks
+    GitHub Link: https://github.com/xinntao/ESRGAN
+
+6. Image-to-Image Translation with Conditional Adversarial Networks
+    GitHub Link: https://github.com/phillipi/pix2pix
+
+7. DeepFaceLab: Integrated, flexible and extensible face-swapping framework
+    GitHub Link: https://github.com/iperov/DeepFaceLab
+
+8. FSGAN: Subject Agnostic Face Swapping and Reenactment
+    GitHub Link: https://github.com/YuvalNirkin/fsgan
