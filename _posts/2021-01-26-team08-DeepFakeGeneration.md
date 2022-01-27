@@ -34,32 +34,38 @@ Here is an example of using deepfake generation ([imgsrc](https://news.artnet.co
 As deepfake generation might cause many problems (such as fake news!), the other popular subtract is deepfake detection, where we try to build the network that can identify real images from fake, generated images.
 
 ## Core ideas: GAN
-GAN ("Generative adversarial network")
+GAN ("Generative adversarial network") is the core framework behind most of the deepfake algorithms. The idea is simple, for deepfake generators, the more easily you can trick the human eyes, the better your algorithm is. And for the deepfake detector, the more easily you can detect the fake image, the better. However, we cannot train a deepfake generators by manually evaluating how good the result is-we need the help of the detector. 
+
+That brings the idea of "adversarial": the generator tries to fool the detector, and the detector tries to detect every fake image produced by the generator. And we train these two network at the same time.
+
+![GAN structure]({{ '/assets/images/group08deepfake/GAN-structure.png' | relative_url }})
+{: style="width: 800; max-width: 150%;"}
+*Fig 1. A simple structure for GAN network. (Image source: <https://neptune.ai/blog/6-gan-architectures>)*
 
 ### Relevant papers and their git repo:
 
 1. MaskGAN: Towards Diverse and Interactive Facial Image Manipulation<br>
-	GitHub Link: https://github.com/switchablenorms/CelebAMask-HQ
+	[GitHub Link](https://github.com/switchablenorms/CelebAMask-HQ/)
 
 2. StarGAN: Unified Generative Adversarial Networks for Multi-Domain Image-to-Image Translation<br>
-    GitHub Link: https://github.com/yunjey/StarGAN
+    [GitHub Link](https://github.com/yunjey/StarGAN/)
 
 3. StarGAN v2: Diverse Image Synthesis for Multiple Domains<br>
-    GitHub Link: https://github.com/clovaai/stargan-v2
+    [GitHub Link](https://github.com/clovaai/stargan-v2/)
 
 4. Unpaired Image-to-Image Translation using Cycle-Consistent Adversarial Networks<br>
-    GitHub Link: https://github.com/junyanz/CycleGAN
+    [GitHub Link](https://github.com/junyanz/CycleGAN/)
 
 5. ESRGAN: Enhanced Super-Resolution Generative Adversarial Networks<br>
-    GitHub Link: https://github.com/xinntao/ESRGAN
+    [GitHub Link](https://github.com/xinntao/ESRGAN/)
 
 6. Image-to-Image Translation with Conditional Adversarial Networks<br>
-    GitHub Link: https://github.com/phillipi/pix2pix
+    [GitHub Link](https://github.com/phillipi/pix2pix/)
 
 7. DeepFaceLab: Integrated, flexible and extensible face-swapping framework<br>
-    GitHub Link: https://github.com/iperov/DeepFaceLab
+    [GitHub Link](https://github.com/iperov/DeepFaceLab/)
 
 8. FSGAN: Subject Agnostic Face Swapping and Reenactment<br>
-    GitHub Link: https://github.com/YuvalNirkin/fsgan
+    [GitHub Link](https://github.com/YuvalNirkin/fsgan/)
 
 ## Reference
