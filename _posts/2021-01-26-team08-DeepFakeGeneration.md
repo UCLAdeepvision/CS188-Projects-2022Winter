@@ -6,20 +6,35 @@ author: Zhengtong Liu, Chenda Duan
 date: 2022-01-26
 ---
 
-> Abstract
+> This is the blog will record and explain technical details for Zhengtong Liu and Chenda Duan's CS188 DLCV project.
+> We will investigate the state-of-the-art DeekFake Generation methods. We are not sure yet which specific subtract we will focus on.
+> Here are the potential fields: Image Synthesis, Image Manipulation, Face Swapping.
 
 
 <!--more-->
 {: class="table-of-content"}
 * TOC
 {:toc}
-## Main Content
-
 ## Team08 Initial Project Proposal
 
 ### Group  Members: Chenda Duan, Zhengtong Liu
 
 ### Topic: DeepFake Generation (with emphasis on image to image translation using GAN)
+
+## What is deepfake?
+What is [deepfake](https://en.wikipedia.org/wiki/Deepfake/)? It is a newly emerged term created by some reddit users. In short, it refers to using [deep learning](https://en.wikipedia.org/wiki/Deep_learning) to generate "fake" images, which look like photos captured in the real world but is not.
+
+The most heated use of deep fake is to do the face swapping, whichis the subset of a broader definition called "deepfake generation".  As you might see in recent years, more and more people get access to well-performed deep fake algorithms and create funny, weird images that might even cause problems.
+
+Here is an example of using deepfake generation ([imgsrc](https://news.artnet.com/art-world/mona-lisa-deepfake-video-1561600/)) 
+![deepfake example]({{ '/assets/images/group08deepfake/Mona-Lisa-deepfake.png' | relative_url }})
+{: style="width: 800; max-width: 150%;"}
+*Fig 1. A example of deepfake generation. (Image source: <https://news.artnet.com/art-world/mona-lisa-deepfake-video-1561600>)*
+
+As deepfake generation might cause many problems (such as fake news!), the other popular subtract is deepfake detection, where we try to build the network that can identify real images from fake, generated images.
+
+## Core ideas: GAN
+GAN ("Generative adversarial network")
 
 ### Relevant papers and their git repo:
 
