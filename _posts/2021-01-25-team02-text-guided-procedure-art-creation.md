@@ -8,12 +8,10 @@ date: 2022-01-25
 
 > Our project mainly works on investigate and reproduce text-guided image generation model and procedure art creation model (or potentially other image transformer that has artistic values), and connect the two models together to build neuron network that can create artworks with only words. Some artists have already applied AI/Deep Learning in their art creation (VQGAN-CLIP), while the development of diffusion model and transformers may provide more stable and human-like output.
 
-Table of contents
-- [Introduction](#introduction)
-- [Implementation](#implementation)
-- [Demo](#demo)
-- [Reference](#reference)
-- [Code Repository](#code-repository)
+<!--more-->
+{: class="table-of-content"}
+* TOC
+{:toc}
 
 
 ## Introduction
