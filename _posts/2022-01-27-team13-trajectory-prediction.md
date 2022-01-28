@@ -6,7 +6,7 @@ author: Sudhanshu Agrawal, Jenson Choi
 date: 2022-01-27
 ---
 
-> Behavior prediction in dynamic, multi-agent systems is an important problem in the context of self-driving cars. In this blog, we will investigate a few different approaches to tackling this multifaceted problem and reproduce the work of [Gao, Jiyang et al.](https://arxiv.org/abs/2005.04259) by implementing the VectorNet in PyTorch.
+> Behavior prediction in dynamic, multi-agent systems is an important problem in the context of self-driving cars. In this blog, we will investigate a few different approaches to tackling this multifaceted problem and reproduce the work of [Gao, Jiyang et al.](https://arxiv.org/abs/2005.04259) by implementing VectorNet in PyTorch.
 
 <!--more-->
 
