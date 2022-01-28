@@ -6,7 +6,7 @@ author: Sudhanshu Agrawal, Jenson Choi
 date: 2022-01-27
 ---
 
-> "Behavior prediction in dynamic, multi-agent systems is an important problem in the context of self-driving cars". [Gao, Jiyang et al.](https://arxiv.org/abs/2005.04259). In this blog, we will investigate a few different approaches to tackling this multifaceted problem (and eventually figure out a specific area that we will focus on).
+> "Behavior prediction in dynamic, multi-agent systems is an important problem in the context of self-driving cars". [Gao, Jiyang et al.](https://arxiv.org/abs/2005.04259) In this blog, we will investigate a few different approaches to tackling this multifaceted problem (and eventually figure out a specific area that we will focus on).
 
 <!--more-->
 
@@ -17,7 +17,7 @@ date: 2022-01-27
 
 ## Introduction
 
-Self-driving is one of the biggest applications of Computer Vision in industry. Naturally, being able to predict the trajectory of an autonomous vehicle is paramount to the success of self-driving. Our project will be an extension of [VectorNet: Encoding HD Maps and Agent Dynamics from Vectorized Representation](https://arxiv.org/abs/2005.04259), which is a hierachical graph neural network architecture that first exploits the spatial locality of individual road components represented by vectors and then models the high-order interactions among all components. Other recent approaches to trajectory prediction primarily utilize convolutional neural networks (CNNs), which is the most widely used model in Computer Vision in recent years.
+Self-driving is one of the biggest applications of Computer Vision in industry. Naturally, being able to predict the trajectory of an autonomous vehicle is paramount to the success of self-driving. Our project will be an extension of [VectorNet: Encoding HD Maps and Agent Dynamics from Vectorized Representation](https://arxiv.org/abs/2005.04259), which is a hierachical graph neural network architecture that first exploits the spatial locality of individual road components represented by vectors and then models the high-order interactions among all components. Research on trajectory prediction is not limited to the self-driving domain, however, [Social LSTM: Human Trajectory Prediction in Crowded Spaces](https://openaccess.thecvf.com/content_cvpr_2016/html/Alahi_Social_LSTM_Human_CVPR_2016_paper.html) and [Social GAN: Socially Acceptable Trajectories with Generative Adversarial Networks](https://arxiv.org/abs/1803.10892) are more generic examples of work related to multi-agents interaction forecasting which we will also explore in this project.
 
 ## Implementation
 
@@ -29,8 +29,16 @@ Please make sure to cite properly in your work, for example:
 
 [1] Gao, Jiyang, et al. "Vectornet: Encoding hd maps and agent dynamics from vectorized representation." _Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition_. 2020.
 
+[2] Alahi, Alexandre, et al. "Social lstm: Human trajectory prediction in crowded spaces." _Proceedings of the IEEE conference on computer vision and pattern recognition_. 2016.
+
+[3] Gupta, Agrim, et al. "Social gan: Socially acceptable trajectories with generative adversarial networks." _Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition_. 2018.
+
 ## Code Repository
 
 [1] [Reimplement VectorNet](https://github.com/xk-huang/yet-another-vectornet)
+
+[2] [Social LSTM Implementation in PyTorch](https://github.com/quancore/social-lstm)
+
+[3] [Social GAN](https://github.com/agrimgupta92/sgan)
 
 ---
