@@ -2,7 +2,7 @@
 layout: post
 comments: true
 title: Proposal
-author: UCLAdeepvision
+author: team18
 date: 2022-02-04
 ---
 
