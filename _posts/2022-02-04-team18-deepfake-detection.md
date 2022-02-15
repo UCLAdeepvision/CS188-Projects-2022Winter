@@ -6,7 +6,7 @@ author: UCLAdeepvision
 date: 2022-02-04
 ---
 
-> abstract type beat 
+> With the rise of more sophistacated methods to fabricate virtual content, it has become imperative to develop techniques for the detection of artificially generated media. This project explores the identification of edited or fabricated images using Generative Adversarial Networks.  
 
 
 <!--more-->
@@ -14,8 +14,8 @@ date: 2022-02-04
 * TOC
 {:toc}
 
-## What is a Deepfake Detection?
-
+## What is a Deepfake?
+Deepfakes are artificially generated images and videos that are difficult to distingish from authentic content. These images and videos can have massive social and political implications, which has led to the development of sophisticated techniques to detect them. Nowadays the most common approach to produce deepfakes is using deep learning models such as autoencoders and Generative Adversarial Networks. Detecting deepfakes is a binary classification problem: images are categorized as fake or real. While early approaches to this problem involved hand-tuning features, newer deep-learning approaches make use of CNNs and GANs to produce better results. These methods allow for better and more fine-tuned feature extraction, which in turn allows for more nuanced detection.  
 
 ## Detecting Deepfakes: Generative Adversarial Networks 
 
