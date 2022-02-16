@@ -1,25 +1,42 @@
 ---
 layout: post
 comments: true
-title: Image / Video Colorization
+title: Video Colorization
 author: Tony Xia, Vince Ai
 date: 2022-01-28
 ---
 
 
-> Historical images and videos are all black and white before the invention of colored cameras. However, have you wondered how the good old time looked like with colors? We will attempt to colorize old images / videos with the power of deep generative models.
-
+> Historical videos like old movies are all black and white before the invention of colored cameras. However, have you wondered how the good old time looked like with colors? We will attempt to colorize old videos with the power of deep generative models.
 
 <!--more-->
 {: class="table-of-content"}
 * TOC
 {:toc}
 
-## Main Content
-We will be exploring methods currently used to colorize monochrome images and videos. 
+## Introduction
+Colorization is the process of estimating RGB colors from grayscale images or video frames to improve their aesthetic and perceptual quality. Image colorization has been one of the hot-pursuit problems in computer vision research in the past decades. Various models has be proposed that can colorize image in increasing accuracy. Video colorization, on the other hand, remains relatively unexplored, but has been gaining increasingly popularity recently. It inherits all the challenges faced by image colorization, while adding more complexities to the colorization process. 
 
-## Example
-### Image
+In this project, we will cover some of the state-of-the-art models in video colorization, examine their model architecture, explain their methodology of tackling the problems, and compare their effectiveness. We will also identify the limitations of current models, and shed light on the future course of research in this field. 
+
+## Problem Formulation
+Formally, video colorization is the problem where given a sequence of grayscale image frame as input, the model aims to recover the corresponding sequence of RGB image frame. To simplify the problem, we usually adopts YUV channels, where only 2 channels needs to be predicted instead of 3. Video colorization poses the following challenges to the research community:
+
+    1. Like image colorization, it is a severely ill-posed problem, as two of the 3 channels are missing. They have to be inferred from other sementics of the image like object detection.
+
+    2. Unlike image colorization that only needs to take care of one image at a time, video colorization needs to remain temporally consistent when colorizatoin a sequence of video frames. Directly applying image colorization methods to videos will cause flickering effects. 
+
+    3. While image colorization is stationary, video colorization has to deal with dynamics scenes, so some frames will be blurred and hard to colorize.
+
+    4. Video colorization requires much more computing power than image colorization as the dataset are usually huge and the models are more complex.
+## Models
+ 
+### Learning Blind Video Temporal Consistency  (2018)
+### Deep Exemplar-based Video Colorization (2019)
+### Framewise Instance Aware Image Colorization (2020)
+### Temporally Consistent Video Colorization (TCVC) (2021)
+
+## Conclusion
 
 ![YOLO]({{ '/assets/images/team12/example.png' | relative_url }})
 {: style="width: 400px; max-width: 100%;"}
