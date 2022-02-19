@@ -15,18 +15,14 @@ date: 2022-01-26
 {: class="table-of-content"}
 * TOC
 {:toc}
-## Team08 Initial Project Proposal
-
-### Group  Members: Chenda Duan, Zhengtong Liu
-
-### Topic: DeepFake Generation (with emphasis on image to image translation using GAN)
 
 ## What is deepfake?
 What is [deepfake](https://en.wikipedia.org/wiki/Deepfake/)? It is a newly emerged term created by some reddit users. In short, it refers to using [deep learning](https://en.wikipedia.org/wiki/Deep_learning) to generate "fake" images, which look like photos captured in the real world but is not.
 
 The most heated use of deep fake is to do the face swapping, whichis the subset of a broader definition called "deepfake generation".  As you might see in recent years, more and more people get access to well-performed deep fake algorithms and create funny, weird images that might even cause problems.
 
-Here is an example of using deepfake generation ([imgsrc](https://news.artnet.com/art-world/mona-lisa-deepfake-video-1561600/)) 
+Here is an example of using deepfake generation:
+
 ![deepfake example]({{ '/assets/images/group08deepfake/Mona-Lisa-deepfake.png' | relative_url }})
 {: style="width: 800; max-width: 150%;"}
 *Fig 1. A example of deepfake generation. (Image source: <https://news.artnet.com/art-world/mona-lisa-deepfake-video-1561600>)*
@@ -40,17 +36,19 @@ That brings the idea of "adversarial": the generator tries to fool the detector,
 
 ![GAN structure]({{ '/assets/images/group08deepfake/GAN-structure.png' | relative_url }})
 {: style="width: 800; max-width: 150%;"}
-*Fig 1. A simple structure for GAN network. (Image source: <https://neptune.ai/blog/6-gan-architectures>)*
+*Fig 2. A simple structure for GAN network. (Image source: <https://neptune.ai/blog/6-gan-architectures>)*
 
-Here we investigate some interesting methods and introduce their ideas through the main innovations in these methods and code explanation:
+Below we mainly focus on two applications, **Image Animation** and **Image-to-image Translation**, of DeepFake Generation. 
 
-#### First Order Motion Model for Image Animation
+## Image Animation
+
+### First Order Motion Model for Image Animation
 
 The First Order Motion Model animates an object in the source image according to the motion of a driving video. The method uses self-learned keypoints together with local affine transformations to model complex motions. (Therefore, they call this method a first-order method.) Note that they uses an occlusion-aware generator and extends the equivariance constraint, commonly used for keypoints detection training, to improve the estimation of local affine transformations. <br>
 
 ![First-order Model Demo]({{ '/assets/images/group08deepfake/vox-teaser.gif' | relative_url }})
 {: style="width: 800; max-width: 150%;"}
-*Fig 2. First Order Motion Model on VoxCeleb Dataset. (Image source: <https://github.com/AliaksandrSiarohin/first-order-model/blob/master/sup-mat/vox-teaser.gif>)*
+*Fig 3. First Order Motion Model on VoxCeleb Dataset. (Image source: <https://github.com/AliaksandrSiarohin/first-order-model/blob/master/sup-mat/vox-teaser.gif>)*
 
 
 The framework consists of two modules: **the motion estimation module** and **the image generation module**.
@@ -121,37 +119,128 @@ $$
 
 This equation can actually be derived from Eq. ($$\ref{eq1}$$). Note that one assumption of the first-order model is that $$\mathbf{S_1}$$ and $$\mathbf{D_1}$$ have similar poses. Otherwise, the idea of relative motion transfer here might not work.
 
+## Image-to-image Translation
+
+### StarGAN v2: Diverse Image Synthesis for Multiple Domains
+
+Different from the First Order Motion Model above, which is largely a stand-alone method, StarGAN v2 adopts many ideas from previous works. Therefore, we will introduce interesting methods used in StarGAN v2 model aside from StarGAN v2 itself below, which hopefully can help the readers to have a more comprehensive view of this model and the Image-to-image Translation field as a whole.
+
+The StarGAN v2 model is an image-to-image translation framework that can generate diverse images of multiple domains with good scalibility. In this paper, *domain* refers to a set of images that can be grouped as a visually distinctive category (e.g. images of cats and dogs can be two domains); while *style* means a unqiue appearance of an image (e.g. hairstyle). Briefly speaking, this framework uses domain-specific decoders to interpret latent style codes to achieve style diversity, and the generator takes an additional domain information so that images of multiple domains can be handled using a single framework. Next, we introduce StarGAN v2 from the framework and the learning objective functions.
+
+![StarGAN v2 Demo]({{ '/assets/images/group08deepfake/celebahq_interpolation.gif' | relative_url }})
+{: style="max-width: 100%;"}
+*Fig 4. StarGAN v2 on CelebA-HQ Dataset. (Image source: <https://github.com/clovaai/stargan-v2/blob/master/assets/celebahq_interpolation.gif>)*
+
+* Framework
+    - **Generator** $$G(\mathbf{x}, \mathbf{s})$$ generates an image with an input image $$\mathbf{x}$$ and style code $$\mathbf{s}$$. Notice that $$G$$ deviates from the origianl GAN model in that it takes in two inputs. This formulation was first proposed in [Image-to-Image Translation with Conditional Adversarial Networks](https://arxiv.org/abs/1611.07004) as conditional GANs (cGANs) are suitable for image-to-image generation tasks, in which we generate an image conditioning on a source image (in this case, image $$\mathbf{x}$$). 
+    
+        The style code $$\mathbf{s}$$ is injected into $$G$$ according to the **adpative instance normalization** (AdaIN). AdaIN is a method that aligns the mean and varaiance of the input features with those of the style features, which is more efficient and simpler than the traditional style swap layer. The idea can be tracked back to [Arbitrary Style Transfer in Real-time with Adaptive Instance Normalization](https://arxiv.org/abs/1703.06868) and was adopted by the state-of-art image style transfer method [StyleGAN](https://arxiv.org/abs/1812.04948). Specifically in this case, the AdaIN operation is defined as
+    
+        $$
+        \mathrm{AdaIN}(x_i, s) = \sigma(s) \left( \frac{x_i - \mu{(x)}}{\sigma{(x)}} \right) + \mu(s)
+        $$
+        
+        where $$x_i$$ is some feature map at some layer of $$G$$. Here we also provide a figure from [StyleGAN](https://arxiv.org/abs/1812.04948) to demonstrate the use of AdaIN. In the right figure, "A" represents the learned affined transform (in this paper, $$\sigma(s)$$ and $$\mu(s)$$) and "B" applies learned scaling factors to the noise (in [StyleGAN](https://arxiv.org/abs/1812.04948) model);
+
+        {:.center}
+        ![AdaIN figure]({{ '/assets/images/group08deepfake/AdaIN.png' | relative_url }})
+        {: style="max-width: 60%;"}
+        *Fig 5. Demonstration of AdaIN operation. (Image source: <https://arxiv.org/pdf/1812.04948.pdf>)*
+
+    - **Mapping network** $$F_y(\mathbf{z})$$ takes in a latent code $$\mathbf{z}$$ outputs a style code $$s$$ corresponding to the domain $$y$$. $$F$$ can produce diverse style codes by sampling $$z \in \mathcal{Z}$$ and $$y \in \mathcal{Y}$$ randomly.
+
+    - **Style encoder** $$E_y(\mathbf{x})$$ extracts the style code $$\mathbf{s}$$ corresponding to the domain $$y$$ from the image $$x$$. Like the mapping network $$F$$, $$E$$ can also produce style codes of different domains and reference images.
+
+    - **Discriminator** $$D$$ is a multitask discriminator consisting of multiple output branches. Each branch $$D_y$$ learns to classifies whether an image $$\mathbf{x}$$ is a real image of domain $$y$$ or a fake image generated by $$G$$.
+
+    {:.center}
+    ![Overview of StarGAN v2]({{ '/assets/images/group08deepfake/starGAN_framework.png' | relative_url }})
+    {: style="max-width: 100%;"}
+    *Fig 6. Overview of StarGAN v2 framework. (Image source: <https://arxiv.org/pdf/1812.04948.pdf>)*
+
+* Learning objective functions<br>
+    Notations that we will use below: an input image $$\mathbf{x} \in \mathcal{X}$$ and its original domain $$\mathbf{y} \in \mathcal{Y}$$; a latent code $$\mathbf{z} \in \mathcal{Z}$$; a target domain $$\tilde{y} \in \mathcal{Y}$$ and style code $$\tilde{\mathbf{s}}$$.
+    - **Adversial objective** 
+
+        $$
+        \mathcal{L}_{adv} = \mathbb{E}_{\mathbf{x}, y}[\log{D_y(\mathbf{x})}] + \mathbb{E}_{\mathbf{x}, \tilde{y}, \mathbf{z}}[\log{(1 - D_{\tilde{y}} (G(\mathbf{x}, \tilde{\mathbf{s}})))}]
+        $$
+
+        where the latent code $$\mathbf{z}$$ and target domain $$\tilde{y}$$ are sampled randomly in training and $$\tilde{s} = F_{\tilde{y}}(\mathbf{z})$$. 
+
+    - **Style reconstruction**
+
+        $$
+        \mathcal{L}_{sty} = \mathbb{E}_{\mathbf{x}, \tilde{y}, \mathbf{z}}[\|\tilde{\mathbf{s}} - E_{\tilde{y}} (G(\mathbf{x}, \tilde{\mathbf{s}})) \|]_{1}
+        $$
+
+        This loss function says that the we should be able to reconstruct the style code $$\tilde{\mathbf{s}}$$ by encoding the generated image with style code input as $$\tilde{\mathbf{s}}$$ itself. This forces the generator $$G$$ to make use of the style code $$\tilde{\mathbf{s}}$$ when generating the image $$G(\mathbf{x}, \tilde{\mathbf{s}})$$. 
+
+        Such reconstruction loss is common used in multimodal image-to-image translation, where images are often encoded as the latent code in the low dimension based on the *partially shared latent space assumption* made in [Multimodal Unsupervised
+        Image-to-Image Translation](https://arxiv.org/abs/1804.04732), that each image $$\mathbf{x} \in \mathcal{X}$$ is generated from a content latent code $$c \in \mathcal{C}$$ that is shared across domains, and a style latent code $$\mathbf{s} \in \mathcal{S}$$ that is specific to the individual domain. Therefore, the encoder-decoder structure, with style code injected, can be justified. In Fig. 7, we see that the reconstruction loss can be computed between images and between latent codes (we only use reconstruction loss between style codes in StarGAN v2).
+
+        {:.center}
+        ![Illustration of Reconstruction Loss]({{ '/assets/images/group08deepfake/reconstruction_loss.png' | relative_url }})
+        {: style="max-width: 100%;"}
+        *Fig 7. Reconstruction Loss in Multimodal Unsupervised Image-to-Image Translation. (Image source: <https://arxiv.org/pdf/1804.04732.pdf>)*
+    
+    - **Style diversification** 
+
+        $$
+        \mathcal{L}_{ds} = \mathbb{E}_{\mathbf{x}, \tilde{y}, \mathbf{z}_1, \mathbf{z}_2} [\| G(\mathbf{x}, \tilde{\mathbf{s}}_1) -  G(\mathbf{x}, \tilde{\mathbf{s}}_2) \|_1]
+        $$
+        
+        where $$\mathbf{z}_1, \mathbf{z}_2$$ are two random latent codes and $$\tilde{s}_{i} = F_{\tilde{y}}(\mathbf{z}_{i})$$ for $$i \in {1, 2}$$. It is worth noticing that we want to maximize instead of minimizing this objective function, as we encourage the generator $$G$$ to disversify the output images according to the target style codes. This syle diversification regularization term was first introduced in [Mode Seeking Generative Adversarial Networks for Diverse Image Synthesis](https://arxiv.org/abs/1903.05628). The **mode collapse** issue for cGANs, that generators tend to ignore the input noisy vectors but focus on the prior conditional information provided, makes the generator more prone to produce images with similar appearances. Motivated by this, the mode seeking GAN model was proposed, in which the style diversification regularization term was added to encourage the generator to explore the image spaces and enhance the chances of generating images from minor modes.
+
+        {:.center}
+        ![Illustration of mode collapose]({{ '/assets/images/group08deepfake/mode_collapse.png' | relative_url }})
+        {: style="max-width: 100%;"}
+        *Fig 8. Illustration of mode collapose. (Image source: <https://arxiv.org/pdf/1903.05628.pdf>)*
+
+        While original regularization term has the difference $$\|\mathbf{z}_1 - \mathbf{z}_2 \|_1$$ in the denominator, the StarGAN v2 model removes this for the sake of stability of training process (the difference $$\|\mathbf{z}_1 - \mathbf{z}_2 \|_1$$ is small and thus increase the loss significantly).
+
+    - **Preserving source characteristics**
+
+        $$
+        \mathcal{L}_{cyc} = \mathbb{E}_{\mathbf{x}, y, \tilde{y}, \mathbf{z}}[\| \mathbf{x} - G(G(\mathbf{x}, \tilde{\mathbf{s}}), \hat{\mathbf{s}})\|_{1}]
+        $$
+
+        where $$\hat{\mathbf{s}} = E_y(\mathbf{x})$$ is the estimated style code of the input image $$\mathbf{x}$$. By minimizing this objective function, we want to make sure that the generator can preserve the domain-invariant characteristics.
+
+        This **cycle consistency loss**, while was already adopted in the previous version of [StyleGAN](https://github.com/yunjey/StarGAN/), was used extensively in another well-known method in the field of image-to-image transfer, called CycleGAN. In the paper [Unpaired Image-to-Image Translation using Cycle-Consistent Adversarial Networks](https://arxiv.org/abs/1703.10593), the cylce consistency loss is utilized to ensure that $$F(G(X)) \approx X$$, where $$G: X \to Y$$ and $$F: Y \to X$$ are two learnable mappings to generate paired images with no paired training data. 
+
+        {:.center}
+        ![Illustration of cycle consistency loss]({{ '/assets/images/group08deepfake/cycle_consistency_loss.png' | relative_url }})
+        {: style="max-width: 100%;"}
+        *Fig 9. Illustration of Cylce Consistency Loss. (Image source: <https://arxiv.org/pdf/1703.10593.pdf>)*
 
 
-### Relevant papers and their git repo:
+    Combine the above objectives, the full objective is 
 
-1. First Order Motion Model for Image Animation<br>
-    [GitHub Link](https://github.com/AliaksandrSiarohin/first-order-model)
+    $$
+    \min_{G, F, E} \max_{D} \mathcal{L}_{adv} + \lambda_{sty} \mathcal{L}_{sty} - \lambda_{ds} \mathcal{L}_{ds} + \lambda_{cyc} \mathcal{L}_{cyc}
+    $$
 
-2. StarGAN: Unified Generative Adversarial Networks for Multi-Domain Image-to-Image Translation<br>
-    [GitHub Link](https://github.com/yunjey/StarGAN/)
+    where $$\lambda_{sty}$$, $$\lambda_{ds}$$ and $$\lambda_{cyc}$$ are hyperparamters for the regularization terms. 
 
-3. StarGAN v2: Diverse Image Synthesis for Multiple Domains<br>
-    [GitHub Link](https://github.com/clovaai/stargan-v2/)
+## Relevant Papers
 
-4. Unpaired Image-to-Image Translation using Cycle-Consistent Adversarial Networks<br>
-    [GitHub Link](https://github.com/junyanz/CycleGAN/)
+1. [First Order Motion Model for Image Animation](https://arxiv.org/abs/2003.00196)<br>
+    [[GitHub Link]](https://github.com/AliaksandrSiarohin/first-order-model)
 
-5. ESRGAN: Enhanced Super-Resolution Generative Adversarial Networks<br>
-    [GitHub Link](https://github.com/xinntao/ESRGAN/)
+2. [StarGAN v2: Diverse Image Synthesis for Multiple Domains](https://arxiv.org/abs/1912.01865)<br>
+    [[GitHub Link]](https://github.com/clovaai/stargan-v2/)
 
-6. Image-to-Image Translation with Conditional Adversarial Networks<br>
-    [GitHub Link](https://github.com/phillipi/pix2pix/)
+3. [StarGAN: Unified Generative Adversarial Networks for Multi-Domain Image-to-Image Translation](https://arxiv.org/abs/1711.09020)<br>
 
-7. MaskGAN: Towards Diverse and Interactive Facial Image Manipulation<br>
-	[GitHub Link](https://github.com/switchablenorms/CelebAMask-HQ/)
+4. [Unpaired Image-to-Image Translation using Cycle-Consistent Adversarial Networks](https://arxiv.org/abs/1703.10593)<br>
 
-8. DeepFaceLab: Integrated, flexible and extensible face-swapping framework<br>
-    [GitHub Link](https://github.com/iperov/DeepFaceLab/)
+5. [Image-to-Image Translation with Conditional Adversarial Networks](https://arxiv.org/abs/1611.07004)<br>
 
-9. FSGAN: Subject Agnostic Face Swapping and Reenactment<br>
-    [GitHub Link](https://github.com/YuvalNirkin/fsgan/)
+6. [Mode Seeking Generative Adversarial Networks for Diverse Image Synthesis](https://arxiv.org/abs/1903.05628)<br>
 
+7. [Arbitrary Style Transfer in Real-time with Adaptive Instance Normalization](https://arxiv.org/abs/1703.06868)
 
+8. [Multimodal Unsupervised Image-to-Image Translation](https://arxiv.org/abs/1804.04732)
 
 ## Reference
