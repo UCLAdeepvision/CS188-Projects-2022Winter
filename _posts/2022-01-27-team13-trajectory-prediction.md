@@ -19,9 +19,16 @@ date: 2022-01-27
 
 Self-driving is one of the biggest applications of Computer Vision in industry. Naturally, being able to predict the trajectory of an autonomous vehicle is paramount to the success of self-driving. Our project will be an extension of [VectorNet: Encoding HD Maps and Agent Dynamics from Vectorized Representation](https://arxiv.org/abs/2005.04259), which is a hierachical graph neural network architecture that first exploits the spatial locality of individual road components represented by vectors and then models the high-order interactions among all components. Research on trajectory prediction is not limited to the self-driving domain, however, [Social LSTM: Human Trajectory Prediction in Crowded Spaces](https://openaccess.thecvf.com/content_cvpr_2016/html/Alahi_Social_LSTM_Human_CVPR_2016_paper.html) and [Social GAN: Socially Acceptable Trajectories with Generative Adversarial Networks](https://arxiv.org/abs/1803.10892) are more generic examples of work related to multi-agents interaction forecasting which we will also explore in this project. In particular, if possible, we will attempt to extend the work on human trajectory prediction in crowded spaces to simulate the effect that social distancing due to COVID-19 has on the trajectories. We may be able to do this by exploring ways of adding a factor to create a form of 'repulsion' between the agents.
 
-# VectorNet - Encoding HD Maps and Agent Dynamics From Vectorized Representation
+# Paper 1: VectorNet - Encoding HD Maps and Agent Dynamics From Vectorized Representation
 
 ## Introduction
+
+The primary focus of this paper is on behavior prediction in complex multi-agent systems, such as self-driving vehicles, with the ultimate goal of building a system which learns to predict the intent of vehicles, which are parameterized as trajectories. Recent learning-based approaches to tackling behavior prediction require building a representation to encode the map and trajectory information, often in the form of High Definition (HD) maps. These HD maps are rendered as color-coded attributes (Fig 1, left), which encode scene context information using ConvNets with limited receptive fields. This limitation motivates the following question: can we learn a meaningful context representation directly from the structured HD maps? The authors of this paper propose to learn a unified representation for multi-agent dynamics and structure scene context directly from their vectorized form (Fig 1, right) using a hierarchical graph neural network architecture.
+
+![Artificial neural network]({{ '/assets/images/team13/HD_map.png' | relative_url }})
+{: style="width: 600px; max-width: 100%;"}
+_Fig 1. Illustration of the rasterized rendering (left) and vectorized approach (right) to represent high-definition map and agent
+trajectories. (Image source: <https://arxiv.org/pdf/2005.04259.pdf>)_
 
 ## Model Architecture
 
@@ -58,7 +65,7 @@ Where:
 
 In summary, the overall function takes in all the neighbouring nodes to the target, encodes them as vectors, then performs a maxpool. It then encodes the current node and concatenates it with the result of the maxpooling operation.
 
-Each layer of the network has different weights for $g_{enc}$, but they are shared among the nodes.
+Each layer of the network has different weights for $$g_{enc}$$, but they are shared among the nodes.
 
 Finally, to obtain the features for a polyline, the nodes along the polyline are maxpooled as :
 $$p = \varphi_{agg}(\{v_i^{(L_p)}\})$$
