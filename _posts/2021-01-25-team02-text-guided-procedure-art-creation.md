@@ -15,7 +15,11 @@ date: 2022-01-25
 
 
 ## Introduction
-Our project idea is inspired by [PaintTransformer](https://github.com/wzmsltw/PaintTransformer) which turns a static image into a oil painting drawing process and [VQGAN + CLIP Art generation](https://github.com/nerdyrodent/VQGAN-CLIP) which turns texts into artwork. We want to combine the idea from both project and design a model which could give artistic painting process from text described. The group members are Wenjie Mo and Zifan He.
+Our project idea is inspired by [PaintTransformer](https://github.com/wzmsltw/PaintTransformer) which turns a static image into a oil painting drawing process and [VQGAN + CLIP Art generation](https://github.com/nerdyrodent/VQGAN-CLIP) which turns texts into artwork. We want to combine the idea from both project and design a model which could give artistic painting process from text described. Specifically, we want to reproduce and explain VQGAN+CLIP for text guided image generation and take it as the input of the PaintTransformer to produce an artwork with paint strokes. 
+
+To clarify, VQGAN + CLIP is actually the combination of two models: VQGAN stands for *Vector Quantized Generative Adversarial Network*, which is a type of GAN that can be used to generation high-resolution images; while CLIP stands for *Contrastive Language-Image Pretraining*, which is a classifier that could pick the most relevant sentence for the image from several options. Unlike other attention GAN, which can also generate image from text, VQGAN + CLIP is more like a student-teacher pair: VQGAN will generate a image, and CLIP will judge whether this image has any relevance to the prompt and tell VQGAN how to optimize. In this blog, we will focus more on the generative portion and take CLIP as a tool for text-guided art generation process.
+
+
 
 ## Implementation
 
