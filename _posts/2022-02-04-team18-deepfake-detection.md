@@ -19,7 +19,7 @@ Deepfakes are artificially generated images and videos that are difficult to dis
 
 ## Detecting Deepfakes: Generative Adversarial Networks 
 
-
+While Deepfake generation has become a standard problem that is commonly solved with the use of GANs, detection is a much more nuanced task. One option is  the architecture now known as MesoNet, which is a CNN architecture. The architecture consists of four alternating layers of convolutions and pooling, a dense network, and hidden layer and utilizes Batch normalization and ReLu activation. The other solution path involves utilizing the fact that deep fakes are generated with GANs. By extracting the discriminators, we can use them as a module specifically to detect deep fakes.
 
 You can add an image to your survey like this:
 ![YOLO]({{ '/assets/images/UCLAdeepvision/object_detection.png' | relative_url }})
