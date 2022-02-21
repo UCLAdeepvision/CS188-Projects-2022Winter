@@ -624,8 +624,7 @@ show_result_pyplot(model, img, result, score_thr=0.3)
 ```python
 cv2.rectangle(img, (310,220), (360,270), (0,0,0), -1)
 ```
-
-![Untitled]()
+![Experiment 1]({{ '/assets/images/team09/1.jpg' | relative_url }}){: style="width: 400px; max-width: 100%;"} Fig 1. Experiment 1.
 
 ### experiment 2:
 
@@ -633,7 +632,7 @@ cv2.rectangle(img, (310,220), (360,270), (0,0,0), -1)
 cv2.rectangle(img, (100,100), (300,250), (127,50,127), -1)
 ```
 
-![Untitled]({{ '/assets/images/team09/1.jpg' | relative_url }}){: style="width: 400px; max-width: 100%;"}*Fig 1. YOLO: An object detection method in computer vision* [1]
+![Experiment 2]({{ '/assets/images/team09/2.jpg' | relative_url }}){: style="width: 400px; max-width: 100%;"} Fig 2. Experiment 2.
 
 ### experiment 3:
 
@@ -641,7 +640,7 @@ cv2.rectangle(img, (100,100), (300,250), (127,50,127), -1)
 cv2.rectangle(img, (300,220), (380,270), (0,0,0), -1)
 ```
 
-![Untitled](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/2f2cc80c-fd1e-44a9-96d6-c9d4a3c8bf6a/Untitled.png)
+![Experiment 3]({{ '/assets/images/team09/3.jpg' | relative_url }}){: style="width: 400px; max-width: 100%;"} Fig 3. Experiment 3.
 
 ### experiment 4:
 
@@ -649,23 +648,23 @@ cv2.rectangle(img, (300,220), (380,270), (0,0,0), -1)
 cv2.rectangle(img, (280,200), (400,300), (0,0,0), -1)
 ```
 
-![Untitled](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/2aff22dd-9045-448f-b570-c0ce68f876b2/Untitled.png)
-
+![Experiment 4]({{ '/assets/images/team09/4.jpg' | relative_url }}){: style="width: 400px; max-width: 100%;"} Fig 4. Experiment 4.
 ### experiment 5:
 
 ```python
 cv2.rectangle(img, (260,190), (410,320), (0,0,0), -1)
 ```
 
-![Untitled](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/5b51a246-7d6d-44ad-a627-c42769055d80/Untitled.png)
+![Experiment 5]({{ '/assets/images/team09/5.jpg' | relative_url }}){: style="width: 400px; max-width: 100%;"} Fig 5. Experiment 5.
 
 ### experiment 6:
 
 experiment using our living room’s picture
 
-![315_fast_rcnn_result.jpeg](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/5b4b3836-6c87-4d18-9f9e-bee70eb32293/315_fast_rcnn_result.jpeg)
 
-### experiment 6:
+![Experiment 6]({{ '/assets/images/team09/6.jpg' | relative_url }}){: style="width: 400px; max-width: 100%;"} Fig 6. Experiment 6.
+
+### experiment 7:
 
 ```python
 cv2.rectangle(img, (700,800), (1000,1000), (0,0,0), -1)
@@ -673,6 +672,7 @@ cv2.rectangle(img, (700,800), (1000,1000), (0,0,0), -1)
 
 network is fooled to recognize our black patch as a “TV” with score = 0.63
 
+![Experiment 7]({{ '/assets/images/team09/7.jpg' | relative_url }}){: style="width: 400px; max-width: 100%;"} Fig 7. Experiment 7.
 
 
 
