@@ -625,7 +625,7 @@ show_result_pyplot(model, img, result, score_thr=0.3)
 cv2.rectangle(img, (310,220), (360,270), (0,0,0), -1)
 ```
 
-![Untitled](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/16f0057d-35e8-405d-944a-29b79df35705/Untitled.png)
+![Untitled]()
 
 ### experiment 2:
 
@@ -633,7 +633,7 @@ cv2.rectangle(img, (310,220), (360,270), (0,0,0), -1)
 cv2.rectangle(img, (100,100), (300,250), (127,50,127), -1)
 ```
 
-![Untitled](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/7d3ade46-0b7a-420f-9795-06c3f9da29c1/Untitled.png)
+![Untitled]({{ '/assets/images/team09/1.jpg' | relative_url }}){: style="width: 400px; max-width: 100%;"}*Fig 1. YOLO: An object detection method in computer vision* [1]
 
 ### experiment 3:
 
