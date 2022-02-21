@@ -3,7 +3,7 @@ layout: post
 comments: true
 title: MMDetection
 author: Yu Zhou, Zongyang Yue
-date: 2022-01-27
+date: 2022-02-20
 ---
 # Introduction
 
