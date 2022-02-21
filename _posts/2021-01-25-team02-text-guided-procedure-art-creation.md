@@ -166,11 +166,33 @@ Lastly, for the training procedure, we first train the VQVAE with discriminator 
 
 ### VQGAN + CLIP
 
+To incorporate VQGAN with CLIP to provide the power of image generation from text, we will download the pretrained CLIP model from OpenAI (reimplement it would time consuming and may not obtain the same performance). For VQGAN, we only need the decoder and the codebook. Our goal is trying to find a latent vector before vector quantization that can produce a figure corresponding to the text prompt. Initially, we randomly generate a latent vector with min and max bounded by the minimum and maximum in the codebook. Then the pretrained CLIP model will parse the prompt into tokens and encode them. It also output the weight of token and construct a Prompt object for loss calculation. Each Prompt object behaves like a self-attention unit that computes the distance between CLIP prediction on the generated image and the embedding and scales by a weight. 
+
+During training, the system will first quantize the latent vector, decode it to an normalized image, perform an augmentation, and output an encoding by the CLIP model. We then put the output into each Prompts to calculate the loss. Finally, based on the loss, we optimize the latent vector and repeat the operation. A workflow is shown below:
+
+![VQGAN]({{ '/assets/images/team02/vqgan+clip.svg' | relative_url }})
+{: style="width: 100%; max-width: 100%;"}
+*Fig 4. Workflow of VQGAN+CLIP text-guided image generation*.
+
 ### PaintTransformer
 
 ## Implementation
 
+### VQGAN + CLIP
+
+All models for this system are trained using CIFAR-10, where each image has shape $$32 \times 32 \times 3$$. The encoder is a combination of ConvNet and ResNet without batch normalization (experiment found that normalization and changing activation function perform worse since it will cause loss of information). It has 128 hidden channels in the ConvNet and 2 resnet block layers. Inversely, the decoder is a combination of transposed convolution layer and ResNet, with 128 hidden channels and 2 residual block layers. Before entering the vector quantization module, an additional ConvNet will downsample the features. The vector quantization module has 512 embedding vectors, each has 64 elements. The discriminator is a normal CNN with batch normalization and fully-connected layers. Each ConvNet layer is activated by a leaky relu function. During training, we apply a 6 epoch warm up to ignore adversarial loss and obtain an improvement of performance by decreasing loss from 0.15 to 0.12. 
+
+When training the transformer, we encode the prediction output from the transformer into one hot matrix and calculate the cross entropy loss of each step. Since we only have 64 elements in the input sequence, the transformer will predict the next element based on the previous 1~63 elements. Fig 5 shows the performance, where the first image is the generate output, the second one is the original decoded image, and the third one is the cropped input image. There is some degree of prediction, even though it is not that well.
+
+![Perform]({{ '/assets/images/team02/transformer_perform.png' | relative_url }})
+{: style="width: 100%; max-width: 100%;"}
+*Fig 5. Image recovery based on 1/8 cropped image*.
+
+### PaintTransformer
+
 ## Demo
+
+Code links [here](https://drive.google.com/drive/folders/1UaRDP9XtW14AJFQre5-XwW14m9Ia8YNs?usp=sharing)
 
 ## Reference
 [1] Xu, Tao, et al. "Attngan: Fine-grained text to image generation with attentional generative adversarial networks." Proceedings of the IEEE conference on computer vision and pattern recognition. 2018.
@@ -190,6 +212,8 @@ Lastly, for the training procedure, we first train the VQVAE with discriminator 
 [8] https://d2l.ai/chapter_attention-mechanisms/transformer.html
 
 [9] https://ljvmiranda921.github.io/notebook/2021/08/08/clip-vqgan/#perception
+
+[10] Van Den Oord, Aaron, and Oriol Vinyals. "Neural discrete representation learning." Advances in neural information processing systems 30 (2017).
 
 ## Code Repository
 [1] [VQGAN + CLIP Art generation](https://github.com/nerdyrodent/VQGAN-CLIP)
