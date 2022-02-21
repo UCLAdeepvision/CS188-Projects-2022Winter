@@ -566,7 +566,112 @@ I believe detection head corresponds to model selection
 
 # Adversarial Attack
 
-This part is currently being explored...
+# Black-patches attack
+
+Fast RCNN
+
+```python
+!mkdir checkpoints
+!wget -c https://download.openmmlab.com/mmdetection/v2.0/mask_rcnn/mask_rcnn_r50_caffe_fpn_mstrain-poly_3x_coco/mask_rcnn_r50_caffe_fpn_mstrain-poly_3x_coco_bbox_mAP-0.408__segm_mAP-0.37_20200504_163245-42aa3d00.pth \
+      -O checkpoints/mask_rcnn_r50_caffe_fpn_mstrain-poly_3x_coco_bbox_mAP-0.408__segm_mAP-0.37_20200504_163245-42aa3d00.pth
+```
+
+```python
+from mmdet.apis import inference_detector, init_detector, show_result_pyplot
+
+# Choose to use a config and initialize the detector
+config = 'configs/mask_rcnn/mask_rcnn_r50_caffe_fpn_mstrain-poly_3x_coco.py'
+# Setup a checkpoint file to load
+checkpoint = 'checkpoints/mask_rcnn_r50_caffe_fpn_mstrain-poly_3x_coco_bbox_mAP-0.408__segm_mAP-0.37_20200504_163245-42aa3d00.pth'
+# initialize the detector
+model = init_detector(config, checkpoint, device='cuda:0')
+```
+
+```python
+import matplotlib.pyplot as plt
+import mmcv
+import cv2
+import numpy as np
+from google.colab.patches import cv2_imshow
+# Use the detector to do inference
+img = mmcv.imread('demo/demo.jpg')
+plt.figure(figsize=(15, 10))
+plt.imshow(mmcv.bgr2rgb(img))
+# print(img.shape) #(427, 640, 3)
+
+# Draw a Rectangle in
+image = np.zeros((512,512,3), np.uint8)
+# cv2.rectangle(image, (100,100), (300,250), (127,50,127), -1)
+cv2.rectangle(img, (310,220), (360,270), (0,0,0), -1)
+cv2_imshow(img)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
+
+plt.show()
+
+result = inference_detector(model, img)
+```
+
+```python
+# Let's plot the result
+show_result_pyplot(model, img, result, score_thr=0.3)
+```
+
+## Fast RCNN specific positions of black patches and result:
+
+### experiment 1:
+
+```python
+cv2.rectangle(img, (310,220), (360,270), (0,0,0), -1)
+```
+
+![Untitled](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/16f0057d-35e8-405d-944a-29b79df35705/Untitled.png)
+
+### experiment 2:
+
+```python
+cv2.rectangle(img, (100,100), (300,250), (127,50,127), -1)
+```
+
+![Untitled](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/7d3ade46-0b7a-420f-9795-06c3f9da29c1/Untitled.png)
+
+### experiment 3:
+
+```python
+cv2.rectangle(img, (300,220), (380,270), (0,0,0), -1)
+```
+
+![Untitled](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/2f2cc80c-fd1e-44a9-96d6-c9d4a3c8bf6a/Untitled.png)
+
+### experiment 4:
+
+```python
+cv2.rectangle(img, (280,200), (400,300), (0,0,0), -1)
+```
+
+![Untitled](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/2aff22dd-9045-448f-b570-c0ce68f876b2/Untitled.png)
+
+### experiment 5:
+
+```python
+cv2.rectangle(img, (260,190), (410,320), (0,0,0), -1)
+```
+
+![Untitled](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/5b51a246-7d6d-44ad-a627-c42769055d80/Untitled.png)
+
+### experiment 6:
+
+experiment using our living room’s picture
+
+![315_fast_rcnn_result.jpeg](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/5b4b3836-6c87-4d18-9f9e-bee70eb32293/315_fast_rcnn_result.jpeg)
+
+### experiment 6:
+
+```python
+cv2.rectangle(img, (700,800), (1000,1000), (0,0,0), -1)
+```
+
+network is fooled to recognize our black patch as a “TV” with score = 0.63
 
 
 
