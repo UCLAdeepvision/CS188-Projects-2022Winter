@@ -118,9 +118,13 @@ In training, mini-batches of 16 samples and the Adadelta learning rate optimizer
 
 
 ## Improving Upon the Paper
+We extend the functionality of this paper from single staff monophonic scores to full piano sheet music with two staves and monophonic lines in each staff. For this purpose, we use Johann Sebastian Bach's Two Part Inventions for our training, validation, and test data. The Two Part Inventions are an ideal material to use for this extension as each line contains a single monophonic score. Thus, our task becomes an object detection task to identify grand staves from the full page of sheet music and pass each staff from the grand staff (treble and bass) to the OMR script.
 
-### Multi-staff detection with YOLOv3
+For object detection, rather than reinventing the wheel, we used YOLOv5 to detect the grand staffs. YOLOv5 uses a model backbone, model neck, and model head in its structure. The model backbone extracts the features using Cross Stage Partial Networks. The model neck uses PANet for obtaining feature pyramids. The model head finally predicts the object locations from the image. Training on YOLOv5 requires both input images as well as files with the labels for each object in each image.
 
+Training data was bootstrapped from the first 9 inventions. These 9 inventions were each two pages of sheet music, with 5 or 6 grand staves per page. These staves were croppped and randomly sampled into 5 staves per page training examples and 6 staves per page training examples. 2500 examples were generated using bootstrap for 5 and 6 pages each respectively, for 5000 total training examples. These grand staff locations were manually labeled, and the new locations were passed on to the full sheet music examples. We used the pretrained weights yolov5l.pt for our training.
+
+The 10th through 12th inventions were used for validation of the grand staff identification. YOLOv5 was able to correctly identify each grand staff, for both the 5 and 6 grand staves per page examples. Finally, the 13th through 15th inventions were used as the test set for both the object detection as well as the actual OMR. These images with labels were then used to crop the grand staves, which were split in half into treble and bass clefs. These single staves were then passed into the OMR script for semantic and agnostic predictions.
 
 ## Basic Syntax
 ### Image
