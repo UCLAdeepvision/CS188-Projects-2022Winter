@@ -102,10 +102,10 @@ $$
 p_\theta (\mathbf{x}) = \int_{\mathbf{z}} p_{\theta}(\mathbf{x}, \mathbf{z}) d\mathbf{z} = \int_{\mathbf{z}} p_{\theta}(\mathbf{x}|\mathbf{z})p_\theta(\mathbf{z}) d\mathbf{z}
 $$
 
-By the Bayesian theorem,
+Where $$p_\theta (\mathbf{x}|\mathbf{z})$$ is the probability decoder and $$p_\theta (\mathbf{z})$$ is the prior of latent space. However, integrating all $$\mathbf{z}$$ is intractable. Alternatively, by the Bayes' rule,
 
 $$
-p_\theta (\mathbf{z} | \mathbf{x}) = \frac{p_\theta (\mathbf{x}|\mathbf{z}) p_\theta (\mathbf{z})}{p_\theta(\mathbf{x})}
+p_\theta(\mathbf{x}) = \frac{p_\theta (\mathbf{x}|\mathbf{z}) p_\theta (\mathbf{z})}{p_\theta (\mathbf{z} | \mathbf{x})}
 $$
 
 In every iteration, we can compute this posterior and use it as the prior for the next iteration. Since we don't know the real $$\theta$$, we just use our own estimate *codebook* $$\Theta$$ and optimize it gradually.
