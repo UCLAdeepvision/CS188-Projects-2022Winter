@@ -34,6 +34,18 @@ Formally, video colorization is the problem where given a sequence of grayscale 
 ### Learning Blind Video Temporal Consistency  (2018)
 ### Deep Exemplar-based Video Colorization (2019)
 ### Framewise Instance Aware Image Colorization (2020)
+InstColor proposed novel network architecture that leverages off-the-shelf models to detect the object and learn from large- scale data to extract image features at the instance and full-image level, and to optimize the feature fusion to obtain the smooth colorization results. The key insight is that a clear figure-ground separation can dramatically improve colorization performance.
+
+The model consists of three parts:
+
+    1. an off-the-shelf pretrained model to detect object instances and produce cropped object images
+    
+    2. two backbone networks trained end-to-end for instance, and full-image colorization 
+    
+    3. a fusion module to selectively blend features extracted from different layers of the two colorization networks
+
+![InstColor]({{ '/assets/images/team12/instColorModel.png' }})
+
 ### Temporally Consistent Video Colorization (TCVC) (2021)
 
 ## Conclusion
