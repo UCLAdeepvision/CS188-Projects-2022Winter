@@ -6,7 +6,7 @@ author: Sudhanshu Agrawal, Jenson Choi
 date: 2022-01-27
 ---
 
-> Behavior prediction in dynamic, multi-agent systems is an important problem in the context of self-driving cars. In this blog, we will investigate a few different approaches to tackling this multifaceted problem and reproduce the work of [Gao, Jiyang et al.](https://arxiv.org/abs/2005.04259) by implementing VectorNet in PyTorch.
+> Behaviour prediction in dynamic, multi-agent systems is an important problem in the context of self-driving cars. In this blog, we will investigate a few different approaches to tackling this multifaceted problem and reproduce the work of [Gao, Jiyang et al.](https://arxiv.org/abs/2005.04259) by implementing VectorNet in PyTorch.
 
 <!--more-->
 
@@ -23,7 +23,7 @@ Self-driving is one of the biggest applications of Computer Vision in industry. 
 
 ## Introduction
 
-Predicting the behavior of others on the road is difficult: often, a holistic understanding of a scene and its context is required, including the width of road lanes, four-way intersection rules, traffic lights, and signs. Recent learning-based approaches to tackling behavior prediction require building a representation to encode the map and trajectory information, often in the form of High Definition (HD) maps. These HD maps are rendered as color-coded attributes (Fig 1, left), which encode scene context information, such as traffic signs, lanes, and road boundaries, with ConvNets. These approaches have a few drawbacks. First and foremost, utilizing ConvNets to encode scene context information requires a lot of compute and time. In addition, processing maps as imagery makes it challenging to model long-range geometry, such as lanes merging ahead. To address these shortcomings, the authors of this paper propose to learn a unified representation for multi-agent dynamics and structure scene context directly from their vectorized form (Fig 1, right) using a hierarchical graph neural network architecture, VectorNet, with the ultimate goal of building a system which learns to predict the intent of vehicles, which are parameterized as trajectories.
+Predicting the behaviour of others on the road is difficult: often, a holistic understanding of a scene and its context is required, including the width of road lanes, four-way intersection rules, traffic lights, and signs. Recent learning-based approaches to tackling behaviour prediction require building a representation to encode the map and trajectory information, often in the form of High Definition (HD) maps. These HD maps are rendered as color-coded attributes (Fig 1, left), which encode scene context information, such as traffic signs, lanes, and road boundaries, with ConvNets. These approaches have a few drawbacks. First and foremost, utilizing ConvNets to encode scene context information requires a lot of compute and time. In addition, processing maps as imagery makes it challenging to model long-range geometry, such as lanes merging ahead. To address these shortcomings, the authors of this paper propose to learn a unified representation for multi-agent dynamics and structure scene context directly from their vectorized form (Fig 1, right) using a hierarchical graph neural network architecture, VectorNet, with the ultimate goal of building a system which learns to predict the intent of vehicles, which are parameterized as trajectories.
 
 ![Artificial neural network]({{ '/assets/images/team13/HD_map.png' | relative_url }})
 {: style="width: 600px; max-width: 100%;"}
@@ -112,7 +112,7 @@ This task is similar to that used by the BERT language model that predicts missi
 ### Overall Structure
 
 The objective function is thus :
-$$ L = L*{traj} + \alpha L*{node}$$
+$$ L = L_{traj} + \alpha L_{node}$$
 Where:
 
 - $$L_{traj}$$ is the negative Gaussian log-likelihood for the ground-truth future trajectories
@@ -121,11 +121,11 @@ Where:
 
 ## Experiments
 
-The authors tested the performance of VectorNet on one vehicle behavior prediction benchmark, the Agroverse dataset.
+The authors tested the performance of VectorNet on one vehicle behaviour prediction benchmark, the Agroverse dataset.
 
 ### Dataset
 
-Argoverse motion forecasting is a dataset designed for vehicle havior prediction with trajectory histories. There are 333K 5-second long sequences split into 211K training, 41K validation and 80K testing sequences. The creators curated this dataset by mining interesting and diverse scenarios, such as yielding for a merging vehicle, crossing an intersection, etc. The trajectories are sampled at 10Hz, with (0, 2] seoncds are used as observation and (2, 5] seconds for trajectory prediction. Each sequence has one "interesting" agent whose trajectory is the precition target.
+Argoverse motion forecasting is a dataset designed for vehicle behaviour prediction with trajectory histories. There are 333K 5-second long sequences split into 211K training, 41K validation and 80K testing sequences. The creators curated this dataset by mining interesting and diverse scenarios, such as yielding for a merging vehicle, crossing an intersection, etc. The trajectories are sampled at 10Hz, with (0, 2] seconds are used as observation and (2, 5] seconds for trajectory prediction. Each sequence has one "interesting" agent whose trajectory is the prediction target.
 
 ### Metrics
 
@@ -133,20 +133,20 @@ The authors adopt the Average Displacement Error (ADE) computed over the entire 
 
 ### Results
 
-The perfomance of VectorNet on the Argoverse dataset is compared with several baseline approaches and a few state-of-the-art architectures, which is summaried in table 1.
+The performance of VectorNet on the Argoverse dataset is compared with several baseline approaches and a few state-of-the-art architectures, which is summarised in table 1.
 
 | Model                      |       DE@3s       |               ADE |
 | :------------------------- | :---------------: | ----------------: |
 | Constant Velocity          |       7.89        |              3.53 |
-| Nearest Neighbor           |       7.88        |              3.45 |
+| Nearest Neighbour           |       7.88        |              3.45 |
 | LSTM ED                    |       4.95        |              2.15 |
 | Challenge Winter: uulm-mrm |       4.19        |              1.90 |
 | Challenge Winter: Jean     |       4.17        |              1.86 |
 | VectorNet                  | $$\textbf{4.01}$$ | $$\textbf{1.81}$$ |
 
-_Table 1. Trajectory prediction performance on teh Argoverse Forecasting test set when number of sampled trajectories K=1. Results were retrieved from the Agroverse leaderboard on 03/18/2020_
+_Table 1. Trajectory prediction performance on the Argoverse Forecasting test set when number of sampled trajectories K=1. Results were retrieved from the Agroverse leaderboard on 03/18/2020_
 
-The baseline approaches are the constant velocity baseline, nearest neighbor retrieval and LSTM encoder-decoder. The state-of-the-art approaches are the winners of the Agroverse Forecasting Challenge. From table 1, VectorNet is able to outperform both state-of-the-art models in terms of DE@3s and ADE when K=1.
+The baseline approaches are the constant velocity baseline, nearest neighbour retrieval and LSTM encoder-decoder. The state-of-the-art approaches are the winners of the Agroverse Forecasting Challenge. From table 1, VectorNet is able to outperform both state-of-the-art models in terms of DE@3s and ADE when K=1.
 
 ### Visualization
 
@@ -155,7 +155,7 @@ Some of the predictions made by VectorNet on trajectories in the Agroverse datas
 ![Artificial neural network]({{ '/assets/images/team13/vectornet_visual.png' | relative_url }})
 {: style="width: 600px; max-width: 100%;"}
 _Fig 2. (Left) Visualization of the prediction: lanes are shown in
-grey, non-target agents are green, target agent’s ground truth trajectory is in pink, predicted trajectory in blue. (Right) Visualization of attention for road and agent: Brighter red color corresponds
+grey, non-target agents are green, target agent’s ground truth trajectory is in pink, predicted trajectory in blue. (Right) Visualization of attention for road and agent: Brighter red colour corresponds
 to higher attention score. (Image source: <https://arxiv.org/pdf/2005.04259.pdf>)_
 
 It is observed that when argents are facing multiple choices (first two examples), the attention mechanism is able to focus on the correct choices (two right-turn lanes in the second example). The third example is a lane-changing agent, the attended lanes are the current lane and target lane. In the fourth example, though the prediction is not accurate, the attention still produces a reasonable score on the correct lane.
