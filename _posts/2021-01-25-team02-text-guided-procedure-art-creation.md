@@ -188,6 +188,46 @@ When training the transformer, we encode the prediction output from the transfor
 {: style="width: 100%; max-width: 100%;"}
 *Fig 5. Image recovery based on 1/8 cropped image*.
 
+**Vector quantization:**
+```python
+# permute dimension: BCHW -> BHWC
+z = z.permute(0,2,3,1).contiguous()
+z_shape = z.shape
+
+#flatten
+flat_z = z.reshape(-1, self.emb_dim)
+l2_dist = (torch.sum(flat_z**2, dim=1, keepdim=True) 
+        + torch.sum(self.emb.weight**2, dim=1) 
+        - 2 * torch.matmul(flat_z, self.emb.weight.t()))
+
+# find closest embedded vector with index and generate 1-hot matrix
+enc_idx = torch.argmin(l2_dist, dim=1).unsqueeze(1)
+enc = torch.zeros(enc_idx.shape[0], self.num_emb, device=z.device)
+enc.scatter_(1, enc_idx, 1)
+
+z_q = torch.matmul(enc, self.emb.weight).reshape(z_shape)
+```
+For the connection with CLIP, most of the generating codes and utilities are borrowed from the original [Google Colab file](https://colab.research.google.com/github/justinjohn0306/VQGAN-CLIP/blob/main/VQGAN%2BCLIP_%28z%2Bquantize_method_with_augmentations%2C_user_friendly_interface%29.ipynb#scrollTo=fccf05b3-2e0a-46a1-a377-607d151377ac). The performance is not that good due to training on low resolution image, but it still correctly generate features of objects, including colors and shapes. It works better for items in the category of CIFAR-10. 
+
+<video width="300" height="300" muted controls>
+  <source src="{{ '/assets/images/team02/banana.mp4' | relative_url }}" type="video/mp4">
+</video>
+
+*Prompt: banana*
+
+<video width="300" height="300" muted controls>
+  <source src="{{ '/assets/images/team02/red_car.mp4' | relative_url }}" type="video/mp4">
+</video>
+
+*Prompt: red car*
+
+<video width="300" height="300" muted controls>
+  <source src="{{ '/assets/images/team02/airplane.mp4' | relative_url }}" type="video/mp4">
+</video>
+
+*Prompt: airplane*
+
+
 ### PaintTransformer
 
 ## Demo
