@@ -18,10 +18,29 @@ date: 2022-01-18
 
 ## Introduction
 
+![YOLO]({{ '/assets/images/team07/Examples.JPG' | relative_url }})
+{: style="width: 800px; max-width: 100%;"}
+*Fig 1. YOLO: An object detection method in computer vision* [1].
 
 ## Architecture
 
+
+### Transformer Model for Text to Token Encoder
+
+### Classifier Free Guidance Loss Functions
+
+### Main Diffusion Model (ADM model architecture with additional text token residual connections) 
+
+### Additional Upsampling Diffusion Model
+
+## Putting it All Together
+
 ## Implementation
+
+### Dataset
+
+
+### Results
 
 ## Demo
 
