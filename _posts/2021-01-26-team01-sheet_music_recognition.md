@@ -28,7 +28,7 @@ As its name suggests, OMR is the field of research focused on training computers
 
 Traditional methods, not based in deep learning, break down OMR into multiple stages. Among other things, an initial pass will clean up the image by removing staff lines, find the bars that break a stave into measures, and detect the clefs that affect the interpretation of notes in pitches. Next, symbols are isolated and run through a classifier. Finally, the individual components are reassembled and reinterpreted within the overall semantics of the piece.
 
-Unfortunately, such a piecewise approach typically fails to generalize **ELABORATE**.
+Unfortunately, such a piecewise approach typically fails to generalize.
 
 ## A Deep-Learning Solution
 
@@ -38,11 +38,30 @@ Neural networks require large amounts of data upon which to train; to facilitate
 
 In PrIMuS, 87,678 sequences of notes, written upon a single staff, are converted into five different representations, these being
 
-1. Plaine and Easie code **insert image 1a.**
-2. Rendered images **insert image 1b.**
-3. Music Encoding Initiative format **insert image 1c.**
-4. Semantic encoding **insert image 1d.**
-5. Agnostic encoding **insert image 1e.**
+- Plaine and Easie code
+![PEC]({{ '/assets/images/team01/Image1a.png' | relative_url }})
+{: style="width: 800px; max-width: 100%;"}
+*Fig 1a. End-to-end neural optical music recognition of monophonic scores.* [1].
+
+- Rendered images
+![Render]({{ '/assets/images/team01/Image1b.png' | relative_url }})
+{: style="width: 800px; max-width: 100%;"}
+*Fig 1b. End-to-end neural optical music recognition of monophonic scores.* [1].
+
+- Music Encoding Initiative format
+![MEI]({{ '/assets/images/team01/Image1c.png' | relative_url }})
+{: style="width: 800px; max-width: 100%;"}
+*Fig 1c. End-to-end neural optical music recognition of monophonic scores.* [1].
+
+- Semantic encoding
+![Semantic]({{ '/assets/images/team01/Image1d.png' | relative_url }})
+{: style="width: 800px; max-width: 100%;"}
+*Fig 1d. End-to-end neural optical music recognition of monophonic scores.* [1].
+
+- Agnostic encoding
+![Agnostic]({{ '/assets/images/team01/Image1e.png' | relative_url }})
+{: style="width: 800px; max-width: 100%;"}
+*Fig 1e. End-to-end neural optical music recognition of monophonic scores.* [1].
 
 Note that in the final setting, many of the rendered images are distorted using GraphicsMagick, so as to emulate pictures taken with a bad camera.
 
@@ -62,24 +81,42 @@ In essence, the agnostic encoding merely notes the 2D plane positions of musical
 
 ### A quick primer on CTC networks
 
-Sequential data usually fails to come in set widths. As an analogy, suppose we had to split a sentence, typed in 20 pt monospace font, into fixed-width letters. This would be easy: all we have to do is box each letter in a rectangle of 20-pt width. Now imagine if we were to use these same boxes to split a second sentence, one written in 25-pt sans-serif. Suddenly, some boxes might contain just a fraction of a character; we would be completely unable to split such a sentence! **Insert example image for reference**.
+Sequential data usually fails to come in set widths. As an analogy, suppose we had to split a sentence, typed in 20 pt monospace font, into fixed-width letters. This would be easy: all we have to do is box each letter in a rectangle of 20-pt width. Now imagine if we were to use these same boxes to split a second sentence, one written in 25-pt sans-serif. Suddenly, some boxes might contain just a fraction of a character; we would be completely unable to split such a sentence!
+
+![CutoffA]({{ '/assets/images/team01/CutoffA.png' | relative_url }})
+{: style="width: 200px; max-width: 100%;"}
 
 How can we fix this? Note that the main problem here is the lack of alignment; a single letter might span two boxes. If we were to independently read each box without the context of the other, we would be unable to make out the greater letter. Thus we need to find some way to span contexts.
 
-*Connectionist temporal classification* (CTC) accomplishes just this in the context of RNNs. Unlike traditional networks, CTC networks continue predicting the same token when the current context is not yet finished; for instance, in our example above, given **insert image of an A split across three boxes**, a network might learn to predict ```AAA```, because the network correctly believes that the latter two boxes still span the A.
+*Connectionist temporal classification* (CTC) accomplishes just this in the context of RNNs. Unlike traditional networks, CTC networks continue predicting the same token when the current context is not yet finished; for instance, in our example above, given 
 
-Note that with this current system, we are unable to distinguish whether ```AAA``` corresponds to `A`, `AA`, or a true `AAA`. With CTC, the solution is to add a special "blank" character `-` that delimits tokens. Therefore given **insert image of two A's**, a CTC network might predict `A-A`.
+![TripleSplit]({{ '/assets/images/team01/TripleSplit.png' | relative_url }})
+{: style="width: 200px; max-width: 100%;"}
 
-To formalize the above, a CTC network uses an RNN to map from a $T$-length sequence $\textbf{x}$ to a $T$-length target sequence $\textbf{z}$. Each element $x_i \in \mathcal{X}$, the $i$th element of $\textbf{x}$, is an $m$-dimensional real-valued vector. Given a finite alphabet $\Sigma$, consisting of all possible token labels, $z_i \in \Sigma^* = \Sigma \cup \{\text{blank}\}$. Each output unit in the network calculates the probability $y_k^t$ of observing the corresponding label at time $t$; as it is assumed all such probabilities are independent among the $T$ indices,
-then given an output sequence $\pi$, the probability $p$ of getting output sequence $\pi$ given input sequence $\textbf{x}$ is
+, a network might learn to predict ```AAA```, because the network correctly recognizes that the latter two boxes still span the A.
+
+Note that with this current system, we are unable to distinguish whether ```AAA``` corresponds to `A`, `AA`, or a true `AAA`. With CTC, the solution is to add a special "blank" character `-` that delimits tokens. Therefore given 
+
+![AA]({{ '/assets/images/team01/AA.png' | relative_url }})
+{: style="width: 400px; max-width: 100%;"}
+
+, a CTC network might predict `A-A`.
+
+To formalize the above, a CTC network uses an RNN to map from a $$T$$-length sequence $$\textbf{x}$$ to a $$T$$-length target sequence $$\textbf{z}$$. Each element $$x_i \in \mathcal{X}$$, the $$i$$th element of $$\textbf{x}$$, is an $$m$$-dimensional real-valued vector. Given a finite alphabet $$\Sigma$$, consisting of all possible token labels, $$z_i \in \Sigma^* = \Sigma \cup \{\text{blank}\}$$. Each output unit in the network calculates the probability $$y_k^t$$ of observing the corresponding label at time $$t$$; as it is assumed all such probabilities are independent among the $$T$$ indices,
+then given an output sequence $$\pi$$, the probability $$p$$ of getting output sequence $$\pi$$ given input sequence $$\textbf{x}$$ is
+
 $$
 p(\pi \mid \textbf{x}) = \prod_{t=1}^T y_{\pi_t}^t.
 $$
-All blanks and duplicates are removed after final processing, so sequences such as ```--lll-m--aa-o``` and ```lm-ao``` both map to ```lmao```. Therefore the probability of getting a final labelling $\textbf{l}$ is
+
+All blanks and duplicates are removed after final processing, so sequences such as ```--lll-m--aa-o``` and ```lm-ao``` both map to ```lmao```. Therefore the probability of getting a final labelling $$\textbf{l}$$ is
+
 $$
 p(\textbf{l}\mid \textbf{x}) = \sum_{\pi \in \mathcal{B}^{-1}(\textbf{l})}p(\pi \mid \textbf{x}).
 $$
+
 The predicted sequence is that with the highest probability, or
+
 $$
 \arg \max_{\textbf{l} \in L^{\leq T}} p(\textbf{l} \mid \textbf{x}).
 $$
@@ -89,33 +126,42 @@ $$
 Since music is a prime example of sequential data without fixed widths, the authors have chosen to create a *Convolutional Recurrent Neural Network* (CRNN) leveraging CTC loss. To simplify the process, only single staffs are run through the network (so, for instance, the network cannot simultaneously process the two staffs---one for each hand---of a piano piece).
 
 The model structure is as follows:
-**Insert Figure 4 of main paper**.
+![Model]({{ '/assets/images/team01/Image4.png' | relative_url }})
+{: style="width: 800px; max-width: 100%;"}
+*Fig 4. End-to-end neural optical music recognition of monophonic scores.* [1].
 
 Specifically, we have
-<center>
 
-| Input ($128 \times W \times 1$)                |
-| :----:                                         |
-| **Convolutional Block**                        |
-| Conv($32, 3 \times 3$),  MaxPool($2 \times 2$) |
-| Conv($64, 3 \times 3$),  MaxPool($2 \times 2$) |
-| Conv($128, 3 \times 3$), MaxPool($2 \times 2$) |
-| Conv($256, 3 \times 3$), MaxPool($2 \times 2$) |
-| **Recurrent Block**                            |
-| Bidirectional LSTM($256$)                      |
-| Bidirectional LSTM($256$)                      |
-| Linear($\|\Sigma\| + 1$)                       |
-| Softmax                                        |
+| Input ($$128 \times W \times 1$$)                  |
+| :------------------------------------------------: |
+| **Convolutional Block**                            |
+| Conv($$32, 3 \times 3$$),  MaxPool($$2 \times 2$$) |
+| Conv($$64, 3 \times 3$$),  MaxPool($$2 \times 2$$) |
+| Conv($$128, 3 \times 3$$), MaxPool($$2 \times 2$$) |
+| Conv($$256, 3 \times 3$$), MaxPool($$2 \times 2$$) |
+| **Recurrent Block**                                |
+| Bidirectional LSTM($$256$$)                        |
+| Bidirectional LSTM($$256$$)                        |
+| Linear($$\|\Sigma\| + 1$$)                         |
+| Softmax                                            |
 
-</center>
 
-where the input is given in $(h, w, c)$ format. Batch normalization is used for every convolutional layer, and the outputs of said layers are passed through a standard ReLU. Note that the linear layer has $|\Sigma| + 1$ output units because of the extra blank label needed with CTC. Bidirectional LSTMs are used because later information about notes can help inform previous frames.
+,
+where the input is given in $$(h, w, c)$$ format. Batch normalization is used for every convolutional layer, and the outputs of said layers are passed through a standard ReLU. Note that the linear layer has $$|\Sigma| + 1$$ output units because of the extra blank label needed with CTC. Bidirectional LSTMs are used because later information about notes can help inform previous frames.
 
 In training, mini-batches of 16 samples and the Adadelta learning rate optimizer were used. While there are better ways to decode the final sequence (i.e. beam search), a simple greedy decoding is used.
 
-### Results
+### Baseline results
+
+The paper defines two error metrics, the *sequence error rate*, the percentage of predicted sequences with at least one error; and the *symbol error rate*, the average edit distance between the predicted and ground truth sequence. The results are as follows:
+
+|                         | Agnostic | Semantic |
+| :---------------------: | :------: | :------: |
+| Sequence error rate (%) | 17.9     |   12.5   |
+| Symbol error rate (%)   | 1.0      |   0.8    |
 
 
+Notably, the model performs much better on the semantic representation, likely due to its closer ties to the actual musical notation.
 
 ## Improving Upon the Paper
 We extend the functionality of this paper from single staff monophonic scores to full piano sheet music with two staves and monophonic lines in each staff. For this purpose, we use Johann Sebastian Bach's Two Part Inventions for our training, validation, and test data. The Two Part Inventions are an ideal material to use for this extension as each line contains a single monophonic score. Thus, our task becomes an object detection task to identify grand staves from the full page of sheet music and pass each staff from the grand staff (treble and bass) to the OMR script.
