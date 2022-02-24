@@ -5,10 +5,10 @@ title: DeepFake Generation
 author: Zhengtong Liu, Chenda Duan
 date: 2022-01-26
 ---
-
+> Note!!!!!! For better understanding and for fun, we have create a [demo](https://drive.google.com/drive/folders/1RRiqMyUGs4wAJ_pcQ56I_WKjuZKXqZVV?usp=sharing). You may need to create a copy and modify the path in the cs188_midwaydemo.ipynb file.
+ 
 > This is the blog will record and explain technical details for Zhengtong Liu and Chenda Duan's CS188 DLCV project.
-> We will investigate the state-of-the-art DeekFake Generation methods. We are not sure yet which specific subtract we will focus on.
-> Here are the potential fields: Image Synthesis, Image Manipulation, Face Swapping.
+> We will investigate the state-of-the-art Image Animation and Image-to-image Translation methods.
 
 
 <!--more-->
@@ -92,6 +92,37 @@ T_{X \leftarrow R} \equiv T_{X \leftarrow Y} \circ T_{Y \leftarrow R} (p_k) \\
 \mathbb{1} \equiv \left(\frac{d}{dp} T_{X \leftarrow R}(p) \bigg\rvert_{p = p_k} \right)^{-1} \left(\frac{d}{dp} T_{X \leftarrow Y}(p) \bigg\rvert_{p = T_{Y \leftarrow R}(p_k)} \right) \left(\frac{d}{dp} T_{Y \leftarrow R}(p) \bigg\rvert_{p = p_k} \right) 
 $$
 
+Below are the code snip showing the structrues of the keypoint detector.  
+```python
+def forward(self, x):
+    if self.scale_factor != 1:
+        x = self.down(x)
+
+    feature_map = self.predictor(x)
+    prediction = self.kp(feature_map)
+
+    final_shape = prediction.shape
+    heatmap = prediction.view(final_shape[0], final_shape[1], -1)
+    heatmap = F.softmax(heatmap / self.temperature, dim=2)
+    heatmap = heatmap.view(*final_shape)
+
+    out = self.gaussian2kp(heatmap)
+
+    if self.jacobian is not None:
+        jacobian_map = self.jacobian(feature_map)
+        jacobian_map = jacobian_map.reshape(final_shape[0], self.num_jacobian_maps, 4, final_shape[2],
+                                            final_shape[3])
+        heatmap = heatmap.unsqueeze(2)
+
+        jacobian = heatmap * jacobian_map
+        jacobian = jacobian.view(final_shape[0], final_shape[1], 4, -1)
+        jacobian = jacobian.sum(dim=-1)
+        jacobian = jacobian.view(jacobian.shape[0], jacobian.shape[1], 2, 2)
+        out['jacobian'] = jacobian
+
+    return out
+```
+
 In the second step, a dense motion network combines the local approximations to estimate the dense motion field $$\hat{T}_{S \leftarrow D}$$. The source frame $$\mathbf{S}$$ is warped according to Eq. ($$\ref{eq1}$$) to obtain $$K$$ transformed images $$\mathbf{S^1}, \ldots \mathbf{S^K}$$, so that the inputs are roughly aligned with $$\hat{T}_{S \leftarrow D}$$ when prediction from $$S$$ ($$\hat{T}_{S \leftarrow D}$$ aligns local patterns with pixels in $$\mathbf{D}$$ not $$\mathbf{S}$$). The heatmaps $$\mathbf{H_k}$$, which indicates where each transformation happens, are calculated as below:
 
 $$
@@ -119,6 +150,48 @@ $$
 
 This equation can actually be derived from Eq. ($$\ref{eq1}$$). Note that one assumption of the first-order model is that $$\mathbf{S_1}$$ and $$\mathbf{D_1}$$ have similar poses. Otherwise, the idea of relative motion transfer here might not work.
 
+Below are the code snip showing the structures of the image generation module, you can see the dense motion network and the occulusion mask mentioned above.
+```python
+def forward(self, source_image, kp_driving, kp_source):
+        # Encoding (downsampling) part
+        out = self.first(source_image)
+        for i in range(len(self.down_blocks)):
+            out = self.down_blocks[i](out)
+
+        # Transforming feature representation according to deformation and occlusion
+        output_dict = {}
+        if self.dense_motion_network is not None:
+            dense_motion = self.dense_motion_network(source_image=source_image, kp_driving=kp_driving,
+                                                     kp_source=kp_source)
+            output_dict['mask'] = dense_motion['mask']
+            output_dict['sparse_deformed'] = dense_motion['sparse_deformed']
+
+            if 'occlusion_map' in dense_motion:
+                occlusion_map = dense_motion['occlusion_map']
+                output_dict['occlusion_map'] = occlusion_map
+            else:
+                occlusion_map = None
+            deformation = dense_motion['deformation']
+            out = self.deform_input(out, deformation)
+
+            if occlusion_map is not None:
+                if out.shape[2] != occlusion_map.shape[2] or out.shape[3] != occlusion_map.shape[3]:
+                    occlusion_map = F.interpolate(occlusion_map, size=out.shape[2:], mode='bilinear')
+                out = out * occlusion_map
+
+            output_dict["deformed"] = self.deform_input(source_image, deformation)
+
+        # Decoding part
+        out = self.bottleneck(out)
+        for i in range(len(self.up_blocks)):
+            out = self.up_blocks[i](out)
+        out = self.final(out)
+        out = F.sigmoid(out)
+
+        output_dict["prediction"] = out
+
+        return output_dict
+```
 ## Image-to-image Translation
 
 ### StarGAN v2: Diverse Image Synthesis for Multiple Domains
@@ -146,6 +219,35 @@ The StarGAN v2 model is an image-to-image translation framework that can generat
         ![AdaIN figure]({{ '/assets/images/group08deepfake/AdaIN.png' | relative_url }})
         {: style="max-width: 60%;"}
         *Fig 5. Demonstration of AdaIN operation. (Image source: <https://arxiv.org/pdf/1812.04948.pdf>)*
+    Below are the structures of the generators
+    ```python
+    def forward(self, x, s, masks=None):
+        x = self.from_rgb(x)
+        cache = {}
+        for block in self.encode:
+            if (masks is not None) and (x.size(2) in [32, 64, 128]):
+                cache[x.size(2)] = x
+            x = block(x)
+        for block in self.decode:
+            x = block(x, s)
+            if (masks is not None) and (x.size(2) in [32, 64, 128]):
+                mask = masks[0] if x.size(2) in [32] else masks[1]
+                mask = F.interpolate(mask, size=x.size(2), mode='bilinear')
+                x = x + self.hpf(mask * cache[x.size(2)])
+        return self.to_rgb(x)
+    ```
+        Note that the self.encode and self.decode contains the AdaIN blocks mention above
+    ```python
+    for _ in range(2):
+        self.encode.append(
+            ResBlk(dim_out, dim_out, normalize=True))
+        self.decode.insert(
+            0, AdainResBlk(dim_out, dim_out, style_dim, w_hpf=w_hpf))
+    if w_hpf > 0:
+        device = torch.device(
+            'cuda' if torch.cuda.is_available() else 'cpu')
+        self.hpf = HighPass(w_hpf, device)
+    ```
 
     - **Mapping network** $$F_y(\mathbf{z})$$ takes in a latent code $$\mathbf{z}$$ outputs a style code $$s$$ corresponding to the domain $$y$$. $$F$$ can produce diverse style codes by sampling $$z \in \mathcal{Z}$$ and $$y \in \mathcal{Y}$$ randomly.
 
@@ -167,7 +269,14 @@ The StarGAN v2 model is an image-to-image translation framework that can generat
         $$
 
         where the latent code $$\mathbf{z}$$ and target domain $$\tilde{y}$$ are sampled randomly in training and $$\tilde{s} = F_{\tilde{y}}(\mathbf{z})$$. 
-
+    Below are the code snip defining the adversial loss
+    ```python
+    def adv_loss(logits, target):
+        assert target in [1, 0]
+        targets = torch.full_like(logits, fill_value=target)
+        loss = F.binary_cross_entropy_with_logits(logits, targets)
+        return loss
+    ```
     - **Style reconstruction**
 
         $$
@@ -183,7 +292,11 @@ The StarGAN v2 model is an image-to-image translation framework that can generat
         ![Illustration of Reconstruction Loss]({{ '/assets/images/group08deepfake/reconstruction_loss.png' | relative_url }})
         {: style="max-width: 100%;"}
         *Fig 7. Reconstruction Loss in Multimodal Unsupervised Image-to-Image Translation. (Image source: <https://arxiv.org/pdf/1804.04732.pdf>)*
-    
+    Below are the code snip defining the Style reconstruction loss
+    ```python
+    s_pred = nets.style_encoder(x_fake, y_trg)
+    loss_sty = torch.mean(torch.abs(s_pred - s_trg))
+    ```
     - **Style diversification** 
 
         $$
@@ -198,7 +311,16 @@ The StarGAN v2 model is an image-to-image translation framework that can generat
         *Fig 8. Illustration of mode collapose. (Image source: <https://arxiv.org/pdf/1903.05628.pdf>)*
 
         While original regularization term has the difference $$\|\mathbf{z}_1 - \mathbf{z}_2 \|_1$$ in the denominator, the StarGAN v2 model removes this for the sake of stability of training process (the difference $$\|\mathbf{z}_1 - \mathbf{z}_2 \|_1$$ is small and thus increase the loss significantly).
-
+    Below are the code snip defining the Style diversification loss
+    ```python
+    if z_trgs is not None:
+        s_trg2 = nets.mapping_network(z_trg2, y_trg)
+    else:
+        s_trg2 = nets.style_encoder(x_ref2, y_trg)
+    x_fake2 = nets.generator(x_real, s_trg2, masks=masks)
+    x_fake2 = x_fake2.detach()
+    loss_ds = torch.mean(torch.abs(x_fake - x_fake2))
+    ```
     - **Preserving source characteristics**
 
         $$
@@ -213,8 +335,13 @@ The StarGAN v2 model is an image-to-image translation framework that can generat
         ![Illustration of cycle consistency loss]({{ '/assets/images/group08deepfake/cycle_consistency_loss.png' | relative_url }})
         {: style="max-width: 100%;"}
         *Fig 9. Illustration of Cylce Consistency Loss. (Image source: <https://arxiv.org/pdf/1703.10593.pdf>)*
-
-
+    Below are the code snip defining the cycle consistency loss
+    ```python
+    masks = nets.fan.get_heatmap(x_fake) if args.w_hpf > 0 else None
+    s_org = nets.style_encoder(x_real, y_org)
+    x_rec = nets.generator(x_fake, s_org, masks=masks)
+    loss_cyc = torch.mean(torch.abs(x_rec - x_real))
+    ```
     Combine the above objectives, the full objective is 
 
     $$
@@ -222,7 +349,11 @@ The StarGAN v2 model is an image-to-image translation framework that can generat
     $$
 
     where $$\lambda_{sty}$$, $$\lambda_{ds}$$ and $$\lambda_{cyc}$$ are hyperparamters for the regularization terms. 
-
+    Below are the code snip showing the overall loss functions.
+    ```python
+    loss = loss_adv + args.lambda_sty * loss_sty \
+    - args.lambda_ds * loss_ds + args.lambda_cyc * loss_cyc
+    ```
 ## Relevant Papers
 
 1. [First Order Motion Model for Image Animation](https://arxiv.org/abs/2003.00196)<br>
