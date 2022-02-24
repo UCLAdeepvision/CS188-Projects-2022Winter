@@ -328,10 +328,10 @@ Below are oil painting generated from original pretained model given in the code
 
 | Input      | Output | Drawing Process     |
 | :---        |    :----:   |          ---: |
-| Model provided | ![]({{ '/assets/images/team02/royce_model.jpg' \| relative_url }})  | ![]({{ '/assets/images/team02/royce_model.gif' \| relative_url }})   |
-| No-dataset approach    | ![]({{ '/assets/images/team02/royce_original.jpg' \| relative_url }})  | ![]({{ '/assets/images/team02/royce_original.gif' \| relative_url }})   |
-Miniplaces  | ![]({{ '/assets/images/team02/royce_miniplace.jpg' \| relative_url }})  | ![]({{ '/assets/images/team02/royce_miniplace.gif' \| relative_url }})   |
-Landscape | ![]({{ '/assets/images/team02/royce_landscape.jpg' \| relative_url }})  | ![]({{ '/assets/images/team02/royce_landscape.gif' \| relative_url }})   |
+| Model provided | ![]({{ '/assets/images/team02/royce_model.jpg' | relative_url }})  | ![]({{ '/assets/images/team02/royce_model.gif' | relative_url }})   |
+| No-dataset approach    | ![]({{ '/assets/images/team02/royce_original.jpg' | relative_url }})  | ![]({{ '/assets/images/team02/royce_original.gif' | relative_url }})   |
+Miniplaces  | ![]({{ '/assets/images/team02/royce_miniplace.jpg' | relative_url }})  | ![]({{ '/assets/images/team02/royce_miniplace.gif' | relative_url }})   |
+Landscape | ![]({{ '/assets/images/team02/royce_landscape.jpg' | relative_url }})  | ![]({{ '/assets/images/team02/royce_landscape.gif' | relative_url }})   |
 
 
 #### Summary:
