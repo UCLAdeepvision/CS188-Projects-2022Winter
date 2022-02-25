@@ -8,6 +8,7 @@ date: 2022-02-24
 
 > (Revise) Pose estimation is defined as the task of using an machine learning model to estimate the pose of a person from an image or a video by estimating the spatial locations of key body joints. In our project, we will use pose estimation to render 2D human body shapes for various photos.
 
+<!--more-->
 {: class="table-of-content"}
 * TOC
 {:toc}
