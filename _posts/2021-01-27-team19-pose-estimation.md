@@ -25,7 +25,13 @@ Human pose estimation is a computer vision task that includes detecting and trac
 
 Pose estimation is a process that requires significant computatinal resouces, and just over a decade ago, such a task seemed near impossible. With recent advances in GPU, TPU, and other processing techology, applications incorporating pose estimation like motion tracking are becoming possible.
 
-Let us introduce several key terminologies related to pose estimation that will help us understand the remainer of the article
+First, let us introduce several key terminologies related to pose estimation that will help us understand the remainder of the article.
+
+### Instance Segmentation
+
+Instance segmentation is the process of classifying individual objects and then localizing each of them with a bounding box. This is different from semantic segmentation, which classifies an image pixel by pixel and treats all pixels in the same class as one object.
+
+With a single-object image, the only tasks necessary are classifying, which is giving a class to the main object, and localizing, which is finding the object's bounding box. With multiple-object images, object detection is required to carry this task out for each object in the image and differentiate between different objects.
 
 ### Top-down vs. Bottom-up methods
 
@@ -55,13 +61,11 @@ All pose estimation models can be grouped into bottom-up and top-down methods.
 
 ### Challenges
 
-(Needs to be revised)
-Human pose estimation is a difficult task because the body's appearance in an image or video can change dynamically due to diverse forms of clothes, occlusions due to the viewing angle, and background contexts.Pose estimation needs to be robust to challenging real-world variations such as are lighting and weather. Additionally, it is difficult to track small and barely visible joints.
+Many factors make human pose estimation difficult, including abnormal viewing angles, different background contexts, overlapping body parts, and different clothing shapes. The pose estimation method must also account for real-world variations such as lighting and weather. In addition, small joints can be difficult to detect.
 
 ### Datasets
 
-(Needs to be revised)
-The most popular dataset for human pose estimation is the MS COCO dataset. MS COCO has 17 different classes (keypoints). The classes are listed below. Each keypoint is annotated with three numbers (x,y,v), where x and y mark the coordinates, and v indicates if the keypoint is visible. 
+The MS COCO dataset is the most popular dataset for human pose estimation. It features 17 different classes, known as keypoints. The classes are listed below. Each keypoint is annotated with three numbers (x,y,v), where x and y mark the coordinates and v indicates if the keypoint is visible. 
 
 ```
 "nose", "left_eye", "right_eye", "left_ear", "right_ear", "left_shoulder", "right_shoulder", 
@@ -73,9 +77,11 @@ The most popular dataset for human pose estimation is the MS COCO dataset. MS CO
 
 Now that we have some intuition behind the background and challenges of pose estimation, let's dive into some of the models that address this task.
 
-### OpenPose (discuss in detail)
+### OpenPose
 
-One of the earliest models for human pose estimation and the first real-time multi-person detection system. OpenPose [1] utilized Part Affinity Fields, a set of 2D vector fields that encodes location and orientation of limbs of different people in the image, and Confidence Maps, a 2D map representing the confidence that a particular body part is located at any given pixel, for its task. OpenPose was the winner of the COCO KeyPoint Detection Challenge in 2016. 
+OpenPose is one of the earliest models for human pose estimation and the first real-time multi-person detection system. It will be the main focus of our project.
+
+For its task, OpenPose [1] utilizes Part Affinity Fields, Confidence Maps, and a set of 2D vector fields that encodes the location and orientation of limbs of different people in the image. Confidence Maps are a 2D map representing the confidence that a particular body part is located at any given pixel. OpenPose was the winner of the COCO KeyPoint Detection Challenge in 2016.
 
 OpenPose is a two-part system using Part Affinity Fields and Confidence Maps.
 
@@ -87,19 +93,27 @@ The set L = (L1, L2, …, LC) has C vector fields, one per limb. Each image loca
 (d): Then, the confidence maps and the affinity fields are parsed by greedy inference, and
 (e): output the 2D keypoints for all people in the image.
 
-**Random Equations**
+**OpenPose Equations**
+
+Confidence Map of J body part locations
 
 $$
 S = (S_1, S_2, …, S_J)\ where\ S_j ∈ R^{w×h}, j ∈ \{1 … J\}
 $$
 
+Part Affinity Field of C connections between body parts
+
 $$
 L = (L_1, L_2, …, L_C)\ where\ L_c ∈ R^{w×hx2}, c ∈ \{1 … C\}
 $$
 
+The base network, F, uses feature maps to redefine Lt
+
 $$
 L^t = \phi^t(F, L^{t-1}), \forall2 \leq t \leq T_p
 $$
+
+New predictions of the confidence maps
 
 $$
 S^{T_p} = \rho^t(F, L^{T_p}), \forall t = T_p
@@ -111,9 +125,13 @@ $$
 
 **Loss Functions**
 
+Part Affinity Fields loss
+
 $$
 f^{t_i}_L = \sum^{C}_{c=1} \sum_p W(p) \cdot \left\lVert L^{t_i}_c(p) - L^*_c(p) \right\rVert^2_2
 $$
+
+Confidence Map loss
 
 $$
 f^{t_k}_S = \sum^{J}_{j=1} \sum_p W(p) \cdot \left\lVert S^{t_k}_j(p) - S^*_j(p) \right\rVert^2_2
@@ -135,11 +153,19 @@ $$
 
 ### Mask R-CNN
 
-TODO
+Mask R-CNN is a popular tool for segmenting an image by its pixels (semantically) or by its image objects (instantially). As such, it is not difficult to apply Mask R-CNN to pose estimation.
+
+Once a CNN extracts features from the image, a Region Proposal Network generates bounding box candidates where objects could be. Another layer reduces the features to those of similar size, then runs them in parallel to get segmentation mask proposals. These are used to create binary masks of where an object is and is not present in the image. Finally, keypoints are extracted by segmenting, then combined with the person locations to get a human skeleton for each figure.
+
+This is similar to a top-down approach, except that the person detection step and the body joint estimation step happen in parallel.
 
 ### Residual Steps Network (RSN)
 
-Now, we will discuss a modern architecture for pose estimation that was the winner of the COCO KeyPoint Detection Challenge in 2019. 
+Now, we will discuss a modern architecture for pose estimation that was the winner of the COCO KeyPoint Detection Challenge in 2019.
+
+RSN was created with the goal of having the accuracy of the DenseNet model without the huge network capacity requirements. It uses a Residual Steps Block, or RSB, to fuse features with element-wise sum operations rather than concatenation. 
+
+The creators claim that the RSN model outperforms its predecessors on the MS COCO dataset, with better performance in many cases as well.
 
 ## Innovation
 
