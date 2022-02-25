@@ -2,9 +2,7 @@
 layout: default
 ---
 <!-- Mathjax Support -->
-usemathjax: true
 
-{% if page.usemathjax %}
 <script type="text/x-mathjax-config">
   MathJax.Hub.Config({
   TeX: { equationNumbers: { autoNumber: "AMS" }},
@@ -18,7 +16,7 @@ usemathjax: true
 };
 </script>
 <script type="text/javascript" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js?config=TeX-AMS-MML_HTMLorMML"></script>
-{% endif %}
+
 <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
   <header class="post-header">
     <h1 class="post-title" itemprop="name headline">{{ page.title | escape }}</h1>
