@@ -33,13 +33,38 @@ The GLIDE model begins by encoding the text prompt. It first encodes the input t
 The original text prompt is also fed into a smaller transformer model which generates a new set of token embeddings. These embeddings and the 64x64 output of the adapted ADM model are then fed into an upsampling diffusuin model with similar residual embedding connections, which will output a 256x256 model generated image.
 
 ### Transformer Model for Text to Token Encoder
- For the text encoding Transformer, GLIDE uses 24 residual blocks of width 2048, resulting in roughly 1.2 billion parameters.
-
-TALK ABOUT TRANSORMER MODEL AND INCLUDE AN IMAGE OF 1
 
 ![Transformer]({{ 'assets/images/team11/transformerModel.png' | relative_url }})
 {: style="width: 500px; max-width: 100%;"}
 *Fig 1. Example of transformer model*.
+
+Before inputting out natural language prompt into our transformer model, we must first tokenize it. HuggingFace is by far the market leader for tokenizer applications. Tokenization is the process of encoding a string of text into transformer-readable token ID integers. These token ID integers can be seen as indexes into our total vocabulary list. Once we have this tokenized text input, we then input this into a transformer model in order to generate token embeddings for each input token. These embeddings are a numerical representation of the meaning of the word given both the context and token id. As words can have multiple different meanings in different contexts and may refer to concepts in previous or future parts of the input text, we must develop a sophisticated model to ensure our token embeddings are accurate.
+
+Transformer Models rose to fame for this application following the paper [Attention is All You Need](https://arxiv.org/pdf/1706.03762.pdf). Transformers fall under the category of sequence-to-sequence models, in which one sequence, our tokenized input, is translated into a different sequence, our token embeddings. The transformer model can be broken into two stages, an encoder and a decoder. 
+
+![Encoder]({{ 'assets/images/team11/encoder1.png' | relative_url }})
+{: style="width: 500px; max-width: 100%;"}
+*Fig 1. Example of a single encoder module*.
+
+The encoder is a stack of encoder modules that sequentially feed into each other to output a final attention and contect vector for the decoder. The orginal tokenized input is first masked, by removing certain words from the input sentence. This masked embedding is put into a self-attention layer which is then normalized and fed through a feed forward neural network with residual connections. Each self-attention layer has three parameters, a query matrix Q, a key matrix K, and a value matrix V. GLIDE uses multi-head attention where each original tokenized input is copied and changed slighlty to include different context or positonal information and fed into our encoder. This can be seens as multiple Q, K, and V vectors that generate seperate output matrices that are concatenated together before being fed into the feed forward layer. This allows the model to learn more nuanced meanings(embeddings) for each word.
+
+![MultiHead]({{ 'assets/images/team11/multihead_attention.png' | relative_url }})
+{: style="width: 500px; max-width: 100%;"}
+*Fig 1. Example of multi-head attention*.
+
+Each word will query every other word based on their keys to decide its attention on the words. The query and key vectors for each tokenized input word will then be multiplied and normalized by the square of its size and softmaxed to generate a probability distribution. This is then seen as a score per word of the same length of the input question. This score can be seen has how much that word should pay attention to every other word to inform its embedding meaning. We then multiply this score to the value vector for that word to focus on the words we want to attend to and ignore the others. Our original embedding is then added back to this output to emphasize the word to focus more on itself through a residual skip connection.
+
+The initial input into our encoder is our masked tokenized input along with a positional encoding. This positional encoding can be modeled in different ways, and is added to our initial tokenized input to create our transformer input.
+
+After the encoder is finished, a final Key(K) and value(V) matrix is generated and sent to each encode-decode block in the decoder. The self-attention for the decoder blocks is similar to the encoder but used on the target sequence. The target sequence in this case would be our unmasked tokenized input. It uses the encoder output in its first itteration to generate the next input into the decoder based on what is most probable. The Encoder-Decoder Attention is therefore getting a representation of both the target sequence (from the Decoder Self-Attention) and a representation of the input sequence from our encoder final K and V matrices. It produces a representation with the attention scores for each target sequence word that captures the influence of the attention scores from the input sequence. As this passes through all the Decoders in the stack, each Self-Attention and each Encoder-Decoder Attention also add their own attention scores into each word’s representation. We then compare the predicted ouputs for our masked tokenized words to the true ones and reupdate the model.
+
+After this is trained, we can exctract the word embeddings and map our input sentences into these pre-generated word embeddings.
+
+For the text encoding Transformer, GLIDE uses 24 residual blocks of width 2048, resulting in roughly 1.2 billion parameters.
+
+
+
+
 
 ### Diffusion Model
 
@@ -59,18 +84,32 @@ $$
 p_{\theta}(x_{t-1}|x_t) := \mathcal{N}(\mu_{\theta}(x_t), \sum_{\theta}(x_t))
 $$
 
-To train this, we can generate samples $$x_t \~ q(x_t | x_0)$$ by applying guassian noise to $$x_0$$ then train a model 
-$$\epsilon_{\theta}$$ to predict the added noise using a surrogate objective. In a basic diffusion model, a simple standard mean-squared error loss can be used. 
-
-GLIDE uses a more effecient version of this where $$ \sum_{\theta} $$ and $$ \mu_{\theta}$$ are learned and fixed allowing for much less diffusion steps.
-
 ![DiffusionStep]({{ '/assets/images/team11/diffusion_step.png' | relative_url }})
 {: style="width: 800px; max-width: 100%;"}
-*Fig 1. Example step of diffusion model* 
+*Fig 1. Example Step of Diffusion Model* 
+
+To train this, we can generate samples $$ x_t$$ approximated by $$ q(x_t | x_0)$$ by applying guassian noise to $$x_0$$ then train a model 
+$$\epsilon_{\theta}$$ to predict the added noise using a surrogate objective. In a basic diffusion model, a simple standard mean-squared error loss can be used. So the outputs and inputs of our convolutional neural network will be seen as inputs and outputs of our diffusion model.
+
+![DiffusionModel]({{ 'assets/images/team11/diffusionModel.png' | relative_url }})
+{: style="width: 800px; max-width: 100%;"}
+*Fig 1. Example of Diffusion Model* 
+
+GLIDE uses a more efficient version of this where $$ \sum_{\theta} $$ and $$ \mu_{\theta}$$ are learned and fixed allowing for much less diffusion steps and a faster training time.
+
+
 
 ### Classifier Free Guidance Loss Functions
 
-WRITE ABOUT PAGE 5 IN GLIDE PAPER
+Classifier free guidance guides a diffusion model without requiring a seperate classifier model to be trained. Classifier-free guidance allows a model to use its own knowledge for guidance rather than the knowledge of a classification model like [CLIP](https://github.com/openai/CLIP), which generates the most relevant text snippet given an image for label assignment. 
+
+In the paper, a CLIP guided diffusion model is compared to a classifier-free diffusion model and finds the classifier-free diffusion model to return mor ephotorealistic results.
+
+For classifier-free guidance with generic text prompts, we replace text captions with an empty sequence at a fixed probability and then guide our prediction towards the true caption (c) using a modified preditiction $$ \tilde{\epsilon}$$
+
+$$  \tilde{\epsilon_{\theta}}(x_t|c) = \epsilon_{\theta}(x_t| \emptyset) + s \cdot (\epsilon_{\theta}(x_t|c) - \epsilon_{\theta}(x_t|\emptyset)) $$
+
+
 
 
 ### Main Diffusion Model (ADM model architecture with additional text token residual connections) 
@@ -103,14 +142,86 @@ So the natural language prompt is first tokenized and encoded. Then the image ba
 
 ## Training
 
+In the training process, we first trained a text-conditional model with CLIP guidance. Then the base model is fine-tuned for classifier-free guidance.
+Model Architecture:
+
+1. ADM 64x64
+
+- model width: 512 channels
+- 2.3 billion parameters
+- Transformer Model
+  - 24 residual blocks of width 2048
+  - 1.2 billions
+- Iterations: 2.5M
+- Batch Size: 2048
+
+2. Upsampling diffusion model:
+
+- model width increases to 384 channels
+- text encoder with width 1024
+- Transformer Model
+  - 24 residual blocks of width 1024
+- Iterations: 1.6M
+- Batch Size: 512
+
 ### Dataset
+
+Dataset used by DALL-E.
 
 ### Training Process
 
-## Results
+1. Base Model
+   First step is to encode text into a sequence of K tokens. Then, these tokens are fed into the Transformer model.
+
+2. Upsampling Diffusion model:
+   The upsampling model has the same training process as the base model with some changes in architecture parameters.
+
+3. Classifier-free Guidance Model
+   The training process of the classifier-free guidance model is the same as the base model, except that 20% of the text token sequences are replaced to empty sequence.
+
+## Evaluation
+In the evaluation process, quantitative metrics, such as Precision/Recall, IS/FID and CLIP score were used. Here we present some simple definitions of each metric:
+1. Precision: fraction of relevant images among all generated images.
+2. Recall: fraction of relevant images that were generated.
+3. Inception Score (IS)
+The inception score measures 2 things in essence:   
+
+1) **Image quality**: Does the image clearly belong to a certain category?   
+
+2) **Image diversity**: Do the images generated have a large variety?   
+
+To evaluate the IS score, we first pass the generated images into a classfier, and we will get a probability distribution of the image belonging to each category. 
+   
+To test on _image quality_, the output probability distribution (or conditional probability distribution) of the image should have a low entropy.
+
+To test on _image diversity_, integrating all the probability distribution of generated images (or marginal probability distribution ) should have a high entropy.
+
+Lastly, we combine the conditional probability and marginal probability using Kullback-Leibler divergence, or KL divergence. The KL divergence is then summed over all images and averaged over all classes.
+
+4. Frechet Inception Distance (FID)
+Built upon IS, FID aims to measure the photorealism of generated images. It also requires the use of a classifier and feeding the generated images and real images into the classifier. Instead of getting the actual probability distribution, we get rid of the last output layer and use the features of the model, or outputs of the last activation layer. Then we compare the characteristics of the features of generated images and that of the real images. The acutal FID score is the calculated distance between the two feature vectors.
+A lower FID score means better generated image phtorealism.
+
+5. CLIP
+CLIP score is defined as $$ E[s(f(image)·g(caption))] $$
+were expectation is taken over the batch of samples, s is the CLIP logit scale, f(image).
+
+Human evaluators were also employed to judge on the photorealistism and caption similarity of the generated images.
+
+### Results
+From human evaluations, we can see that the classifier-free guidance model outperforms the CLIP-guided model.
+![scores_V]({{ 'assets/images/team11/scores_vertical.JPG' | relative_url }})
+{: style="width: 800px; max-width: 100%;"}
+*Fig 1. Scores from human evaluations* [1].
+
+From quantative metrics, we can see that there is a trade-off between the three pairs of metrics as we increase the guidance scale.
+
+![scoresH]({{ 'assets/images/team11/scores_horizontal.JPG' | relative_url }})
+{: style="width: 800px; max-width: 100%;"}
+*Fig 1. Comparing the diversity-fiedelity trande-off of classifier-free guidance and CLIP guidance* [1].
+
 
 ## Demo
-
 OpenAI has released a smaller public glide model that filtered out people, faces, and nsfw content. Below are code examples of how to download, initalize, and test their smaller released model. 
 
 ![GLIDECOMPARISON]({{ '/assets/images/team11/full_vs_filtered_glide.JPG' | relative_url }})
@@ -120,6 +231,8 @@ OpenAI has released a smaller public glide model that filtered out people, faces
 Feel free to follow the code blocks below to play with the released smaller model.
 If you want a quick demo without having to code, github user valhalla has graciously created an interactive website you can try.
  [Interactive Website Link(no coding required, but slower runtime)](https://huggingface.co/spaces/valhalla/glide-text2im) 
+
+OpenAi also released a collab file to play around with their filteres smaller model [here](https://github.com/openai/glide-text2im/blob/main/notebooks/text2im.ipynb).
 
 ### Download their codebase from github
 
@@ -377,5 +490,8 @@ openreview.net/forum?id=qw8AKxfYbI.
 probabilistic models. arXiv:2102.09672, 2021.
 
 [6] Ramesh, A., Pavlov, M., Goh, G., Gray, S., Voss, C., Radford, A., Chen, M., and Sutskever, I. Zero-shot text-toimage generation. arXiv:2102.12092, 2021.
+
+[7] Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan N. Gomez,
+Lukasz Kaiser, and Illia Polosukhin. Attention is all you need. arXiv:1706.03762, 2017.
 
 ---
