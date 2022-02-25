@@ -1078,13 +1078,74 @@ body .markdown-body
 <h2 id="example">Example<a class="headerlink" href="#example" title="Permanent link"></a></h2>
 <h3 id="image">Image<a class="headerlink" href="#image" title="Permanent link"></a></h3>
 <p><img alt="Lubes Segmentation" src="/Users/katiechang/Documents/UCLA/CS188%20-%20Advanced%20CV/CS188-Projects-2022Winter/_posts/%7B%7B%20%27/assets/images/team07/seg_lubes.png%27%20%7C%20relative_url%20%7D%7D" />
-{: style=&rdquo;width: 400px; max-width: 100%;&rdquo;}
 <em>Fig 1. Automatic Segmentation of Pulmonary Lobes</em> [1].</p>
-<h2 id="advanced-deep-networks-for-3d-mitochondria-instance-segmentation">Advanced Deep Networks for 3D Mitochondria Instance Segmentation<a class="headerlink" href="#advanced-deep-networks-for-3d-mitochondria-instance-segmentation" title="Permanent link"></a></h2>
-<h3 id="_1"><a class="headerlink" href="#_1" title="Permanent link"></a></h3>
+<h2 id="160604797-v-net-fully-convolutional-neural-networks-for-volumetric-medical-image-segmentation">1606.04797: V-Net: Fully Convolutional Neural Networks for Volumetric Medical Image Segmentation<a class="headerlink" href="#160604797-v-net-fully-convolutional-neural-networks-for-volumetric-medical-image-segmentation" title="Permanent link"></a></h2>
+<p>Convolutional neural networks have been popular for solving problems in medical image analysis. Most of the developed image segmentation approaches only operate on 2D images. However, medical imaging often consists of 3D volumes, which gives opportunity to the development of CNNs in 3D image segmentation. In their paper V-Net: Fully Convolutional Neural Networks for Volumetric Medical Image Segmentation, Milletari et al propose the V-Net: a volumetric, fully convolutional neural network trained on 3D MRI scans of the prostate to predict segmentation for the entire volume.</p>
+<p>Importance: &ldquo;Segmentation is a highly relevant task in medical image analysis. Automatic delineation of organs and structures of interest is often necessary to perform tasks such as visual augmentation [10], computer assisted diagnosis [12], interventions [20] and extraction of quantitative indices from images [1]. In particular, since diagnostic and interventional imagery often consists of 3D images, being able to perform volumetric segmentations by taking into account the whole volume content at once, has a particular relevance.&rdquo;</p>
+<p>Unlike prior approaches for processing 3D image inputs slice-wise (with 2D convolutions on each slice), the proposed model uses volumetric (3D) convolutions. The following figure is a schematic representation of the V-Net model. The left side of the figure depicts a compression path, while the right side depicts a decompression path to the original signal size. Each intermediate &ldquo;stage&rdquo; consists of 2-3 convolutional layers. Moreover, the input of each stage is &ldquo;(a) used in the convolutional layers and processed through the non-linearities and (b) added to the output of the last convolutional layer of that stage in order to enable learning a residual function&rdquo;. The design of this neural network ensures a runtime much faster than similar networks that do not learn residual functions. </p>
+<p>Along the compression path, the data resolution is reduced with convolution kernels of dimensions 2 × 2 × 2 applied at stride 2, effectively halving the size of feature maps at each stage. Additionally, the number of feature channels and in turn number of feature maps doubles at each compression stage. Conversely, the decompression stages apply de-convolutions to increase the data size again, while also accounting for previously extracted features from the left path. The final predictions, after a softmax layer, comprises two volumes outputting the probability of each voxel to belonging to foreground and to background.</p>
+<p>The objective function used by the V-Net architecture considers the dice coefficient, a quantity ranging from 0 to 1. The dice coefficient between two binary volumes is defined as </p>
+<p>$$ D = \dfrac{2 \sum_{i}^{N} p_i g_i}{ \sum_{i}^{N} p_i^{2} + \sum_{i}^{N} g_i^{2} }$$</p>
+<p><img alt="V-Net Architecture" src="/Users/katiechang/Documents/UCLA/CS188%20-%20Advanced%20CV/CS188-Projects-2022Winter/_posts/%7B%7B%20%27/assets/images/team07/160604797arch.png%27%20%7C%20relative_url%20%7D%7D" />
+<em>Fig 2. V-Net Architecture</em> [1].</p>
+<h2 id="210407961-advanced-deep-networks-for-3d-mitochondria-instance-segmentation-paper-code">2104.07961: Advanced Deep Networks for 3D Mitochondria Instance Segmentation [<a href="https://arxiv.org/abs/2104.07961">Paper</a>] [<a href="https://github.com/Limingxing00/MitoEM2021-Challenge">Code</a>]<a class="headerlink" href="#210407961-advanced-deep-networks-for-3d-mitochondria-instance-segmentation-paper-code" title="Permanent link"></a></h2>
+<h3 id="motivation">Motivation<a class="headerlink" href="#motivation" title="Permanent link"></a></h3>
+<p>This paper is inspired by the MitoEM Challenge: Large-scale 3D Mitochondria Instance Segmentation. There has been an increasingly pressing need for a new automatic mitochondria segmentation approach as current algebraic segmentation methods offeres a rather limited generalizability. As the volume of electron microscopy images increases to the scale of Terabyte, the focus turns to CNN-based approaches. In general, the CNN-based segmentation methods could be categorized into two groups, 
+1. Top-down method that uses Mask-RCNN for instance segmentation. 
+2. Bottom-up method that predicts a binary segmentation mask, an affinity map or a binary mask with the instance boundary, after which a post-processing algorithm is applied to distinguish instances. </p>
+<p>The authors of this paper decided to approach the problem with a bottom-up method as the elongated and distorted nature of mitochondria makes it difficult to set a proper anchor size for Mask-RCNN.</p>
+<h3 id="pre-processing-fine-tuning-and-other-implementation-details">Pre-processing, Fine-Tuning, and other Implementation Details<a class="headerlink" href="#pre-processing-fine-tuning-and-other-implementation-details" title="Permanent link"></a></h3>
+<ol>
+<li>Data augmentation is employed; refer to <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7713709/">paper</a> for more. </li>
+<li>Interpolation network is adopted. The interpolation network takes two adjacent frames of the noisy frame as input and predict two kernels; the two adjacent frames are then convolved with the two adjacent frames, the sum of which contributes to the restored frame.</li>
+<li>The authors devised a two-stage training which they call multi-scale training. Originally, the network is trained in 20K interations with input size 32x256x256 to select the best model; after the model is selected, the input size is changed to 26x320x320 and fine-tuned in 10K iterations. </li>
+<li>Emperically, the authors decided on optimizer Adam with a fixed rate of 1e-4 and batch size of 2.</li>
+<li>The adopted evalution metric is <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7713709/">3D AP-75 metric</a>; in this case, at least 0.75 intersection over the union with the ground truth is required to be a true positive. The jacaard-index coefficient and dice similarity coefficient are evaluated for the foreground objects in the volumes. </li>
+</ol>
+<h3 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link"></a></h3>
+<p>The paper proposes two deep residual networks for the rat and human sample: Res-UNet-R and Res-UNet-H, in that respective order. Interestingly, the Res-UNet-H only differs from Res-UNet-R because it has an additional decoder path. The additional decoder path allows Res-UNet-H to predict the semantic mask and instance boundary separately, which, along with the noise reduction method that will be introduced later, is used to alleviate the influence of noise on segmentation, which is subjectively significant in the human sample. For this reason, this post will be focusing mostly on Res-UNet-H. 
+- Convolution Block: since the MitoEM dataset has anisotropic resolution, the authors designed an Anisotropic Convolution Block (ACB) that consists of a 1x3x3 convolutional layer, an exponential linear unit (ELU), two 3x3x3 conventional layers, each of which are followed by an ELU, and a skip connection in the two 3x3x3 conventional layers, as illustrated below. The conventional layers are the used to enlarge the receptive field.
+- Network Structure: the two proposed networks are largely inspired by 3D U-Net. The feature maps extracted from a 3D block with a 1x5x5 conventional layer are embedded. There is an ACB to extract the anisotropic information in each layer of the encoder. A conventional layer of 1x3x3 is used to downsample the feature maps in the lateral dimensions. The decoder uses a trilinear upsampling to restore the resolution of the feature maps and ACB is used to reconstruct the detailed information. Two (or one, if using Res-UNet-R), decoder paths are used to predict the semantic mask and the instance boundary separately (simultaneously, if using Res-UNet-R). A visual representation of the network could be seen below.</p>
+<h3 id="loss">Loss<a class="headerlink" href="#loss" title="Permanent link"></a></h3>
+<p>The authors chose to employ a weighted binary cross entropy loss function to combat the class imbalance problem. Both the semantic msak and instance boundary are considered in the loss function as they are both used to generate the post-processing seed map. Thus, the loss function could be described by</p>
+<p>$$ L = L_{WBCE}(X_M, Y_M) + L_{WBCE}(X_B, Y_B) $$ </p>
+<p>where </p>
+<p>$$ L_{WBCE}(X_i, Y_i) = \dfrac{1}{DHW} W_{i} \cdot L_{BCE}(X_i, Y_i)$$</p>
+<p>$$
+W = \begin{cases} 
+      Y_i + \dfrac{W_f}{1-W_f}(1-Y_i) &amp; W_f &gt; 0.5 \
+      \dfrac{W_f}{1-W_f}Y_i + 1-Y_i &amp; W_f \leq 0.5
+   \end{cases}
+$$</p>
+<p>$$W_f = \dfrac{\text{sum}(Y_i)}{DHW}$$ is the foreground voxel ratio, D, H, and W, the depth, height, and width of the block, $$ X_M $$ and $$X_B $$ the predicted response maps of the semantic mask and the instance boundary while $$ Y_M $$ and $$ Y_B $$ the corresponding ground-truths of $$ X_M $$ and $$X_B $$.</p>
+<h3 id="post-processing-algorithm">Post-Processing algorithm<a class="headerlink" href="#post-processing-algorithm" title="Permanent link"></a></h3>
+<p>Once the semantic mask $$X_M$$ and the instance boundary $$X_B$$ are obtained, the seed map is defined as </p>
+<p>$$
+S^{j} = \begin{cases} 
+      1 &amp; X^{j}<em 1="1">{M} &gt; T</em>, X^{j}<em 2="2">{B} &gt; T</em> \
+      0 &amp; \text{else}
+   \end{cases}
+$$</p>
+<p>where $$T_{1}, T_{2}$$ are empirically defined as 0.9 and 0.8 respectively. Note that $$X_M \in \mathbb{R}^{D \cdot H \cdot W}, \ X_B \in \mathbb{R}^{D \cdot H \cdot W}, \ j \in [1, \mathbb{R}^{D \cdot H \cdot W}]$$</p>
+<!-- ### Keywords
+- Mask-RCNN
+- 3D U-Net
+- foreground voxel ratio
+- Anisotropic?
+- semantic mask?
+- instance boundary? -->
+
+<h2 id="190206362-automatic-segmentation-of-pulmonary-lobes">1902.06362: Automatic Segmentation of Pulmonary Lobes<a class="headerlink" href="#190206362-automatic-segmentation-of-pulmonary-lobes" title="Permanent link"></a></h2>
+<p>Using a Progressive Dense V-Network</p>
+<h3 id="motivation_1">Motivation<a class="headerlink" href="#motivation_1" title="Permanent link"></a></h3>
+<p>In the medical imaging analysis field, fast and reliable segmentation of lung lobes is important for diagnosis, assessment, and quantification of pulmonary diseases. Existing techniques for segmentation have been slow and not fully automated. To address the lack of an adequate imaging system, this paper proposes a new approach for lung lobe segmentation: a progessive dense V-network (PDV-Net) that is robust, fast, and fully automated.
+Some challenges to develop efficient automated system to identify lung fissures are as follows:
+1. Fissures are usually incomplete, not extending to the lobar boundaries. 
+2. Visual characteristics of lobar boundaries vary in the presence of pathologies. 
+3. Other fissures may be misinterpreted as the major or minor fissures that separate the lung lobes.</p>
+<h2 id="code"><a href="https://drive.google.com/drive/folders/1uUNNbixXDdgpa9GIWPccQO8RGyPLAviw">Code</a><a class="headerlink" href="#code" title="Permanent link"></a></h2>
 <h2 id="reference">Reference<a class="headerlink" href="#reference" title="Permanent link"></a></h2>
 <p>[1] Imran, Abdullah-Al-Zubaer et al. “Automatic Segmentation of Pulmonary Lobes Using a Progressive Dense V-Network”. Lecture Notes in Computer Science (2018): 282–290.</p>
-<p>[2] Li, Mingxing et al. “Advanced Deep Networks for 3D Mitochondria Instance Segmentation”. arXiv [cs.CV] 2021. [<a href="https://github.com/Limingxing00/MitoEM2021-Challenge">Paper</a>]
-[<a href="https://github.com/Limingxing00/MitoEM2021-Challenge">Code</a>] </p>
+<p>[2] Li, Mingxing et al. “Advanced Deep Networks for 3D Mitochondria Instance Segmentation”. arXiv [cs.CV] 2021. </p>
 <p>[3] M. Nakada, T. Zhou, H. Chen, A. Lakshmipathy and D. Terzopoulos, &ldquo;Deep Learning of Neuromuscular and Visuomotor Control of a Biomimetic Simulated Humanoid,&rdquo; in IEEE Robotics and Automation Letters, vol. 5, no. 3, pp. 3952-3959, July 2020, doi: 10.1109/LRA.2020.2972829.</p>
 <hr /></article></body></html>
