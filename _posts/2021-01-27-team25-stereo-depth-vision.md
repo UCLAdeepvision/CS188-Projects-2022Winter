@@ -30,6 +30,87 @@ HITNet is a recent model that works to use some of the recent techniques from ac
 
 ![UNET]({{ '/assets/images/team25/unet.png' | relative_url }})
 
+This is the UNet feature extractor implementation used in the HITNet model.
+It has 4 stages of downsampling and upsampling.
+It also uses LeakyReLU activation with 0.2 slope for improved training.
+
+```python
+class UpsampleBlock(nn.Module):
+    def __init__(self, c0, c1):
+        super().__init__()
+        self.up_conv = nn.Sequential(
+            nn.ConvTranspose2d(c0, c1, 2, 2),
+            nn.LeakyReLU(0.2),
+        )
+        self.merge_conv = nn.Sequential(
+            nn.Conv2d(c1 * 2, c1, 1),
+            nn.LeakyReLU(0.2),
+            nn.Conv2d(c1, c1, 3, 1, 1),
+            nn.LeakyReLU(0.2),
+            nn.Conv2d(c1, c1, 3, 1, 1),
+            nn.LeakyReLU(0.2),
+        )
+
+    def forward(self, input, sc):
+        x = self.up_conv(input)
+        x = torch.cat((x, sc), dim=1)
+        x = self.merge_conv(x)
+        return x
+
+class FeatureExtractor(nn.Module):
+    def __init__(self, C):
+        super().__init__()
+        self.down_0 = nn.Sequential(
+            nn.Conv2d(3, C[0], 3, 1, 1),
+            nn.LeakyReLU(0.2),
+        )
+        self.down_1 = nn.Sequential(
+            SameConv2d(C[0], C[1], 4, 2),
+            nn.LeakyReLU(0.2),
+            nn.Conv2d(C[1], C[1], 3, 1, 1),
+            nn.LeakyReLU(0.2),
+        )
+        self.down_2 = nn.Sequential(
+            SameConv2d(C[1], C[2], 4, 2),
+            nn.LeakyReLU(0.2),
+            nn.Conv2d(C[2], C[2], 3, 1, 1),
+            nn.LeakyReLU(0.2),
+        )
+        self.down_3 = nn.Sequential(
+            SameConv2d(C[2], C[3], 4, 2),
+            nn.LeakyReLU(0.2),
+            nn.Conv2d(C[3], C[3], 3, 1, 1),
+            nn.LeakyReLU(0.2),
+        )
+        self.down_4 = nn.Sequential(
+            SameConv2d(C[3], C[4], 4, 2),
+            nn.LeakyReLU(0.2),
+            nn.Conv2d(C[4], C[4], 3, 1, 1),
+            nn.LeakyReLU(0.2),
+            nn.Conv2d(C[4], C[4], 3, 1, 1),
+            nn.LeakyReLU(0.2),
+            nn.Conv2d(C[4], C[4], 3, 1, 1),
+            nn.LeakyReLU(0.2),
+        )
+        self.up_3 = UpsampleBlock(C[4], C[3])
+        self.up_2 = UpsampleBlock(C[3], C[2])
+        self.up_1 = UpsampleBlock(C[2], C[1])
+        self.up_0 = UpsampleBlock(C[1], C[0])
+
+    def forward(self, input):
+        x0 = self.down_0(input)
+        x1 = self.down_1(x0)
+        x2 = self.down_2(x1)
+        x3 = self.down_3(x2)
+        o0 = self.down_4(x3)
+        o1 = self.up_3(o0, x3)
+        o2 = self.up_2(o1, x2)
+        o3 = self.up_1(o2, x1)
+        o4 = self.up_0(o3, x0)
+        return o4, o3, o2, o1, o0
+```
+
+
 <center> Figure 1: Example U-Net Implementation </center>
 
 ### Initialization
@@ -46,6 +127,37 @@ The authors also add an additional parameter to the model which they denote the 
 ![HITNet]({{ '/assets/images/team25/HITNet.png' | relative_url }})
 
 <center> Figure 2: Details of Propagation and Initialization Steps </center>
+
+This is an implementation of the warp step
+
+```python
+@functools.lru_cache()
+@torch.no_grad()
+def make_warp_coef(scale, device):
+    center = (scale - 1) / 2
+    index = torch.arange(scale, device=device) - center
+    coef_y, coef_x = torch.meshgrid(index, index)
+    coef_x = coef_x.reshape(1, -1, 1, 1)
+    coef_y = coef_y.reshape(1, -1, 1, 1)
+    return coef_x, coef_y
+
+
+def disp_up(d, dx, dy, scale, tile_expand):
+    n, _, h, w = d.size()
+    coef_x, coef_y = make_warp_coef(scale, d.device)
+
+    if tile_expand:
+        d = d + coef_x * dx + coef_y * dy
+    else:
+        d = d * scale + coef_x * dx * 4 + coef_y * dy * 4
+
+    d = d.reshape(n, 1, scale, scale, h, w)
+    d = d.permute(0, 1, 4, 2, 5, 3)
+    d = d.reshape(n, 1, h * scale, w * scale)
+    return d
+```
+
+
 ### Propagation
 
 #### Warping
@@ -65,6 +177,28 @@ The CNN model $$U$$ is made or resnet blocks followed by dilated convolutions. T
 ### Loss
 The network uses multiple different losses: an initialization loss, propagation loss, slant loss, and confidence loss. These values are all weighted equally and used to optimize the model.
 
+### Training Results
+
+To train both HITNet and StereoLab models ourselves, we heavily relied upon the work of GitHub user zjjMaiMai in their
+repository TinyHITNet [6], which implements both models in PyTorch.
+
+This is an example result on a training image after 3200 steps of  training the HITNet model on the KITTI 2015 dataset.
+The top image is the ground truth from a laser scanner pointcloud. The second image is the predicted depth.
+The last two images are each of the camera views.
+
+![KITTI HITNet trained for 3200 steps]({{ '/assets/images/team25/kitti-hitnet-3200step.png' | relative_url }})
+
+This is an example result on a training image after 11,700 steps of training the StereoNet model on the KITTI 2015 dataset.
+StereoNet has fewer parameters, requires less GPU memory, and trains faster than HITNet.
+
+![KITTI StereoNet trained for 11,700 steps]({{ '/assets/images/team25/kitti-stereonet-11700step.png' | relative_url }})
+
+This is the EPE error during training. The orange line is HITNet trained with batch size 1, and the blue line is
+StereoNet trained with batch size 2. We can see that StereoNet converges during training much faster. 
+The steps themselves also ran faster than HITNet. There is still potential improvement in the optimization process.
+We also did not train HITNet enough because we did not have time yet. 
+
+![Train Accuracy]({{ '/assets/images/team25/train-epe.png' | relative_url }})
 
 
 ## Reference
@@ -79,5 +213,7 @@ Please make sure to cite properly in your work, for example:
 [4] Nikolai Smolyanskiy, et al. ["On the Importance of Stereo for Accurate Depth Estimation: An Efficient Semi-Supervised Deep Neural Network Approach."](https://arxiv.org/abs/1803.09719) *Conference on Computer Vision and Pattern Recognition*. 2018.
 
 [5] Olaf Ronneberger, et al. ["U-Net: Convolutional Networks for Biomedical Image Segmentation"](https://arxiv.org/abs/1505.04597) *Conference on Computer Vision and Pattern Recognition*. 2015.
+
+[6] zjjMaiMai on GitHub. [TinyHITNet](https://github.com/zjjMaiMai/TinyHITNet) *GitHub*. 2021.
 
 ---
