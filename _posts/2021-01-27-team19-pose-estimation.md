@@ -96,7 +96,7 @@ The set L = (L1, L2, …, LC) has C vector fields, one per limb. Each image loca
 
 **OpenPose Equations**
 
-Confidence Map of J body part locations
+Confidence Map of J body parts
 
 $$
 S = (S_1, S_2, …, S_J)\ where\ S_j ∈ R^{w×h}, j ∈ \{1 … J\}
@@ -151,6 +151,22 @@ $$
 ![OpenPose Network Architecture]({{ '/assets/images/team19/openpose_network_architecture.png' | relative_url }})
 {: style="width: 400px; max-width: 100%;"}
 *Fig 3. OpenPose Network Architecture.*
+
+**OpenPose Confidence Maps**
+
+The confidence maps are a measure of the likelihood of a given body part being in a certain section. For example, the confidence map of the right knee should be 0 in every grid area that a right knee is not present. There is one set, S, for each body part, adding up to J sets that make up the confidence maps.
+
+However, confidence maps are not as crucial to accuracy as Part Affinity Fields are, and some models omit them entirely since they tend to not increase the Average Precision or Average Recall.
+
+**OpenPose Part Affinity Fields**
+
+The Part Affinity Fields connect parts of the body that belong to the same person. For example, if an area is classified as "left_elbow" and another area is classified as "left_wrist," the PAF tells you how likely it is that those two body parts belong to the same person. This proves helpful when images contain multiple people overlapping or standing close to each other, like in crowd situations.
+
+The exact methods of determining this association strength can be done multiple ways, such as:
+    * A k-partite graph
+    * A bi-partite graph with a greedy algorithm
+    * A tree structure
+    * Body part classification
 
 ### Mask R-CNN
 
