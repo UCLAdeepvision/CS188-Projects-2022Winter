@@ -163,10 +163,10 @@ However, confidence maps are not as crucial to accuracy as Part Affinity Fields 
 The Part Affinity Fields connect parts of the body that belong to the same person. For example, if an area is classified as "left_elbow" and another area is classified as "left_wrist," the PAF tells you how likely it is that those two body parts belong to the same person. This proves helpful when images contain multiple people overlapping or standing close to each other, like in crowd situations.
 
 The exact methods of determining this association strength can be done multiple ways, such as:
-    * A k-partite graph
-    * A bi-partite graph with a greedy algorithm
-    * A tree structure
-    * Body part classification
+ * A k-partite graph
+ * A bi-partite graph with a greedy algorithm
+ * A tree structure
+ * Body part classification
 
 ### Mask R-CNN
 
