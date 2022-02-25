@@ -133,11 +133,11 @@ Using the dice score for comparison, the authors find that the PDV-Net significa
 ## [Code](https://drive.google.com/drive/folders/1uUNNbixXDdgpa9GIWPccQO8RGyPLAviw)
 
 
-## Reference
-[1] Imran, Abdullah-Al-Zubaer et al. “Automatic Segmentation of Pulmonary Lobes Using a Progressive Dense V-Network”. Lecture Notes in Computer Science (2018): 282–290.
+## References
+[1] Milletari, Fausto, Nassir Navab, en Seyed-Ahmad Ahmadi. “V-Net: Fully Convolutional Neural Networks for Volumetric Medical Image Segmentation”. arXiv [cs.CV] 2016. 
 
 [2] Li, Mingxing et al. “Advanced Deep Networks for 3D Mitochondria Instance Segmentation”. arXiv [cs.CV] 2021. 
 
-[3] M. Nakada, T. Zhou, H. Chen, A. Lakshmipathy and D. Terzopoulos, "Deep Learning of Neuromuscular and Visuomotor Control of a Biomimetic Simulated Humanoid," in IEEE Robotics and Automation Letters, vol. 5, no. 3, pp. 3952-3959, July 2020, doi: 10.1109/LRA.2020.2972829.
+[3] Imran, Abdullah-Al-Zubaer et al. “Automatic Segmentation of Pulmonary Lobes Using a Progressive Dense V-Network”. Lecture Notes in Computer Science (2018): 282–290. 
 
 ---
