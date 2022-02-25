@@ -1,5 +1,5 @@
 ---
-layout: post
+layout: postmathjax
 comments: true
 title: Depth From Stereo Vision
 author: Alex Mikhalev, David Morley
@@ -7,7 +7,7 @@ date: 2022-01-27
 ---
 
 
-> Our project explores the use of Deep Learning for inferring the depth data based on two side-by-side camera images. This is done by determining which pixels on each image corresponding to the same object (a process known as stereo matching), and then calculating the distance between corresponding pixels, from which the depth can be calculated (with information about the placement of the cameras). While there exist classical vision based solutions to stereo matching, deep learning can produce better results. 
+> Our project explores the use of Deep Learning for inferring the depth data based on two side-by-side camera images. This is done by determining which pixels on each image corresponding to the same object (a process known as stereo matching), and then calculating the distance between corresponding pixels, from which the depth can be calculated (with information about the placement of the cameras). While there exist classical vision based solutions to stereo matching, deep learning can produce better results.
 
 
 <!--more-->
@@ -15,58 +15,50 @@ date: 2022-01-27
 * TOC
 {:toc}
 
-## Main Content
-Your survey starts here. You can refer to the [source code](https://github.com/lilianweng/lil-log/tree/master/_posts) of [lil's blogs](https://lilianweng.github.io/lil-log/) for article structure ideas or Markdown syntax. We've provided a [sample post](https://ucladeepvision.github.io/CS188-Projects-2022Winter/2017/06/21/an-overview-of-deep-learning.html) from Lilian Weng and you can find the source code [here](https://raw.githubusercontent.com/UCLAdeepvision/CS188-Projects-2022Winter/main/_posts/2017-06-21-an-overview-of-deep-learning.md)
+## Background
+Stereo matching is the process of aligning two images taken by distinct cameras of the same object. In the very simple case,
+with perfect images, and one object at constant depth, one can compute the disparity (pixel alignment offset) required to align both the left and right camera images. This information can be used, along with the distance between the two cameras, to compute a distance estimation for this object. In the real world case, this problem becomes much more complicated. Many objects reside in the scene with different textures, shadows, etc, and performing an alignment between all these points is difficult, making it more challenging to estimate distance than in the simple case. There are two different forms of stereo matching: active and passive. In the active case, one simplifies the problems of alignment by projecting light (ofter laser dot matrix) and using other adaptive mechanisms to make it easier to align the two camera images. This hardware is much more expensive however and thus not as likely to see widespread use. Passive stereo imaging just involves two statically placed cameras and thus is a much harder problem that we will explore for our final project.
 
-## Basic Syntax
-### Image
-Please create a folder with the name of your team id under /assets/images/, put all your images into the folder and reference the images in your main content.
+A natural question that also might be asked, is why not use a single camera for depth estimation? There are some models that explore this, but it is much more difficult to get accurate depth measurements, and there is a large gap between depth accuracies (as shown in 4)).
 
-You can add an image to your survey like this:
-![YOLO]({{ '/assets/images/UCLAdeepvision/object_detection.png' | relative_url }})
-{: style="width: 400px; max-width: 100%;"}
-*Fig 1. YOLO: An object detection method in computer vision* [1].
+## Paper Choice
+We evaluated multiple different papers when deciding on what we wanted to choose for our final project. As we purchased an OAK-D Lite stereo camera for use in our actual environment, we favored algorithms that could run in close to real time, so we'd be able to observe the depth estimations of objects as we walked
+by them. We first considered the Pyramid Matching Network, which had a rather simple multilayer convolutional model, but weren't the most confident in its real time performance, given the author's reliance on a fairly powerful GPU. We then considered both HITNet (a recent network, although admittedly a somewhat complex one) authored this year Google, and StereoNet (a model which uses a 2 pass Siamese Network). We decided to do a deep dive into HITNet due to its more complex design, and compared our results to the pretrained HITNet model, along with an implementation of StereoNet. Below we give an explanation of the HITNet Model.
 
-Please cite the image if it is taken from other people's work.
+## HITNet
+HITNet is a recent model that works to use some of the recent techniques from active stereo depth applied to the passive stereo problem. It is  optimized for speed, using a combination of a fast multi-resolution initial step, and 2d disparity propagation, instead of much more costly 3D convolutions. Although it performs slightly worse than the 3D convolutional models, it takes only milliseconds to process an image pair, compared to seconds from those models.
 
+![UNET]({{ '/assets/images/team25/unet.png' | relative_url }})
 
-### Table
-Here is an example for creating tables, including alignment syntax.
+<center> Figure 1: Example U-Net Implementation </center>
 
-|             | column 1    |  column 2     |
-| :---        |    :----:   |          ---: |
-| row1        | Text        | Text          |
-| row2        | Text        | Text          |
+### Initialization
+The key idea of the initialization step of HITNet is the use of an encoder decoder network, with the model using the results of all the different resolution layers output by the decoder. The initialization phase builds on top of U-Net (such a decoder-encoder network) which is shown in Figure 1. After generating different resolution features for both $$I_R$$ and $$I_L$$ (the left and right images) we obtain two multiscale representations denoted $$ \epsilon^R $$ and $$\epsilon^L$$. Taking $$\epsilon^R$$ and $$\epsilon^L $$ we then attempt to align tiles of these images. The idea here is for each resolution, we want to tile that image and map tiles in $$\epsilon^L$$ to $$\epsilon^R$$. We denote the feature map for a specific resolution l as $$e_l$$. To get the tile features we run a 4x4 convolution on both $$\epsilon^L$$ and $$\epsilon^R$$, but there's a subtle point here: We want to cover our features with overlapping tiles, but we also want to minimize the number of disparity values we have to try. In order to solve this problem the authors introduce the following asymmetry, when applying the convolution on the selected tile regions from the feature map. For $$\epsilon^L$$ overlap the tiles in x direction and use a 4x4 stride on the convolution. For $$\epsilon^R$$ do not overlap the tiles, but instead use a 4x1 stride in the convolution so the tiles overlap in the convolution computation. This allows us to formulate our matching cost c for a specific location (x,y) with resolution l and disparity d as:
+$$c(l,x,y, d) = \lvert \lvert e_{l,x,y} - e_{l, 4x -d, y} \rvert \rvert_1$$
+We then compute the disparities for each (x,y) location and resolution l, where D is the max disparity, noting that our convolution trick allows us to try far fewer values for the disparity with the following:
 
+$$d_{l,x,y}^{init} = argmin_{d \in [0,D]}c(l,x,y,d)$$
 
+This search is exhaustive over all potential disparity values.
 
-### Code Block
-```
-# This is a sample code block
-import torch
-print (torch.__version__)
-```
+The authors also add an additional parameter to the model which they denote the tile feature descriptor $$p_{l,x,y}^{init}$$ for each point (x,y) and resolution l. This is a value which the output of a perceptron and leaky ReLU fed the costs of the best matching disparity d, and the embedding for that specific feature at that point. The idea of this feature is to pass along the confidence of the match to the network laters.
+
+### Propagation
+The second step of the model, propagation, uses input from all the different resolutions of the features
 
 
-### Formula
-Please use latex to generate formulas, such as:
-
-$$
-\tilde{\mathbf{z}}^{(t)}_i = \frac{\alpha \tilde{\mathbf{z}}^{(t-1)}_i + (1-\alpha) \mathbf{z}_i}{1-\alpha^t}
-$$
-
-or you can write in-text formula $$y = wx + b$$.
-
-### More Markdown Syntax
-You can find more Markdown syntax at [this page](https://www.markdownguide.org/basic-syntax/).
 
 ## Reference
 Please make sure to cite properly in your work, for example:
 
 [1] Zhuoran Shen, et al. ["Efficient Attention: Attention with Linear Complexities."](https://arxiv.org/pdf/1812.01243v9.pdf) *Winter Conference on Applications of Computer Vision*. 2021.
-[2] Vladimir Tankovich, et al. "HITNet: Hierarchical Iterative Tile Refinement Network for Real-time Stereo Matching." *Conference on Computer Vision and Pattern Recognition*. 2021.
-[3] Jia-Ren Chang, et al. "Pyramid Stereo Matching Network." *Conference on Computer Vision and Pattern Recognition*. 2018.
-[4] Nikolai Smolyanskiy, et al. "On the Importance of Stereo for Accurate Depth Estimation: An Efficient Semi-Supervised Deep Neural Network Approach." *Conference on Computer Vision and Pattern Recognition*. 2018.
 
+[2] Vladimir Tankovich, et al. ["HITNet: Hierarchical Iterative Tile Refinement Network for Real-time Stereo Matching."](https://arxiv.org/abs/2007.12140) *Conference on Computer Vision and Pattern Recognition*. 2021.
+
+[3] Jia-Ren Chang, et al. ["Pyramid Stereo Matching Network."](https://arxiv.org/abs/1803.08669) *Conference on Computer Vision and Pattern Recognition*. 2018.
+
+[4] Nikolai Smolyanskiy, et al. ["On the Importance of Stereo for Accurate Depth Estimation: An Efficient Semi-Supervised Deep Neural Network Approach."](https://arxiv.org/abs/1803.09719) *Conference on Computer Vision and Pattern Recognition*. 2018.
+
+[5] Olaf Ronneberger, et al. ["U-Net: Convolutional Networks for Biomedical Image Segmentation"](https://arxiv.org/abs/1505.04597) *Conference on Computer Vision and Pattern Recognition*. 2015.
 
 ---
