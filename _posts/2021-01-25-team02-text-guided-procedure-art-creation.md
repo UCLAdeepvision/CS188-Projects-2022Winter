@@ -286,13 +286,13 @@ Only Stroke Predictor contains trainable parameters. So the training part will o
 In the paper, authors used a novel way to train the model with existing datasets. According to framework of this project, the loss function is the comparison between the generated strokes and the original image. Without dependencies on labels, randomly generated images can be used for training. Since there is no limit of generating random images, the dataset can be really large for training more reliable models. The following snippet shows the generation of a random image. The `foreground` and `alpha` serve as a random stroke and pixel generator and assign corresponding value to `old` (which later becomes I<sub>c</sub> and I<sub>t</sub> through further transformation)
 ```python
 old = torch.zeros(self.opt.batch_size // 4, 3, self.patch_size * 2, self.patch_size * 2, device=self.device)
-            for i in range(self.opt.used_strokes):
-                foreground = foregrounds[:, i, :, :, :]
-                alpha = alphas[:, i, :, :, :]
-                old = foreground * alpha + old * (1 - alpha)
-            old = old.view(self.opt.batch_size // 4, 3, 2, self.patch_size, 2, self.patch_size).contiguous()
-            old = old.permute(0, 2, 4, 1, 3, 5).contiguous()
-            self.old = old.view(self.opt.batch_size, 3, self.patch_size, self.patch_size).contiguous()
+for i in range(self.opt.used_strokes):
+    foreground = foregrounds[:, i, :, :, :]
+    alpha = alphas[:, i, :, :, :]
+    old = foreground * alpha + old * (1 - alpha)
+old = old.view(self.opt.batch_size // 4, 3, 2, self.patch_size, 2, self.patch_size).contiguous()
+old = old.permute(0, 2, 4, 1, 3, 5).contiguous()
+self.old = old.view(self.opt.batch_size, 3, self.patch_size, self.patch_size).contiguous()
 ```
 #### Painting Process
 After a solid Stroke Predictor model has been trained, the predictor can be used for the real painting process. The [Demo](#painttransformer) section illustrates the painting process. The drawer will run *K* iterations to finish the drawing. The value of K depends on the input picture dimension and can ve derived through the below formula:
