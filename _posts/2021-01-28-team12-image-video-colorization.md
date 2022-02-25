@@ -34,17 +34,31 @@ Formally, video colorization is the problem where given a sequence of grayscale 
 
 
 ### 3.1 Instance Aware Image Colorization (2020)
-InstColor proposed novel network architecture that leverages off-the-shelf models to detect the object and learn from large- scale data to extract image features at the instance and full-image level, and to optimize the feature fusion to obtain the smooth colorization results. The key insight is that a clear figure-ground separation can dramatically improve colorization performance.
+Before the introduction of this paper, image colorization is mostly done in the whole iamge-level. Previous methods leverage the deep neural network to map input grayscale images to plausible color outputs directly. Arguing that without a clear figure-ground separation, one cannot effectively locate and learn meaningful semantics at object level, this paper proposed a novel network architecture that leverages off-the-shelf models to detect the object, and learn from large-scale data to extract image features at the instance and full-image level, and to optimize the feature fusion to obtain the smooth colorization results. The key insight is that a clear figure-ground separation can dramatically improve colorization performance.
 
-The model consists of three parts:
+The model consists of three parts, which is shown in figure below:
 
-1. an off-the-shelf pretrained model to detect object instances and produce cropped object images
+![InstColor]({{ '/assets/images/team12/instColorModel.png' | relative_url }}){: style="max-width: 80%;"}
 
-2. two backbone networks trained end-to-end for instance, and full-image colorization 
+1. an off-the-shelf pretrained Mask R-CNN model to detect object instances and produce cropped object images.
 
-3. a fusion module to selectively blend features extracted from different layers of the two colorization networks
+2. two backbone networks trained end-to-end for instance, and full-image colorization. The paper adopted the main colorization network introduced in Zhang et al. [7] as the backbone network.
 
-![InstColor]({{ '/assets/images/team12/instColorModel.png' | relative_url }})
+3. a fusion module to selectively blend features extracted from different layers of the two colorization networks as shown below. Formally, given a full-image feature  $$f^X_j$$ and a number of $$N$$ of instance features and corresponding object bounding boxes $$\{f^{X_i}_j,B_i\}^N_{i=1}$$, we use 2 3-layer CNNs to get full image weight map $$W_F$$ and per instance weight map $$W^i_I$$ respectively, resize them using the bounding box $$B_i$$ to get $$f^{\bar X_i}_j$$ and $$\bar W^i_I$$, and compute the outputs 
+
+$$f^{\tilde X}_j=f^X_j\circ W_F + \sum\limits_{i=1}^Nf^{\bar X_i}_j\circ \bar W^i_I
+$$
+
+![InstColor_Fusion]({{ '/assets/images/team12/instColor_Fusion.png' | relative_url }}){: style=" max-width: 80%;"}
+
+
+The loss function used in this paper is the smooth $$l_1$$ loss with $$\delta=1$$:
+
+$$
+L_\delta(x, y) = \frac{1}{2}(x-y)^2 1_{\{|x-y|<\delta\}}+\delta(x-y-\frac{1}{2}\delta)1_{\{|x-y|\geq\delta\}}
+$$
+
+During the training process, the model is first trained on the full-image colorization, and the weights are transfered to the instance network as initialization, which is then trained. Lastly, both the full iamge and object colorization model are freezed, and the fusion model is trained. 
 
 ## 4. Temporal Consistency
 Coloring each pixel individually using an image colorization technique often results in color flickering, as the frames do not have a way to "sync up" across time. Thus, we need a method to synchronize the pixel values across the time dimension.
@@ -147,5 +161,5 @@ Please make sure to cite properly in your work, for example:
 [4] Lei, Chenyang, Yazhou Xing, and Qifeng Chen. "Blind video temporal consistency via deep video prior." Advances in Neural Information Processing Systems 33 (2020): 1083-1093.
 [5] Ronneberger, Olaf, Philipp Fischer, and Thomas Brox. "U-net: Convolutional networks for biomedical image segmentation." International Conference on Medical image computing and computer-assisted intervention. Springer, Cham, 2015.  
 [6] Lai, Wei-Sheng, et al. "Learning blind video temporal consistency." Proceedings of the European conference on computer vision (ECCV). 2018.
-
+[7] Richard Zhang, Jun-Yan Zhu, Phillip Isola, Xinyang Geng, Angela S. Lin, Tianhe Yu, and Alexei A. Efros. Realtime user-guided image colorization with learned deep priors. ACM TOG (Proc. SIGGRAPH), 36(4):119:1–119:11, 2017
 ---
