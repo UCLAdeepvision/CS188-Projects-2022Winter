@@ -18,6 +18,7 @@ date: 2022-01-27
 There's already one successful attempt at training transformer GANs ([TransGAN](https://arxiv.org/pdf/2102.07074.pdf)). However, as indicated by the paper, the proposed approach is showing the most significant shortcoming of almost all transformer-based models - it is more data-hungry compared to other architectures by a large margin. Inspired by the recent finding of an un-embedded, prior-based position encoding system ([LinearPos](https://arxiv.org/abs/2108.12409)), we hereby motivate our exploration of a simple, light-weighted yet effective design of a vision-oriented transformer block. We hope such design could alleviate the data efficiency problem of transformers whereas to maintain the merit of its ability to model long dependencies.
 
 ## Implementation
+
 ```python
 import torch
 from torch import nn
@@ -278,6 +279,7 @@ class EuclideanTransformerModel(EuclideanTransformerPreTrainedModel):
 
         return pixel_embeddings, semantic_embeddings
 ```
+
 The 1-D Linear Bias is now extended to the 2-D world. Multiple diffusion pattern should examined, such as linear, gaussian etc.
 ## Demo
 TBD
