@@ -7,7 +7,7 @@ date: 2022-01-18
 ---
 
 
-> Self-driving is a hot topic for deep vision applications. However Vision-based urban driving is hard. Lots of methods for learning to drive have been proposed in the past several years. In this work, we focus on reproducing "Learning to drive from a world on rails" and trying to solve the drawbacks of the methods such as high pedestrian friction rate. We will also utilize the lidar(which is preinstalled on most cars with some self-driving capability) data to achieve better bench mark results.
+> Self-driving is a hot topic for deep vision applications. However, Vision-based urban driving is hard. Lots of methods for learning to drive have been proposed in the past several years. In this work, we focus on reproducing "Learning to drive from a world on rails" and trying to solve the drawbacks of the methods such as high pedestrian friction rate. We will also utilize the lidar(which is preinstalled on most cars with some self-driving capability) data to achieve better benchmark results.
 
 
 <!--more-->
@@ -16,7 +16,7 @@ date: 2022-01-18
 {:toc}
 
 ## Introduction
-Our work is a continuation of [Learning to drive from a world on rails](https://dotchen.github.io/world_on_rails/) which uses dynamic programming to learn an agent from past driving logs and then applies it to generate action values. This work is also very closely related to [Learning by Cheating](https://github.com/dotchen/LearningByCheating) which uses a similar two-stage approach to tackle the learning problem. At the same time, we will compare our work with a few others that uses a totally different approach such as [ChauffeurNet: Learning to Drive by Imitating the Best and Synthesizing the Worst](https://github.com/aidriver/ChauffeurNet) that learns to drive by synthesizing images to deal with the worst case scenario. In our work, we will try to solve the drawbacks of "Learning to drive from a world on rails" which doesn't use the most accurate Lidar data and has a high pedestrian friction rate problem.
+Our work is a continuation of [Learning to drive from a world on rails](https://dotchen.github.io/world_on_rails/) which uses dynamic programming to learn an agent from past driving logs and then applies it to generate action values. This work is also very closely related to [Learning by Cheating](https://github.com/dotchen/LearningByCheating) which uses a similar two-stage approach to tackle the learning problem. At the same time, we will compare our work with a few others that use a totally different approach such as [ChauffeurNet: Learning to Drive by Imitating the Best and Synthesizing the Worst](https://github.com/aidriver/ChauffeurNet) that learns to drive by synthesizing images to deal with the worst case scenario. In our work, we will try to solve the drawbacks of "Learning to drive from a world on rails" which doesn't use the most accurate Lidar data and has a high pedestrian friction rate problem.
 
 ## Technical Details
 
@@ -30,7 +30,7 @@ In terms of training data and evaluation, they are all sampled from the CARLA tr
 
 
 ### Simulator
-In our work, we use the same traffic simulator(CARLA) as many other similar papers. CARLA has been developed from the ground up to support development, training, and validation of autonomous driving systems. In addition to open-source code and protocols, CARLA provides open digital assets (urban layouts, buildings, vehicles) that were created for this purpose and can be used freely. The simulation platform supports flexible specification of sensor suites, environmental conditions, full control of all static and dynamic actors, maps generation and much more.
+In our work, we use the same traffic simulator(CARLA) as many other similar papers. CARLA has been developed from the ground up to support development, training, and validation of autonomous driving systems. In addition to open-source code and protocols, CARLA provides open digital assets (urban layouts, buildings, vehicles) that were created for this purpose and can be used freely. The simulation platform supports flexible specification of sensor suites, environmental conditions, full control of all static and dynamic actors, map generation, and much more.
 
 Below are a few advantages that CARLA brings to us.
 
@@ -39,10 +39,10 @@ Below are a few advantages that CARLA brings to us.
 ![Artificial neural network]({{ '/assets/images/team10/image_1.png' | relative_url }}){: style="height: 150px; max-width: 100%;"} | ![Artificial neural network]({{ '/assets/images/team10/image_2.png' | relative_url }}){: style="height: 150px; max-width: 100%;"} | ![Artificial neural network]({{ '/assets/images/team10/image_5.png' | relative_url }}){: style="height: 150px; max-width: 100%;"}
 
 ### Forward Kinematic Model
-![Artificial neural network]({{ '/assets/images/team10/bicycle.png' | relative_url }})
+![Artificial neural network]({{ '/assets/images/team10/bicycle.PNG' | relative_url }})
 {: style="float: right; width: 300px;"}
 
-The goal of forward model is to take as inputs the current ego-vehicle state as 2D location, orientation and speed and predicts the next ego-vehicle state, orientation and speed. In this work, a parameterized bicycle model is used as the structural prior. The basic parameters in a bicycle model are shown on the right.
+The goal of the forward model is to take as inputs the current ego-vehicle state as 2D location, orientation and speed and predict the next ego-vehicle state, orientation, and speed. In this work, a parameterized bicycle model is used as the structural prior. The basic parameters in a bicycle model are shown on the right.
 
 The bicycle model is called the front wheel steering model, as the front wheel orientation can be controlled relative to the heading of the vehicle. Our target is to compute state [x, y, 𝜃, 𝛿], 𝜃 is heading angle, 𝛿 is steering angle. Our inputs are [𝑣, 𝜑], 𝑣 is velocity, 𝜑 is steering rate.
 
@@ -92,21 +92,21 @@ class EgoModel(nn.Module):
 ```
 
 ### Bellman Equation Evaluation
-As the vehicle states in autonumous driving is continuous, it's impossible to model each state. Therefore, a discretization method is used to represent the reward of each state. For each time-step t, the value function is represented as a 4D tensor which is discretized into $$N_H * N_W$$ position bins,$$N_v$$ velocity bins and $$N_{\theta}$$ orientation bins. The value function and action value function can be described by the following 2 equitions
+As the vehicle state in autonomous driving is continuous, it's impossible to model each state. Therefore, a discretization method is used to represent the reward of each state. For each time-step t, the value function is represented as a 4D tensor which is discretized into $$N_H * N_W$$ position bins,$$N_v$$ velocity bins and $$N_{\theta}$$ orientation bins. The value function and action value function can be described by the following 2 equations
 
 $$V(L_{t}^{ego}, \hat{L}_t^{world}) = \underset{a}{max}Q(L_t^{ego}, \hat{L}_t^{world}, a)$$
 
 $$Q(L_t^{ego}, \hat{L}_t^{world}, a_t) = r(L_t^{ego}, \hat{L}_t^{world}, a_t) + \gamma V(T^{ego}(L_t^{ego}, \hat{L}_t^{world}, a), \hat{L}_{t+1}^{world})$$
 
-The action-value function is needed for all ego-vehicle state $$L^{ego}$$, but only recorded world states $$\hat{L}_t^{world}$$. Therefore, it's scufficient to evaluate the action-value function on just recorded world states for all ego-vehicle:
+The action-value function is needed for all ego-vehicle state $$L^{ego}$$, but only recorded world states $$\hat{L}_t^{world}$$. Therefore, it's sufficient to evaluate the action-value function on just recorded world states for all ego-vehicle:
 $$\hat{V}_t(L_t^{ego}) = V(L_t^{ego}, \hat{L}_t^{world}), \hat{Q}_t(L_t^{ego}, a_t) = V(L_t^{ego}, \hat{L}_t^{world}, a_t). $$
-Furthermore, since the world states are strictly ordered in time, hence the Bellman equations simplifies to 
+Furthermore, since the world states are strictly ordered in time, hence the Bellman equation simplifies to 
 
 $$V(L_{t}^{ego}) = \underset{a}{max}Q(L_t^{ego}, a)$$
 
 $$Q(L_t^{ego}, a_t) = r(L_t^{ego}, \hat{L}_t^{world}, a_t) + \gamma V(T^{ego}(L_t^{ego}, a))$$
 
-It's easy to observe that the above equation uses the compact states(position, orientation and velocity) of the vehicle. Therefore, it can be solved using backward induction and dynamic programming.
+It's easy to observe that the above equation uses the compact states(position, orientation, and velocity) of the vehicle. Therefore, it can be solved using backward induction and dynamic programming.
 
 Below is the main implementation of computing Q values
 ```
@@ -242,7 +242,7 @@ def policy(self, wide_rgb, narr_rgb, cmd, spd=None):
 ```
 
 #### Image Segmentation
-Additionally, the agent is asked to predict semantic segmentation as an auxiliary loss. This consistently improves the agent's driving performance, especially when generalizing to new environments. One of the segmented image is shown as below.
+Additionally, the agent is asked to predict semantic segmentation as an auxiliary loss. This consistently improves the agent's driving performance, especially when generalizing to new environments. One of the segmented images is shown as below.
 
 ![Artificial neural network]({{ '/assets/images/team10/image_2.png' | relative_url }}){: style="width: 500px; max-width: 100%;"}
 
@@ -272,7 +272,7 @@ class SegmentationHead(nn.Module):
 ### Reward Design
 The reward function $$r(L_t^{ego}, L_t^{world}, a_t, c_t)$$ considers ego-vehicle state, world state, action and high-level command, and is computed from the driving log at each timestep. The agent receives a reward of +1 for staying in the target lane at the desired position, orientation and speed, and is smoothly penalized for deviating from the lane down to a value of 0. If the agent is located at a "zero-speed" region(e.g. red light, or close to other traffic participants), it is rewarded for zero velocity regardless of orientation, and penalized otherwise except for red light zones. All "zero speed" rewards are scaled by $$r_{stop} = 0.01$$, in order to avoid agents disregarding the target lane. 
 
-The agents receives a greedy reward of $$r_{brake} = +5$$ if it brakes in the zero-speed zone. To avoid agents chasing braking region, the braking reward cannot be accumulated. All rewards are additive. One interesting observation is that with zero-speed zones and brake rewards, there is no need to explicitly penalize collisions. We compute the action-values over all high-level commands("turn left", "turn right", "go straight", "follow lane", "change left" or "change right") for each timestep, and use multi-branch supervision when distilling the visumotor agent.
+The agents receives a greedy reward of $$r_{brake} = +5$$ if it breaks in the zero-speed zone. To avoid agents chasing braking region, the braking reward cannot be accumulated. All rewards are additive. One interesting observation is that with zero-speed zones and brake rewards, there is no need to explicitly penalize collisions. We compute the action-values over all high-level commands("turn left", "turn right", "go straight", "follow lane", "change left" or "change right") for each timestep, and use multi-branch supervision when distilling the visuomotor agent.
 
 ## Demo
 <iframe width="560" height="315" src="https://www.youtube.com/embed/1kX7bcJ5cY0" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
