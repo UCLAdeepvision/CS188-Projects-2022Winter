@@ -5,16 +5,19 @@ title: DeepFake Generation
 author: Zhengtong Liu, Chenda Duan
 date: 2022-01-26
 ---
+
 > Note!!!!!! For better understanding and for fun, we have create a [demo](https://drive.google.com/drive/folders/1RRiqMyUGs4wAJ_pcQ56I_WKjuZKXqZVV?usp=sharing). You may need to create a copy and modify the path in the cs188_midwaydemo.ipynb file.
  
 > This is the blog will record and explain technical details for Zhengtong Liu and Chenda Duan's CS188 DLCV project.
 > We will investigate the state-of-the-art Image Animation and Image-to-image Translation methods.
 
 
+
 <!--more-->
 {: class="table-of-content"}
 * TOC
 {:toc}
+
 
 ## What is deepfake?
 What is [deepfake](https://en.wikipedia.org/wiki/Deepfake/)? It is a newly emerged term created by some reddit users. In short, it refers to using [deep learning](https://en.wikipedia.org/wiki/Deep_learning) to generate "fake" images, which look like photos captured in the real world but is not.
@@ -331,6 +334,7 @@ The StarGAN v2 model is an image-to-image translation framework that can generat
 
         This **cycle consistency loss**, while was already adopted in the previous version of [StyleGAN](https://github.com/yunjey/StarGAN/), was used extensively in another well-known method in the field of image-to-image transfer, called CycleGAN. In the paper [Unpaired Image-to-Image Translation using Cycle-Consistent Adversarial Networks](https://arxiv.org/abs/1703.10593), the cylce consistency loss is utilized to ensure that $$F(G(X)) \approx X$$, where $$G: X \to Y$$ and $$F: Y \to X$$ are two learnable mappings to generate paired images with no paired training data. 
 
+
         {:.center}
         ![Illustration of cycle consistency loss]({{ '/assets/images/group08deepfake/cycle_consistency_loss.png' | relative_url }})
         {: style="max-width: 100%;"}
@@ -347,6 +351,7 @@ The StarGAN v2 model is an image-to-image translation framework that can generat
     $$
     \min_{G, F, E} \max_{D} \mathcal{L}_{adv} + \lambda_{sty} \mathcal{L}_{sty} - \lambda_{ds} \mathcal{L}_{ds} + \lambda_{cyc} \mathcal{L}_{cyc}
     $$
+
 
     where $$\lambda_{sty}$$, $$\lambda_{ds}$$ and $$\lambda_{cyc}$$ are hyperparamters for the regularization terms. 
     Below are the code snip showing the overall loss functions.
@@ -374,4 +379,4 @@ The StarGAN v2 model is an image-to-image translation framework that can generat
 
 8. [Multimodal Unsupervised Image-to-Image Translation](https://arxiv.org/abs/1804.04732)
 
-## Reference
+
