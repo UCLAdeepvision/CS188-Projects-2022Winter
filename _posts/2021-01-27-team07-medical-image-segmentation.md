@@ -23,6 +23,7 @@ Our team explores the applications of CV in healthcare; specifically, notable st
 ### Image
 
 ![Lubes Segmentation]({{ '/assets/images/team07/seg_lubes.png' | relative_url }})
+
 *Fig 1. Automatic Segmentation of Pulmonary Lobes* [1].
 
 ## 1606.04797: V-Net: Fully Convolutional Neural Networks for Volumetric Medical Image Segmentation [[Paper](https://arxiv.org/abs/1606.04797)] [[Code](https://github.com/faustomilletari/VNet)] 
@@ -139,5 +140,7 @@ Using the dice score for comparison, the authors find that the PDV-Net significa
 [2] Li, Mingxing et al. “Advanced Deep Networks for 3D Mitochondria Instance Segmentation”. arXiv [cs.CV] 2021. 
 
 [3] Imran, Abdullah-Al-Zubaer et al. “Automatic Segmentation of Pulmonary Lobes Using a Progressive Dense V-Network”. Lecture Notes in Computer Science (2018): 282–290. 
+
+
 
 ---
