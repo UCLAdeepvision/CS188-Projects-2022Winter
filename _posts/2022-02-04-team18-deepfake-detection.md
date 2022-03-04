@@ -2,6 +2,7 @@
 layout: post
 comments: true
 title: Proposal
+
 author: UCLAdeepvision
 date: 2022-02-04
 ---
@@ -32,6 +33,7 @@ Project Repository:
 https://github.com/arnavgarg/UCLA_CS_188_Final_Project
 
 References:
+
 https://arxiv.org/abs/2101.09781
 
 https://ieeexplore.ieee.org/document/9564096
