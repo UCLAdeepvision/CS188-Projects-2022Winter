@@ -18,6 +18,7 @@ date: 2022-01-26
 ## Main Content
 This project was inspired by [Zaragoza et al.](URL 'https://www.mdpi.com/2076-3417/8/4/606'). We extend the monophonic score reader by parsing grand staves from piano sheet music. Thus, we add a stage in the pipeline to first identify any grand staves before separating them into treble and bass. Each individual staff is then feed into the current pipeline. 
 
+
 # An End-to-End Approach to Optical Music Recognition
 
 ## What is Optical Music Recognition (OMR)?
