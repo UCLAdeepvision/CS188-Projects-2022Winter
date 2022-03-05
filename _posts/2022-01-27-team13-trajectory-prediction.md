@@ -3,7 +3,7 @@ layout: post
 comments: true
 title: Trajectory Prediction
 author: Sudhanshu Agrawal, Jenson Choi
-date: 2022-01-27
+date: 2022-03-04
 ---
 
 > Behaviour prediction in dynamic, multi-agent systems is an important problem in the context of self-driving cars. In this blog, we will investigate a few different approaches to tackling this multifaceted problem and reproduce the work of [Gao, Jiyang et al.](https://arxiv.org/abs/2005.04259) by implementing VectorNet in PyTorch.
@@ -112,7 +112,7 @@ This task is similar to that used by the BERT language model that predicts missi
 ### Overall Structure
 
 The objective function is thus :
-$$ L = L_{traj} + \alpha L_{node}$$
+$$ L = L*{traj} + \alpha L*{node}$$
 Where:
 
 - $$L_{traj}$$ is the negative Gaussian log-likelihood for the ground-truth future trajectories
@@ -138,7 +138,7 @@ The performance of VectorNet on the Argoverse dataset is compared with several b
 | Model                      |       DE@3s       |               ADE |
 | :------------------------- | :---------------: | ----------------: |
 | Constant Velocity          |       7.89        |              3.53 |
-| Nearest Neighbour           |       7.88        |              3.45 |
+| Nearest Neighbour          |       7.88        |              3.45 |
 | LSTM ED                    |       4.95        |              2.15 |
 | Challenge Winter: uulm-mrm |       4.19        |              1.90 |
 | Challenge Winter: Jean     |       4.17        |              1.86 |
@@ -177,116 +177,189 @@ It outperforms the best ConvNet on the publicly available Argoverse data set whi
 
 _<https://colab.research.google.com/drive/1ldrHriSrpxNQ9t2igfBTdctp9pMUSYQw?usp=sharing>_
 
+# Paper 2: Social LSTM: Human Trajectory Prediction in Crowded Spaces
 
-# Social LSTMs 
+## Introduction
 
-## Introduction 
+One of the main things an autonomous vehicle needs to take into account is the pedestrians on the road. It needs to be able to learn general human movement and predict future trajectories.
 
-One of the main things an autonomous vehicle needs to take into account is the pedestrians on the road. It needs to be able to learn general human movement and predict future trajectories. 
+In the past, human trajectories were modelled using hand-crafted functions for specific settings - such as to model attraction and repulsion. However, these approaches fail to generalize to more complex settings.
 
-In the past, human trajectories were modelled using hand-crafted functions for specific settings - such as to model attraction and repulsion. However, these approaches fail to generalize to more complex settings. 
+The authors of the paper propose a new architecture based on the LSTM model which can learn common rules and conventions of human movement without the need for any additional annotation of datasets.
 
-The authors of the paper propose a new architecture based on the LSTM model which can learn common rules and conventions of human movement without the need for any additional annotation of datasets. 
+## Model Architecture
 
-## The Model
+### Problem Setup and Notation:
 
-### Problem Setup and Notation: 
-- At time $$t$$, the $$i^{th}$$ person in the scene is represented by their XY-coordinates, $$(x_t^i, y_t^i)$$. 
-- The positions of all the people are known from time $$1$$ to $$T_{obs}$$. 
-- The objective is to predict their positions for times $$T_{obs+1}$$ to $$T_{pred}$$. 
+- At time $$t$$, the $$i^{th}$$ person in the scene is represented by their XY-coordinates, $$(x_t^i, y_t^i)$$.
+- The positions of all the people are known from time $$1$$ to $$T_{obs}$$.
+- The objective is to predict their positions for times $$T_{obs+1}$$ to $$T_{pred}$$.
 
-### Model Architecture 
+### Model Architecture
 
-The model uses one LSTM per person, with the weights shared across all sequences. 
+The model uses one LSTM per person, with the weights shared across all sequences.
 
-#### Pooling Strategy 
-To take into account the behaviour of all other sequences while predicting the trajectory of a given person, the authors implement a "Social" pooling strategy that connects the various LSTMs. 
+#### Pooling Strategy
 
-Suppose our objective is to predict the trajectory of the $$i^{th}$$ agent. While predicting the trajectory at a given time step, we consider the neighbouring agents, and for each agent $$j$$, the hidden state LSTM cell $$h_t^j$$ of the agent is used to construct a hidden state tensor $$H_t^i$$. 
+To take into account the behaviour of all other sequences while predicting the trajectory of a given person, the authors implement a "Social" pooling strategy that connects the various LSTMs.
 
-Formally, given a neighbourhood $$N_0$$, and a hidden state dimension $$D$$, construct a tensor for the $$i^{th}$$ person : 
+Suppose our objective is to predict the trajectory of the $$i^{th}$$ agent. While predicting the trajectory at a given time step, we consider the neighbouring agents, and for each agent $$j$$, the hidden state LSTM cell $$h_t^j$$ of the agent is used to construct a hidden state tensor $$H_t^i$$.
 
-$$ H_t^{t} \in \mathbb{R}^{N_0 \times N_0 \times D}$$ 
+Formally, given a neighbourhood $$N_0$$, and a hidden state dimension $$D$$, construct a tensor for the $$i^{th}$$ person :
 
-given by : 
+$$ H_t^{t} \in \mathbb{R}^{N_0 \times N_0 \times D}$$
 
-$$ H_t^i(m, n, :) = \sum_{j\in \mathcal{N}_i} 1_{mn}[x_t^j - x_t^i, y_t^j - y_t^i]h_{t-1}^j $$
+given by :
 
-Where: 
-- $$h_{t-1}^j$$ is the hidden state of the LSTM for the $$j^{th}$$ person at time $$t-1$$. 
-- $$ 1_{mn}[x, y] $$ is an indicator function to check if $$(x, y)$$ is in the cell $$(m, n)$$ of the grid. 
-- $$\mathcal{N}_i$$ is the set of neighbours corresponding to person $$i$$. 
+$$ H*t^i(m, n, :) = \sum*{j\in \mathcal{N}_i} 1_{mn}[x_t^j - x_t^i, y_t^j - y_t^i]h\_{t-1}^j $$
 
-So each grid cell corresponds to a certain distance from the agent $$i$$. For each grid position, if a neighbouring trajectory is at that distance from $$i$$, the hidden state for that trajectory at that time step is added to the tensor at that grid cell position. This is done for all neighbouring agents and for all grid cell positions. 
+Where:
 
-Finally, the pooled social hidden states are embedded into $$a_i^t$$ and the coordinates are embedded into $$e_i^t$$. Formally : 
+- $$h_{t-1}^j$$ is the hidden state of the LSTM for the $$j^{th}$$ person at time $$t-1$$.
+- $$ 1\_{mn}[x, y] $$ is an indicator function to check if $$(x, y)$$ is in the cell $$(m, n)$$ of the grid.
+- $$\mathcal{N}_i$$ is the set of neighbours corresponding to person $$i$$.
 
-  $$ e_t^i = \phi(x_t^i, y_t^i; W_e) $$ 
+So each grid cell corresponds to a certain distance from the agent $$i$$. For each grid position, if a neighbouring trajectory is at that distance from $$i$$, the hidden state for that trajectory at that time step is added to the tensor at that grid cell position. This is done for all neighbouring agents and for all grid cell positions.
 
-  $$ a_i^t = \phi(H_t^i \; ; W_a) $$
+Finally, the pooled social hidden states are embedded into $$a_i^t$$ and the coordinates are embedded into $$e_i^t$$. Formally :
 
-  $$ h_i^t = \text{LSTM}(h_i^{t-1}, e_i^t, a_t^i \; ; W_l) $$ 
+$$ e_t^i = \phi(x_t^i, y_t^i; W_e) $$
 
-Where :  
-- $$\phi(.)$$ is an embedding function with ReLU nonlinearity 
-- $$W_e, W_a$$ are the embedding weights  
-- $$ W_l$$ are the weights of the LSTM. 
+$$ a_i^t = \phi(H_t^i \; ; W_a) $$
 
+$$ h_i^t = \text{LSTM}(h_i^{t-1}, e_i^t, a_t^i \; ; W_l) $$
 
-## Position Estimation 
+Where :
 
-The hidden state at time $$t$$ is used to predict the distribution of the trajectory position $$ (\hat{x}, \hat{y})^i_{t+1} $$ at the next time step $$t+1$. 
+- $$\phi(.)$$ is an embedding function with ReLU nonlinearity
+- $$W_e, W_a$$ are the embedding weights
+- $$ W_l$$ are the weights of the LSTM.
 
-The authors assume that the coordinates are given by a bivariate Gaussian distribution parameterized by the bivariate mean, standard deviation, and correlation coefficient at time $t+1$. Thus, 
+## Position Estimation
 
-$$ (\hat{x}, \hat{y})_t^i \sim \mathcal{N}(\mu_t^i, \sigma_t^i, \rho_t^i) $$ 
+The hidden state at time $$t$$ is used to predict the distribution of the trajectory position $$ (\hat{x}, \hat{y})^i\_{t+1} $$ at the next time step $$t+1$.
 
-Where the Gaussian distribution parameters are predicted by a linear layer with a $$5\times D$$ weight matrix $$W_p$$ as follows : 
+The authors assume that the coordinates are given by a bivariate Gaussian distribution parameterized by the bivariate mean, standard deviation, and correlation coefficient at time $t+1$. Thus,
 
-$$ [\mu_t^i, \sigma_t^i, \rho_t^i] = W_ph_i^{t-1} $$ 
+$$ (\hat{x}, \hat{y})\_t^i \sim \mathcal{N}(\mu_t^i, \sigma_t^i, \rho_t^i) $$
 
-The parameters of the LSTm are learned by minimizing the negative log-likelihood loss $L_i$ for the $i^{th}$ trajectory for each trajectory in the training data set. 
+Where the Gaussian distribution parameters are predicted by a linear layer with a $$5\times D$$ weight matrix $$W_p$$ as follows :
 
-Since the hidden states of all the LSTMs are coupled by the social pooling layer, backpropagation is jointly performed through multiple LSTMs in the scene at every time step. 
+$$ [\mu_t^i, \sigma_t^i, \rho_t^i] = W_ph_i^{t-1} $$
 
-## Inference 
+The parameters of the LSTm are learned by minimizing the negative log-likelihood loss $L_i$ for the $i^{th}$ trajectory for each trajectory in the training data set.
 
-During test time, the social LSTM model is used to predict the future position $$ (\hat{x}_t^i, \hat{y}_t^i) $$ of the $$i^{th}$$ person. 
+Since the hidden states of all the LSTMs are coupled by the social pooling layer, backpropagation is jointly performed through multiple LSTMs in the scene at every time step.
 
-At each time step, the positions predicted by the social LSTM for each of the previous time steps is used as the input of the model instead of the true coordinates. These predicted coordinates also replace the true coordinates when constructing the social hidden state tensor. 
+## Inference
 
-## Experiments 
+During test time, the social LSTM model is used to predict the future position $$ (\hat{x}\_t^i, \hat{y}\_t^i) $$ of the $$i^{th}$$ person.
 
-### Datasets 
-The authors use two datasets which capture many real-world settings with thousands of non-linear trajectories. They also cover complex group dynamics such as couples walking together, groups crossing each other, and groups forming and dispersing. 
+At each time step, the positions predicted by the social LSTM for each of the previous time steps is used as the input of the model instead of the true coordinates. These predicted coordinates also replace the true coordinates when constructing the social hidden state tensor.
 
-- ETH dataset : Contains two scenes with 750 different pedestrians 
-- UCY dataset : Contains two scenes with 786 different people 
+## Experiments
 
-### Error Metrics:  
-The authors consider 3 error metrics : 
+### Datasets
+
+The authors use two datasets which capture many real-world settings with thousands of non-linear trajectories. They also cover complex group dynamics such as couples walking together, groups crossing each other, and groups forming and dispersing.
+
+- ETH dataset : Contains two scenes with 750 different pedestrians
+- UCY dataset : Contains two scenes with 786 different people
+
+### Error Metrics:
+
+The authors consider 3 error metrics :
+
 - Average displacement error : Mean Squared Error between the true and predicted trajectories.
-- Final Displacement error : Distance between the predicted and true final destinations at the end of the prediction period. 
-- Average non-linear displacement error : MSE at the non-linear regions of a trajectory (since this is where most errors occur). 
+- Final Displacement error : Distance between the predicted and true final destinations at the end of the prediction period.
+- Average non-linear displacement error : MSE at the non-linear regions of a trajectory (since this is where most errors occur).
 
-The authors observed that the social LSTM model outperformed the state-of-the-art methods on these publicly available datasets. 
+The authors observed that the social LSTM model outperformed the state-of-the-art methods on these publicly available datasets.
 
-An example of a prediction made by the social LSTM is visualized in Fig 1. The scene consists of 4 individuals and the figure displays the predicted trajectories at a particular time. 
+An example of a prediction made by the social LSTM is visualized in Fig 3. The scene consists of 4 individuals and the figure displays the predicted trajectories at a particular time.
 
 ![Artificial neural network]({{ '/assets/images/team13/social_lstm_visual.png' | relative_url }})
 {: style="width: 600px; max-width: 100%;"}
-_Fig 1. (Top) Input to the model : Solid lines are the ground truth trajectories, the dashed lines are the previous positions, and the dot is the current position. (Bottom) The output of the model as a probability of future positions. 
+_Fig 3. (Top) Input to the model : Solid lines are the ground truth trajectories, the dashed lines are the previous positions, and the dot is the current position. (Bottom) The output of the model as a probability of future positions.
 (Image source: <https://openaccess.thecvf.com/content_cvpr_2016/html/Alahi_Social_LSTM_Human_CVPR_2016_paper.html>)_
+
 ## Takeaways
 
-The authors have proposed an LSTM based model that can jointly reason across multiple individuals to predict human trajectories in a scene. Each agent is assigned an LSTM and they share information through a novel social pooling layer. 
+The authors have proposed an LSTM based model that can jointly reason across multiple individuals to predict human trajectories in a scene. Each agent is assigned an LSTM and they share information through a novel social pooling layer.
 
-The model outperforms other methods on public datasets and is capable of predicting several non-linear trajectories and group behaviours. 
+The model outperforms other methods on public datasets and is capable of predicting several non-linear trajectories and group behaviours.
 
+# Paper 3: Social GAN: Socially Acceptable Trajectories with Generative Adversarial Networks
 
+## Introduction
 
+Similar to Social LSTM, the authors of Social GAN seek to model pedestrian motions that are socially acceptable. While previous architectures such as the Social LSTM have made great progress, they suffer from two limitations. First and foremost, they fail to model interactions between all people in a scene efficiently. Instead, they model a local neighborhood around each person when making the prediction. Secondly, they tend to learn the "average behavior" since the loss function effectlively minimizes the L2 norm between the ground truth and forecasted trajectories.
 
+To address these shortcomings, the authors propose to use a Generative Adversarial Network (GAN) with a RNN Encoder-Decoder generator and a RNN based encoder discriminator. In addition, they propose a new pooling mechanism that learns a "global" pooling vector which encodes the subtle cues for all people involved in a scene.
 
+## Model Architecture
+
+### Problem Setup and Notation
+
+- The model receives as input all the trajectories for people in a scene as $$\textbf{X} = X_1, X_2, ..., X_n$$ and predict the future trajectories $$\hat{\textbf{Y}} = \hat{Y}_1, \hat{Y}_2, ..., \hat{Y}_n$$ of all people simultaneously.
+- The input trajectory of a person $$i$$ is defined as $$X_i = (x_i^t, y_i^t)$$ from time steps $$t=1, ..., t_{obs}$$.
+- The future trajectory (ground truth) of a person $$i$$ can similarly be defined as $$Y_i = (x_i^t, y_i^t)$$ from time steps $$t = t_{obs} + 1, ..., t_{pred}$$.
+
+### Generative Adversarial Networks
+
+Generative Adversarial Networks (GANs) represent a paradigm shift in deep learning. Instead of training a single neural network to perform a certain task, GANs generally involve the training of two models in opposition to one another: a generator $$G$$, whose primary objective is to capture the data distribution, as well as a discriminator $$D$$, whose main goal is to estimate the probability that a sample came from the training data rather than $$G$$. In more formal terms, the generator $$G$$ takes a latent variable $$z$$ as input and outputs sample $$G(z)$$. The discriminator $$D$$ takes a sample $$x$$ and outputs $$D(x)$$, the probability that the sample is real. The following objective function is used during training:
+
+$$\min_G \max_D V(G, D) = E_{x\sim p_{data}(x)}[logD(x)] + E_{z\sim p(z)}[log(1-D(G(z)))]$$
+
+Hence, the training procedure is akin to a two-player min-max game, in which the generator $$G$$ is looking to minimize $$V(G, D)$$ and the discriminator $$D$$ is seeking to maximize $$V(G, D)$$. A common application of GANs is in the area of Deepfake with the generator being responsible for generating deepfaked images and the discriminator responsible for determining whether the image is real or fake. Over the course of training, the generator will learn to generate more realistic images and the discriminator will get better at distinguishing between real and deepfaked images.
+
+### Socially-Aware GAN
+
+The proposed model Socially-Aware GAN (SGAN) is effectively a GAN with a specialized pooling module. The SGAN model, therefore, consists of three main components: Generator (G), Pooling Module (PM) and Discriminator (D). A diagram of the SGAN model can be found in Fig 4.
+
+![Artificial neural network]({{ '/assets/images/team13/sgan_model.png' | relative_url }})
+{: style="width: 800px; max-width: 100%;"}
+_Fig 4. Overview of the SGAN model.
+(Image source: <https://arxiv.org/pdf/1803.10892.pdf>)_
+
+$$\textbf{Generator.}$$ The generator $$G$$ of SGAN consists of an encoder and decoder. The encoder first uses a single layer MLP to obtain a fixed length vector $$e_i^t$$, which is an embedding of the location of each person. These embeddings are then fed as input to the LSTM cell of the encoder at time $$t$$, which is captured by the following recurrence relations:
+
+$$e_i^t = \phi(x_i^t, y_i^t; W_{ee})$$
+
+$$h_{ei}^t = LSTM(h_{ei}^{t-1}, e_i^t; W_{encoder})$$
+
+where $$\phi(\cdot)$$ is the embedding function with ReLU nonlinearity, $$W_{ee}$$ is the embedding weight. The LSTM weights ($$W_{encoder}$$) are shared between all people in a given scene.
+
+The decoder is quite similar to the encoder in principle and can be described by the following recurrence relations:
+
+$$e_i^t = \phi(x_i^{t-1}, y_i^{t-1}; W_{ed})$$
+
+$$P_i = PM(h_{d1}^{t-1}, ..., h_{dn}^t)$$
+
+$$h_{di}^t = LSTM(\gamma(P_i, h_{di}^{t-1}), e_i^t; W_{decoder})$$
+
+$$(\hat{x}_i^t, \hat{y}_i^t) = \gamma(h_{di}^t)$$
+
+where $$\phi(\cdot)$$ is the embedding function with ReLU nonlinearity, $$W_{ed}$$ is the embedding weight. The LSTM weights are denoted by ($$W_{decoder}$$) and $$\gamma$$ is an MLP. $$PM$$ denotes the pooling module which will be discussed in a bit.
+
+$$\textbf{Discriminator.}$$ The discriminator $$D$$ of SGAN consists of an encoder, which takes in $$T_{real} = [X_i, Y_i]$$ or $$T_{fake} = [X_i, \hat{Y}_i]$$ and classifies them as socially acceptable (real) or socially unacceptable (fake). A MLP is applied on the encoder's last hidden state to obtain a classification score.
+
+$$\textbf{Losses.}$$ On top of the adversarial loss described previously, a L2 loss is applied on the predicted trajectory to measure how far are the generated samples from the actual ground truth. The total loss is the sum of the adversarial loss and the L2 loss.
+
+### Pooling Module
+
+The pooling module proposed by the authors computes relative positions between the red and all other people as shown in Fig 5.
+
+![Artificial neural network]({{ '/assets/images/team13/pooling_module.png' | relative_url }})
+{: style="width: 600px; max-width: 100%;"}
+_Fig 5. Comparison of the pooling module of SGAN (red dotted arrows) and Social Pooling (red dashed grid).
+(Image source: <https://arxiv.org/pdf/1803.10892.pdf>)_
+
+These positions are concatenated with each person's hidden state, processed independently by an MLP, then pooled elementwise using Max-Pooling to compute the red person's pooling vector $$P_1$$. The pooled vector $$P_i$$ effectively summarizes all the information that a person needs to make a decision.
+
+## Experiments
+
+## Takeaways
 
 ## Reference
 
