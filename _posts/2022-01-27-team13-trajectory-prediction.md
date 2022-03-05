@@ -177,6 +177,117 @@ It outperforms the best ConvNet on the publicly available Argoverse data set whi
 
 _<https://colab.research.google.com/drive/1ldrHriSrpxNQ9t2igfBTdctp9pMUSYQw?usp=sharing>_
 
+
+# Social LSTMs 
+
+## Introduction 
+
+One of the main things an autonomous vehicle needs to take into account is the pedestrians on the road. It needs to be able to learn general human movement and predict future trajectories. 
+
+In the past, human trajectories were modelled using hand-crafted functions for specific settings - such as to model attraction and repulsion. However, these approaches fail to generalize to more complex settings. 
+
+The authors of the paper propose a new architecture based on the LSTM model which can learn common rules and conventions of human movement without the need for any additional annotation of datasets. 
+
+## The Model
+
+### Problem Setup and Notation: 
+- At time $$t$$, the $$i^{th}$$ person in the scene is represented by their XY-coordinates, $$(x_t^i, y_t^i)$$. 
+- The positions of all the people are known from time $$1$$ to $$T_{obs}$$. 
+- The objective is to predict their positions for times $$T_{obs+1}$$ to $$T_{pred}$$. 
+
+### Model Architecture 
+
+The model uses one LSTM per person, with the weights shared across all sequences. 
+
+#### Pooling Strategy 
+To take into account the behaviour of all other sequences while predicting the trajectory of a given person, the authors implement a "Social" pooling strategy that connects the various LSTMs. 
+
+Suppose our objective is to predict the trajectory of the $$i^{th}$$ agent. While predicting the trajectory at a given time step, we consider the neighbouring agents, and for each agent $$j$$, the hidden state LSTM cell $$h_t^j$$ of the agent is used to construct a hidden state tensor $$H_t^i$$. 
+
+Formally, given a neighbourhood $$N_0$$, and a hidden state dimension $$D$$, construct a tensor for the $$i^{th}$$ person : 
+
+$$ H_t^{t} \in \mathbb{R}^{N_0 \times N_0 \times D}$$ 
+
+given by : 
+
+$$ H_t^i(m, n, :) = \sum_{j\in \mathcal{N}_i} 1_{mn}[x_t^j - x_t^i, y_t^j - y_t^i]h_{t-1}^j $$
+
+Where: 
+- $$h_{t-1}^j$$ is the hidden state of the LSTM for the $$j^{th}$$ person at time $$t-1$$. 
+- $$ 1_{mn}[x, y] $$ is an indicator function to check if $$(x, y)$$ is in the cell $$(m, n)$$ of the grid. 
+- $$\mathcal{N}_i$$ is the set of neighbours corresponding to person $$i$$. 
+
+So each grid cell corresponds to a certain distance from the agent $$i$$. For each grid position, if a neighbouring trajectory is at that distance from $$i$$, the hidden state for that trajectory at that time step is added to the tensor at that grid cell position. This is done for all neighbouring agents and for all grid cell positions. 
+
+Finally, the pooled social hidden states are embedded into $$a_i^t$$ and the coordinates are embedded into $$e_i^t$$. Formally : 
+
+  $$ e_t^i = \phi(x_t^i, y_t^i; W_e) $$ 
+
+  $$ a_i^t = \phi(H_t^i \; ; W_a) $$
+
+  $$ h_i^t = \text{LSTM}(h_i^{t-1}, e_i^t, a_t^i \; ; W_l) $$ 
+
+Where :  
+- $$\phi(.)$$ is an embedding function with ReLU nonlinearity 
+- $$W_e, W_a$$ are the embedding weights  
+- $$ W_l$$ are the weights of the LSTM. 
+
+
+## Position Estimation 
+
+The hidden state at time $$t$$ is used to predict the distribution of the trajectory position $$ (\hat{x}, \hat{y})^i_{t+1} $$ at the next time step $$t+1$. 
+
+The authors assume that the coordinates are given by a bivariate Gaussian distribution parameterized by the bivariate mean, standard deviation, and correlation coefficient at time $t+1$. Thus, 
+
+$$ (\hat{x}, \hat{y})_t^i \sim \mathcal{N}(\mu_t^i, \sigma_t^i, \rho_t^i) $$ 
+
+Where the Gaussian distribution parameters are predicted by a linear layer with a $$5\times D$$ weight matrix $$W_p$$ as follows : 
+
+$$ [\mu_t^i, \sigma_t^i, \rho_t^i] = W_ph_i^{t-1} $$ 
+
+The parameters of the LSTm are learned by minimizing the negative log-likelihood loss $L_i$ for the $i^{th}$ trajectory for each trajectory in the training data set. 
+
+Since the hidden states of all the LSTMs are coupled by the social pooling layer, backpropagation is jointly performed through multiple LSTMs in the scene at every time step. 
+
+## Inference 
+
+During test time, the social LSTM model is used to predict the future position $$ (\hat{x}_t^i, \hat{y}_t^i) $$ of the $$i^{th}$$ person. 
+
+At each time step, the positions predicted by the social LSTM for each of the previous time steps is used as the input of the model instead of the true coordinates. These predicted coordinates also replace the true coordinates when constructing the social hidden state tensor. 
+
+## Experiments 
+
+### Datasets 
+The authors use two datasets which capture many real-world settings with thousands of non-linear trajectories. They also cover complex group dynamics such as couples walking together, groups crossing each other, and groups forming and dispersing. 
+
+- ETH dataset : Contains two scenes with 750 different pedestrians 
+- UCY dataset : Contains two scenes with 786 different people 
+
+### Error Metrics:  
+The authors consider 3 error metrics : 
+- Average displacement error : Mean Squared Error between the true and predicted trajectories.
+- Final Displacement error : Distance between the predicted and true final destinations at the end of the prediction period. 
+- Average non-linear displacement error : MSE at the non-linear regions of a trajectory (since this is where most errors occur). 
+
+The authors observed that the social LSTM model outperformed the state-of-the-art methods on these publicly available datasets. 
+
+An example of a prediction made by the social LSTM is visualized in Fig 1. The scene consists of 4 individuals and the figure displays the predicted trajectories at a particular time. 
+
+![Artificial neural network]({{ '/assets/images/team13/social_lstm_visual.png' | relative_url }})
+{: style="width: 600px; max-width: 100%;"}
+_Fig 1. (Top) Input to the model : Solid lines are the ground truth trajectories, the dashed lines are the previous positions, and the dot is the current position. (Bottom) The output of the model as a probability of future positions. 
+(Image source: <https://openaccess.thecvf.com/content_cvpr_2016/html/Alahi_Social_LSTM_Human_CVPR_2016_paper.html>)_
+## Takeaways
+
+The authors have proposed an LSTM based model that can jointly reason across multiple individuals to predict human trajectories in a scene. Each agent is assigned an LSTM and they share information through a novel social pooling layer. 
+
+The model outperforms other methods on public datasets and is capable of predicting several non-linear trajectories and group behaviours. 
+
+
+
+
+
+
 ## Reference
 
 Please make sure to cite properly in your work, for example:
