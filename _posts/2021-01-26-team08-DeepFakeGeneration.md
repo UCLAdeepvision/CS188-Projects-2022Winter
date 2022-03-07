@@ -200,7 +200,9 @@ def forward(self, source_image, kp_driving, kp_source):
 
 ### Other Methods of Image Animations
 
-Although the first-order motion model achieves pretty good performance, it actually leads to compromised results in some cases. For example, we tried to set the images of ourselves as the source image. However,the keypoints detection were not accurate and the animation result looks unnatuaral in some cases, especially when the source image is not cropped to roughly align with the driving video. 
+Although the first-order motion model achieves pretty good performance, it actually leads to compromised results in some cases. For example, we tried to set the images of ourselves as the source image. However, the keypoints detection were not accurate and the animation result looks unnatuaral in some cases, especially when the source image is not cropped to roughly align with the driving video. 
+
+Additionally, for the first order motion model, the pretrained-model is highly sensitive and only works well on the images similar to its training set. If, for exmaple, the model is trained on face images, then the model will perform poorly for images which the face takes small place.
 
 Here we also introduce another framework that can accomplish the image animation task, [the Global-Flow Local-Attention framework](https://arxiv.org/abs/2003.00696). Similar to the first-order motion model, this framework composes of two parts: Global Flow Field Estimator and Local Neural Texture Renderer. The Global Flow Field Estimator employs a flow-based method to extract the global correlations and generate flow fields, while the Local Neural Texture Renderer uses a local-attention mechanism to spatially transform the information from the source to target. Below shows a example video generated from the source image. Since this method is originally proposed for the task of pose-guided person image generation, edge guidance is also shown. (resolution of the demo slightly compromised when converting from video to gif) 
 
@@ -377,20 +379,20 @@ The StarGAN v2 model is an image-to-image translation framework that can generat
     loss = loss_adv + args.lambda_sty * loss_sty \
     - args.lambda_ds * loss_ds + args.lambda_cyc * loss_cyc
     ```
-### StyleGan: synthesize the Style
-    Learning about StarGAN, and how it uses AdaIN to fuse the style features and the input features, we have to mention the first work that propose AdaIN: StyleGAN
-    
-    We know that for traiditonal GAN, the generator simply takes a (most likely randomly generated latent vector) and generate the images. However, people actually have little control over the latent vector. What if, say, we want to fuse two images, and take one image's overall looks and the other image's styles? We cannot brute-forcely add up, or take the mean of, their latent vector. We need to somehow distangle the part of the vector that controls the style.
 
-    So that's the reason of the Style GAN and its AdaIN. The general architure of the generator of StyleGAN is already list above (when introducing the AdaIN). The basic idea is that, different part of the generators (4x4 and 8x8) controls different features. The paper mentioned that the first half of the generator controls more on the overall looks of the images (i.e, male or female), whereas the latter part of the network controls more on the style (hair, glasses, expressions). Thus, by feeding two style vectors from different source images, we can essentially fuse the style of one images into the other.
-    ![StyleGAN Demo]({{ '/assets/images/team08/stylegan.png' | relative_url }})
-    {: style="width: 800; max-width: 150%;"}
-    *Fig 11. Demo for StyleGAN. (Image source: <https://arxiv.org/pdf/1812.04948.pdf>)*
 
-## Drawbacks
+### StyleGan: Synthesize the Style
+
+Learning about StarGAN, and how it uses AdaIN to fuse the style features and the input features, we have to mention the first work that propose AdaIN: StyleGAN.
+
+We know that for traiditonal GAN, the generator simply takes a (most likely randomly generated latent vector) and generate the images. However, people actually have little control over the latent vector. What if, say, we want to fuse two images, and take one image's overall looks and the other image's styles? We cannot brute-forcely add up, or take the mean of, their latent vector. We need to somehow distangle the part of the vector that controls the style.
+
+So that's the reason of the Style GAN and its AdaIN. The general architure of the generator of StyleGAN is already list above (when introducing the AdaIN). The basic idea is that, different part of the generators (4x4 and 8x8) controls different features. The paper mentioned that the first half of the generator controls more on the overall looks of the images (i.e, male or female), whereas the latter part of the network controls more on the style (hair, glasses, expressions). Thus, by feeding two style vectors from different source images, we can essentially fuse the style of one images into the other.
+![StyleGAN Demo]({{ '/assets/images/team08/stylegan.png' | relative_url }})
+{: style="width: 800; max-width: 150%;"}
+*Fig 11. Demo for StyleGAN. (Image source: <https://arxiv.org/pdf/1812.04948.pdf>)*
+
 No one is perfect, and so does the GAN. There are some drawbacks for the networks we mentioned. Note some of them are found by ourselves and may not being well-analyzed.
-
-For the first order motion model, the pretrained-model is highly sensitive and only works well on the images similar to its training set. If, for exmaple, the model is trained on face images, then the model will perform poorly for images which the face takes small peace.
 
 For the StarGAN, according to the [analysis](https://www.researchgate.net/publication/336880524_Comparative_Review_of_Cross-Domain_Generative_Adversarial_Networks/fulltext/5db875904585151435d1609a/Comparative-Review-of-Cross-Domain-Generative-Adversarial-Networks.pdf), it poorly handles some specific attributes, such as age and glasses. It will produce unrealistic images in such case.
 
