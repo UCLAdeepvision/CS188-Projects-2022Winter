@@ -223,7 +223,7 @@ The StarGAN v2 model is an image-to-image translation framework that can generat
 
 ![StarGAN v2 Demo]({{ '/assets/images/team08/celebahq_interpolation.gif' | relative_url }})
 {: style="max-width: 100%;"}
-*Fig 4. StarGAN v2 on CelebA-HQ Dataset. (Image source: <https://github.com/clovaai/stargan-v2/blob/master/assets/celebahq_interpolation.gif>)*
+*Fig 5. StarGAN v2 on CelebA-HQ Dataset. (Image source: <https://github.com/clovaai/stargan-v2/blob/master/assets/celebahq_interpolation.gif>)*
 
 * Framework
     - **Generator** $$G(\mathbf{x}, \mathbf{s})$$ generates an image with an input image $$\mathbf{x}$$ and style code $$\mathbf{s}$$. Notice that $$G$$ deviates from the origianl GAN model in that it takes in two inputs. This formulation was first proposed in [Image-to-Image Translation with Conditional Adversarial Networks](https://arxiv.org/abs/1611.07004) as conditional GANs (cGANs) are suitable for image-to-image generation tasks, in which we generate an image conditioning on a source image (in this case, image $$\mathbf{x}$$). 
@@ -239,7 +239,7 @@ The StarGAN v2 model is an image-to-image translation framework that can generat
         {:.center}
         ![AdaIN figure]({{ '/assets/images/team08/AdaIN.png' | relative_url }})
         {: style="max-width: 60%;"}
-        *Fig 5. Demonstration of AdaIN operation. (Image source: <https://arxiv.org/pdf/1812.04948.pdf>)*
+        *Fig 6. Demonstration of AdaIN operation. (Image source: <https://arxiv.org/pdf/1812.04948.pdf>)*
     Below are the structures of the generators
     ```python
     def forward(self, x, s, masks=None):
@@ -279,7 +279,7 @@ The StarGAN v2 model is an image-to-image translation framework that can generat
     {:.center}
     ![Overview of StarGAN v2]({{ '/assets/images/team08/starGAN_framework.png' | relative_url }})
     {: style="max-width: 100%;"}
-    *Fig 6. Overview of StarGAN v2 framework. (Image source: <https://arxiv.org/pdf/1812.04948.pdf>)*
+    *Fig 7. Overview of StarGAN v2 framework. (Image source: <https://arxiv.org/pdf/1812.04948.pdf>)*
 
 * Learning objective functions<br>
     Notations that we will use below: an input image $$\mathbf{x} \in \mathcal{X}$$ and its original domain $$\mathbf{y} \in \mathcal{Y}$$; a latent code $$\mathbf{z} \in \mathcal{Z}$$; a target domain $$\tilde{y} \in \mathcal{Y}$$ and style code $$\tilde{\mathbf{s}}$$.
@@ -312,7 +312,7 @@ The StarGAN v2 model is an image-to-image translation framework that can generat
         {:.center}
         ![Illustration of Reconstruction Loss]({{ '/assets/images/team08/reconstruction_loss.png' | relative_url }})
         {: style="max-width: 100%;"}
-        *Fig 7. Reconstruction Loss in Multimodal Unsupervised Image-to-Image Translation. (Image source: <https://arxiv.org/pdf/1804.04732.pdf>)*
+        *Fig 8. Reconstruction Loss in Multimodal Unsupervised Image-to-Image Translation. (Image source: <https://arxiv.org/pdf/1804.04732.pdf>)*
     Below are the code snip defining the Style reconstruction loss
     ```python
     s_pred = nets.style_encoder(x_fake, y_trg)
@@ -329,7 +329,7 @@ The StarGAN v2 model is an image-to-image translation framework that can generat
         {:.center}
         ![Illustration of mode collapose]({{ '/assets/images/team08/mode_collapse.png' | relative_url }})
         {: style="max-width: 100%;"}
-        *Fig 8. Illustration of mode collapose. (Image source: <https://arxiv.org/pdf/1903.05628.pdf>)*
+        *Fig 9. Illustration of mode collapose. (Image source: <https://arxiv.org/pdf/1903.05628.pdf>)*
 
         While original regularization term has the difference $$\|\mathbf{z}_1 - \mathbf{z}_2 \|_1$$ in the denominator, the StarGAN v2 model removes this for the sake of stability of training process (the difference $$\|\mathbf{z}_1 - \mathbf{z}_2 \|_1$$ is small and thus increase the loss significantly).
     Below are the code snip defining the Style diversification loss
@@ -356,7 +356,7 @@ The StarGAN v2 model is an image-to-image translation framework that can generat
         {:.center}
         ![Illustration of cycle consistency loss]({{ '/assets/images/team08/cycle_consistency_loss.png' | relative_url }})
         {: style="max-width: 100%;"}
-        *Fig 9. Illustration of Cylce Consistency Loss. (Image source: <https://arxiv.org/pdf/1703.10593.pdf>)*
+        *Fig 10. Illustration of Cylce Consistency Loss. (Image source: <https://arxiv.org/pdf/1703.10593.pdf>)*
     Below are the code snip defining the cycle consistency loss
     ```python
     masks = nets.fan.get_heatmap(x_fake) if args.w_hpf > 0 else None
@@ -377,6 +377,32 @@ The StarGAN v2 model is an image-to-image translation framework that can generat
     loss = loss_adv + args.lambda_sty * loss_sty \
     - args.lambda_ds * loss_ds + args.lambda_cyc * loss_cyc
     ```
+### StyleGan: synthesize the Style
+    Learning about StarGAN, and how it uses AdaIN to fuse the style features and the input features, we have to mention the first work that propose AdaIN: StyleGAN
+    
+    We know that for traiditonal GAN, the generator simply takes a (most likely randomly generated latent vector) and generate the images. However, people actually have little control over the latent vector. What if, say, we want to fuse two images, and take one image's overall looks and the other image's styles? We cannot brute-forcely add up, or take the mean of, their latent vector. We need to somehow distangle the part of the vector that controls the style.
+
+    So that's the reason of the Style GAN and its AdaIN. The general architure of the generator of StyleGAN is already list above (when introducing the AdaIN). The basic idea is that, different part of the generators (4x4 and 8x8) controls different features. The paper mentioned that the first half of the generator controls more on the overall looks of the images (i.e, male or female), whereas the latter part of the network controls more on the style (hair, glasses, expressions). Thus, by feeding two style vectors from different source images, we can essentially fuse the style of one images into the other.
+    ![StyleGAN Demo]({{ '/assets/images/team08/stylegan.png' | relative_url }})
+    {: style="width: 800; max-width: 150%;"}
+    *Fig 11. Demo for StyleGAN. (Image source: <https://arxiv.org/pdf/1812.04948.pdf>)*
+
+## Drawbacks
+No one is perfect, and so does the GAN. There are some drawbacks for the networks we mentioned. Note some of them are found by ourselves and may not being well-analyzed.
+
+For the first order motion model, the pretrained-model is highly sensitive and only works well on the images similar to its training set. If, for exmaple, the model is trained on face images, then the model will perform poorly for images which the face takes small peace.
+
+For the StarGAN, according to the [analysis](https://www.researchgate.net/publication/336880524_Comparative_Review_of_Cross-Domain_Generative_Adversarial_Networks/fulltext/5db875904585151435d1609a/Comparative-Review-of-Cross-Domain-Generative-Adversarial-Networks.pdf), it poorly handles some specific attributes, such as age and glasses. It will produce unrealistic images in such case.
+
+For the StyleGAN, the synthesisted images  is highly dependent on the abosulte coordinates of the pixel. There is a recent version: StyleGAN3, that handles the problem, as shown in the video.
+
+![StyleGAN3 Demo]({{ '/assets/images/team08/styleganv3.gif' | relative_url }})
+{: style="width: 800; max-width: 150%;"}
+*Fig 12. Demo for StyleGAN3. (Image source: <https://nvlabs.github.io/stylegan3/>)*
+
+
+
+
 ## Relevant Papers
 
 1. [First Order Motion Model for Image Animation](https://arxiv.org/abs/2003.00196)<br>
@@ -398,3 +424,9 @@ The StarGAN v2 model is an image-to-image translation framework that can generat
 8. [Multimodal Unsupervised Image-to-Image Translation](https://arxiv.org/abs/1804.04732)
 
 9. [Deep Image Spatial Transformation for Person Image Generation](https://arxiv.org/abs/2003.00696)
+
+10. [A Style-Based Generator Architecture for Generative Adversarial Networks](https://arxiv.org/pdf/1812.04948.pdf)
+
+11. [Comparative Review of Cross-Domain Generative Adversarial Networks](https://www.researchgate.net/publication/336880524_Comparative_Review_of_Cross-Domain_Generative_Adversarial_Networks/fulltext/5db875904585151435d1609a/Comparative-Review-of-Cross-Domain-Generative-Adversarial-Networks.pdf)
+
+12. [Alias-Free Generative Adversarial Networks (StyleGAN3)](https://nvlabs.github.io/stylegan3/)
