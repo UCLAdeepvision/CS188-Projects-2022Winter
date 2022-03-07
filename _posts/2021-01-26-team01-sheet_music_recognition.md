@@ -9,11 +9,14 @@ date: 2022-01-26
 
 > Sheet Music Recognition is a difficult task. [Zaragoza et al.](URL 'https://www.mdpi.com/2076-3417/8/4/606') devised a method for recognizing monophonic scores (one staff). We extend this functionality for piano sheet music (grand staff) that have are monophonic in each staff (treble and bass).
 
-
-<!--more-->
-{: class="table-of-content"}
-* TOC
-{:toc}
+## Table of contents
+* [Main Content](https://github.com/NingWang1729/CS188-Projects-2022Winter/blob/main/_posts/2021-01-26-team01-sheet_music_recognition.md#main-content)
+* [OMR Introduction](https://github.com/NingWang1729/CS188-Projects-2022Winter/blob/main/_posts/2021-01-26-team01-sheet_music_recognition.md#an-end-to-end-approach-to-optical-music-recognition)
+* [Primus Dataset](https://github.com/NingWang1729/CS188-Projects-2022Winter/blob/main/_posts/2021-01-26-team01-sheet_music_recognition.md#a-deep-learning-solution)
+* [Improvement](https://github.com/NingWang1729/CS188-Projects-2022Winter/blob/main/_posts/2021-01-26-team01-sheet_music_recognition.md#improving-upon-the-paper)
+* [Results](https://github.com/NingWang1729/CS188-Projects-2022Winter/blob/main/_posts/2021-01-26-team01-sheet_music_recognition.md#results)
+* [Conclusions](https://github.com/NingWang1729/CS188-Projects-2022Winter/blob/main/_posts/2021-01-26-team01-sheet_music_recognition.md#overall-conclusions)
+* [Reference](https://github.com/NingWang1729/CS188-Projects-2022Winter/blob/main/_posts/2021-01-26-team01-sheet_music_recognition.md#reference)
 
 ## Main Content
 This project was inspired by [Zaragoza et al.](URL 'https://www.mdpi.com/2076-3417/8/4/606'). We extend the monophonic score reader by parsing grand staves from piano sheet music. Thus, we add a stage in the pipeline to first identify any grand staves before separating them into treble and bass. Each individual staff is then feed into the current pipeline. 
