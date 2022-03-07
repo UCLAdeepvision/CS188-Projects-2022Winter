@@ -7,7 +7,7 @@ date: 2022-01-26
 ---
 
 
-> Sheet Music Recognition is a difficult task. [Zaragoza et al.](URL 'https://www.mdpi.com/2076-3417/8/4/606') devised a method for recognizing monophonic scores (one staff). We extend this functionality for piano sheet music (grand staff) that have are monophonic in each staff (treble and bass).
+> Sheet Music Recognition is a difficult task. [Zaragoza et al.](URL 'https://www.mdpi.com/2076-3417/8/4/606') devised a method for recognizing monophonic scores (one staff). We extend this functionality for piano sheet music (grand staff) that have are monophonic in each staff (treble and bass). https://github.com/NingWang1729/tf-end-to-end
 
 ## Table of contents
 * [Main Content](https://github.com/NingWang1729/CS188-Projects-2022Winter/blob/main/_posts/2021-01-26-team01-sheet_music_recognition.md#main-content)
