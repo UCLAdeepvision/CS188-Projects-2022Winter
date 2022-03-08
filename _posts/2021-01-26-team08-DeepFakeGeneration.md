@@ -19,21 +19,21 @@ date: 2022-03-06
 {:toc}
 
 
-## What is deepfake?
-What is [deepfake](https://en.wikipedia.org/wiki/Deepfake/)? It is a newly emerged term created by some reddit users. In short, it refers to using [deep learning](https://en.wikipedia.org/wiki/Deep_learning) to generate "fake" images, which look like photos captured in the real world but is not.
+## What is DeepFake?
+What is [DeepFake](https://en.wikipedia.org/wiki/Deepfake)? Originally, it was a term created by some reddit users. It now refers to using [deep learning](https://en.wikipedia.org/wiki/Deep_learning) to generate "fake" images, which look like photos captured in the real world but is not.
 
-The most heated use of deep fake is to do the face swapping, whichis the subset of a broader definition called "deepfake generation".  As you might see in recent years, more and more people get access to well-performed deep fake algorithms and create funny, weird images that might even cause problems.
+The most heated use of deep fake is to do the face swapping, which is the subset of a broader definition called "DeepFake generation".  As you might see in recent years, more and more people get access to well-performed deep fake algorithms and create funny, weird images that might even cause problems.
 
-Here is an example of using deepfake generation:
+Here is an example of using DeepFake generation:
 
-![deepfake example]({{ '/assets/images/team08/Mona-Lisa-deepfake.png' | relative_url }})
+![DeepFake example]({{ '/assets/images/team08/Mona-Lisa-deepfake.png' | relative_url }})
 {: style="width: 800; max-width: 150%;"}
-*Fig 1. A example of deepfake generation. (Image source: <https://news.artnet.com/art-world/mona-lisa-deepfake-video-1561600>)*
+*Fig 1. A example of DeepFake generation. (Image source: <https://news.artnet.com/art-world/mona-lisa-deepfake-video-1561600>)*
 
-As deepfake generation might cause many problems (such as fake news!), the other popular subtract is deepfake detection, where we try to build the network that can identify real images from fake, generated images.
+As DeepFake generation might cause many problems (such as fake news!), the other popular sub-topic is DeepFake detection, where we try to build the network that can identify real images from fake, generated images.
 
 ## Core ideas: GAN
-GAN ("Generative adversarial network") is the core framework behind most of the deepfake algorithms. The idea is simple, for deepfake generators, the more easily you can trick the human eyes, the better your algorithm is. And for the deepfake detector, the more easily you can detect the fake image, the better. However, we cannot train a deepfake generators by manually evaluating how good the result is-we need the help of the detector. 
+GAN ("Generative adversarial network") is the core framework behind most of the DeepFake algorithms. The idea is simple, for DeepFake generators, the more easily you can trick the human eyes, the better your algorithm is. And for the DeepFake detector, the more easily you can detect the fake image, the better. However, we cannot train a DeepFake generators by manually evaluating how good the result is-we need the help of the detector. 
 
 That brings the idea of "adversarial": the generator tries to fool the detector, and the detector tries to detect every fake image produced by the generator. And we train these two network at the same time.
 
@@ -41,7 +41,7 @@ That brings the idea of "adversarial": the generator tries to fool the detector,
 {: style="width: 800; max-width: 150%;"}
 *Fig 2. A simple structure for GAN network. (Image source: <https://neptune.ai/blog/6-gan-architectures>)*
 
-Below we mainly focus on two applications, **Image Animation** and **Image-to-image Translation**, of DeepFake Generation. 
+Below we mainly focus on two applications, **Image Animation** and **Image-to-image Translation**, of the DeepFake generation. 
 
 ## Image Animation
 
@@ -202,20 +202,22 @@ def forward(self, source_image, kp_driving, kp_source):
 
 Although the first-order motion model achieves pretty good performance, it actually leads to compromised results in some cases. For example, we tried to set the images of ourselves as the source image. However, the keypoints detection were not accurate and the animation result looks unnatuaral in some cases, especially when the source image is not cropped to roughly align with the driving video. 
 
-Additionally, for the first order motion model, the pretrained-model is highly sensitive and only works well on the images similar to its training set. If, for exmaple, the model is trained on face images, then the model will perform poorly for images which the face takes small place.
+Additionally, for the first order motion model, the pretrained-model is highly sensitive and only works well on the images similar to its training set. If, for exmaple, the model is trained on face images, then the model will perform poorly for images where the face takes small place. (To try out yourself, the Colab [demo](https://drive.google.com/drive/folders/1RRiqMyUGs4wAJ_pcQ56I_WKjuZKXqZVV?usp=sharing) we provide might be helpful.)
 
-Here we also introduce another framework that can accomplish the image animation task, [the Global-Flow Local-Attention framework](https://arxiv.org/abs/2003.00696). Similar to the first-order motion model, this framework composes of two parts: Global Flow Field Estimator and Local Neural Texture Renderer. The Global Flow Field Estimator employs a flow-based method to extract the global correlations and generate flow fields, while the Local Neural Texture Renderer uses a local-attention mechanism to spatially transform the information from the source to target. Below shows a example video generated from the source image. Since this method is originally proposed for the task of pose-guided person image generation, edge guidance is also shown. (resolution of the demo slightly compromised when converting from video to gif) 
+Here we also introduce another framework that can accomplish the Image Animation task, [the Global-Flow Local-Attention framework](https://arxiv.org/abs/2003.00696). Similar to the first-order motion model, this framework composes of two parts: **Global Flow Field Estimator** and **Local Neural Texture Renderer**. The Global Flow Field Estimator employs a flow-based method to extract the global correlations and generate flow fields, while the Local Neural Texture Renderer uses a local-attention mechanism to spatially transform the information from the source to target. Below shows a example video generated from the source image. Since this method is originally proposed for the task of pose-guided person image generation, edge guidance is also shown. (resolution of the demo slightly compromised when converting from video to gif) 
 
 {:.center}
 ![Global-Flow Local-Attention demo]({{ '/assets/images/team08/global-flow-local-attention.gif' | relative_url }})
 {: style="width: 800; max-width: 40%;"}
 *Fig 4. A demo of the Global-Flow-Local-Attention model application on image animation.(Video source: <https://drive.google.com/file/d/1YJfGzpCZ0ZDtbyRrEEBXtH-qSHHB8ltT/view?usp=sharing>)*
 
-However, this method also have some drawbacks. This method requires an explicit edge guidance video. This edge guidance video is processed from a sequence of source images in the demo provided. While this method generates videos with vivid details, it also require more source images in some sense. 
+However, this method also has some drawbacks. This method requires an explicit edge guidance video. This edge guidance video is processed from a sequence of source images in the demo provided. While this method generates videos with vivid details, it also require more source images in some sense. 
 
-We do not provide a detailed explanation of the Global-Flow Local-Attention framework here. Readers that are interested in this method may refer to the original paper.
+We do not provide a detailed explanation of the Global-Flow Local-Attention framework here. Readers who are interested in this method may refer to the original paper.
 
 ## Image-to-image Translation
+
+
 
 ### StarGAN v2: Diverse Image Synthesis for Multiple Domains
 
@@ -242,35 +244,34 @@ The StarGAN v2 model is an image-to-image translation framework that can generat
         ![AdaIN figure]({{ '/assets/images/team08/AdaIN.png' | relative_url }})
         {: style="max-width: 60%;"}
         *Fig 6. Demonstration of AdaIN operation. (Image source: <https://arxiv.org/pdf/1812.04948.pdf>)*
-    Below are the structures of the generators
-    ```python
-    def forward(self, x, s, masks=None):
-        x = self.from_rgb(x)
-        cache = {}
-        for block in self.encode:
-            if (masks is not None) and (x.size(2) in [32, 64, 128]):
-                cache[x.size(2)] = x
-            x = block(x)
-        for block in self.decode:
-            x = block(x, s)
-            if (masks is not None) and (x.size(2) in [32, 64, 128]):
-                mask = masks[0] if x.size(2) in [32] else masks[1]
-                mask = F.interpolate(mask, size=x.size(2), mode='bilinear')
-                x = x + self.hpf(mask * cache[x.size(2)])
-        return self.to_rgb(x)
-    ```
-        Note that the self.encode and self.decode contains the AdaIN blocks mention above
-    ```python
-    for _ in range(2):
-        self.encode.append(
-            ResBlk(dim_out, dim_out, normalize=True))
-        self.decode.insert(
-            0, AdainResBlk(dim_out, dim_out, style_dim, w_hpf=w_hpf))
-    if w_hpf > 0:
-        device = torch.device(
-            'cuda' if torch.cuda.is_available() else 'cpu')
-        self.hpf = HighPass(w_hpf, device)
-    ```
+
+        Below are the structures of the generators:
+        ```python
+        def forward(self, x, s, masks=None):
+            x = self.from_rgb(x)
+            cache = {}
+            for block in self.encode:
+                if (masks is not None) and (x.size(2) in [32, 64, 128]):
+                    cache[x.size(2)] = x
+                x = block(x)
+            for block in self.decode:
+                x = block(x, s)
+                if (masks is not None) and (x.size(2) in [32, 64, 128]):
+                    mask = masks[0] if x.size(2) in [32] else masks[1]
+                    mask = F.interpolate(mask, size=x.size(2), mode='bilinear')
+                    x = x + self.hpf(mask * cache[x.size(2)])
+            return self.to_rgb(x)
+        ## Note that the self.encode and self.decode contains the AdaIN blocks mention above
+        for _ in range(2):
+            self.encode.append(
+                ResBlk(dim_out, dim_out, normalize=True))
+            self.decode.insert(
+                0, AdainResBlk(dim_out, dim_out, style_dim, w_hpf=w_hpf))
+        if w_hpf > 0:
+            device = torch.device(
+                'cuda' if torch.cuda.is_available() else 'cpu')
+            self.hpf = HighPass(w_hpf, device)
+        ```
 
     - **Mapping network** $$F_y(\mathbf{z})$$ takes in a latent code $$\mathbf{z}$$ outputs a style code $$s$$ corresponding to the domain $$y$$. $$F$$ can produce diverse style codes by sampling $$z \in \mathcal{Z}$$ and $$y \in \mathcal{Y}$$ randomly.
 
@@ -292,14 +293,15 @@ The StarGAN v2 model is an image-to-image translation framework that can generat
         $$
 
         where the latent code $$\mathbf{z}$$ and target domain $$\tilde{y}$$ are sampled randomly in training and $$\tilde{s} = F_{\tilde{y}}(\mathbf{z})$$. 
-    Below are the code snip defining the adversial loss
-    ```python
-    def adv_loss(logits, target):
-        assert target in [1, 0]
-        targets = torch.full_like(logits, fill_value=target)
-        loss = F.binary_cross_entropy_with_logits(logits, targets)
-        return loss
-    ```
+
+        Below are the code snip defining the adversial loss:
+        ```python
+        def adv_loss(logits, target):
+            assert target in [1, 0]
+            targets = torch.full_like(logits, fill_value=target)
+            loss = F.binary_cross_entropy_with_logits(logits, targets)
+            return loss
+        ```
     - **Style reconstruction**
 
         $$
@@ -315,11 +317,12 @@ The StarGAN v2 model is an image-to-image translation framework that can generat
         ![Illustration of Reconstruction Loss]({{ '/assets/images/team08/reconstruction_loss.png' | relative_url }})
         {: style="max-width: 100%;"}
         *Fig 8. Reconstruction Loss in Multimodal Unsupervised Image-to-Image Translation. (Image source: <https://arxiv.org/pdf/1804.04732.pdf>)*
-    Below are the code snip defining the Style reconstruction loss
-    ```python
-    s_pred = nets.style_encoder(x_fake, y_trg)
-    loss_sty = torch.mean(torch.abs(s_pred - s_trg))
-    ```
+    
+        Below are the code snip defining the Style reconstruction loss:
+        ```python
+        s_pred = nets.style_encoder(x_fake, y_trg)
+        loss_sty = torch.mean(torch.abs(s_pred - s_trg))
+        ```
     - **Style diversification** 
 
         $$
@@ -334,16 +337,17 @@ The StarGAN v2 model is an image-to-image translation framework that can generat
         *Fig 9. Illustration of mode collapose. (Image source: <https://arxiv.org/pdf/1903.05628.pdf>)*
 
         While original regularization term has the difference $$\|\mathbf{z}_1 - \mathbf{z}_2 \|_1$$ in the denominator, the StarGAN v2 model removes this for the sake of stability of training process (the difference $$\|\mathbf{z}_1 - \mathbf{z}_2 \|_1$$ is small and thus increase the loss significantly).
-    Below are the code snip defining the Style diversification loss
-    ```python
-    if z_trgs is not None:
-        s_trg2 = nets.mapping_network(z_trg2, y_trg)
-    else:
-        s_trg2 = nets.style_encoder(x_ref2, y_trg)
-    x_fake2 = nets.generator(x_real, s_trg2, masks=masks)
-    x_fake2 = x_fake2.detach()
-    loss_ds = torch.mean(torch.abs(x_fake - x_fake2))
-    ```
+
+        Below are the code snip defining the Style diversification loss: 
+        ```python
+        if z_trgs is not None:
+            s_trg2 = nets.mapping_network(z_trg2, y_trg)
+        else:
+            s_trg2 = nets.style_encoder(x_ref2, y_trg)
+        x_fake2 = nets.generator(x_real, s_trg2, masks=masks)
+        x_fake2 = x_fake2.detach()
+        loss_ds = torch.mean(torch.abs(x_fake - x_fake2))
+        ```
     - **Preserving source characteristics**
 
         $$
@@ -359,13 +363,15 @@ The StarGAN v2 model is an image-to-image translation framework that can generat
         ![Illustration of cycle consistency loss]({{ '/assets/images/team08/cycle_consistency_loss.png' | relative_url }})
         {: style="max-width: 100%;"}
         *Fig 10. Illustration of Cylce Consistency Loss. (Image source: <https://arxiv.org/pdf/1703.10593.pdf>)*
-    Below are the code snip defining the cycle consistency loss
-    ```python
-    masks = nets.fan.get_heatmap(x_fake) if args.w_hpf > 0 else None
-    s_org = nets.style_encoder(x_real, y_org)
-    x_rec = nets.generator(x_fake, s_org, masks=masks)
-    loss_cyc = torch.mean(torch.abs(x_rec - x_real))
-    ```
+
+        Below are the code snip defining the cycle consistency loss
+        ```python
+        masks = nets.fan.get_heatmap(x_fake) if args.w_hpf > 0 else None
+        s_org = nets.style_encoder(x_real, y_org)
+        x_rec = nets.generator(x_fake, s_org, masks=masks)
+        loss_cyc = torch.mean(torch.abs(x_rec - x_real))
+        ```
+
     Combine the above objectives, the full objective is 
 
     $$
@@ -374,7 +380,7 @@ The StarGAN v2 model is an image-to-image translation framework that can generat
 
 
     where $$\lambda_{sty}$$, $$\lambda_{ds}$$ and $$\lambda_{cyc}$$ are hyperparamters for the regularization terms. 
-    Below are the code snip showing the overall loss functions.
+    Below are the code snip showing the overall loss functions:
     ```python
     loss = loss_adv + args.lambda_sty * loss_sty \
     - args.lambda_ds * loss_ds + args.lambda_cyc * loss_cyc
@@ -385,7 +391,7 @@ The StarGAN v2 model is an image-to-image translation framework that can generat
 
 Learning about StarGAN, and how it uses AdaIN to fuse the style features and the input features, we have to mention the first work that propose AdaIN: StyleGAN.
 
-We know that for traiditonal GAN, the generator simply takes a (most likely randomly generated latent vector) and generate the images. However, people actually have little control over the latent vector. What if, say, we want to fuse two images, and take one image's overall looks and the other image's styles? We cannot brute-forcely add up, or take the mean of, their latent vector. We need to somehow distangle the part of the vector that controls the style.
+We know that for traiditonal GAN, the generator ususally takes a randomly generated latent vector and generates the images. However, people actually have little control over the latent vector. What if, say, we want to fuse two images, and take one image's overall looks and the other image's styles? We cannot brute-forcely add up, or take the mean of, their latent vector. We need to somehow disentangle the parts of the vector that controls the style.
 
 So that's the reason of the Style GAN and its AdaIN. The general architure of the generator of StyleGAN is already list above (when introducing the AdaIN). The basic idea is that, different part of the generators (4x4 and 8x8) controls different features. The paper mentioned that the first half of the generator controls more on the overall looks of the images (i.e, male or female), whereas the latter part of the network controls more on the style (hair, glasses, expressions). Thus, by feeding two style vectors from different source images, we can essentially fuse the style of one images into the other.
 ![StyleGAN Demo]({{ '/assets/images/team08/stylegan.png' | relative_url }})
@@ -394,9 +400,9 @@ So that's the reason of the Style GAN and its AdaIN. The general architure of th
 
 No one is perfect, and so does the GAN. There are some drawbacks for the networks we mentioned. Note some of them are found by ourselves and may not being well-analyzed.
 
-For the StarGAN, according to the [analysis](https://www.researchgate.net/publication/336880524_Comparative_Review_of_Cross-Domain_Generative_Adversarial_Networks/fulltext/5db875904585151435d1609a/Comparative-Review-of-Cross-Domain-Generative-Adversarial-Networks.pdf), it poorly handles some specific attributes, such as age and glasses. It will produce unrealistic images in such case.
+For the StarGAN, according to the [analysis](https://www.researchgate.net/publication/336880524_Comparative_Review_of_Cross-Domain_Generative_Adversarial_Networks/fulltext/5db875904585151435d1609a/Comparative-Review-of-Cross-Domain-Generative-Adversarial-Networks.pdf) and from our experiment (please see the [demo](https://drive.google.com/drive/folders/1RRiqMyUGs4wAJ_pcQ56I_WKjuZKXqZVV?usp=sharing) in the Colab), it poorly handles some specific attributes, such as age and glasses. It will produce unrealistic images in such cases.
 
-For the StyleGAN, the synthesisted images  is highly dependent on the abosulte coordinates of the pixel. There is a recent version: StyleGAN3, that handles the problem, as shown in the video.
+For the StyleGAN, the synthesisted image is highly dependent on the abosulte coordinates of the pixel. The recent version, StyleGAN3, handles the problem as shown in the demonstration below.
 
 ![StyleGAN3 Demo]({{ '/assets/images/team08/styleganv3.gif' | relative_url }})
 {: style="width: 800; max-width: 150%;"}
