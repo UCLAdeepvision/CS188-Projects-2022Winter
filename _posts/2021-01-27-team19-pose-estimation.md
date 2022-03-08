@@ -206,6 +206,10 @@ Pose estimation has applications in a number of areas.
     * Snapchat's [Lens Studio](https://lensstudio.snapchat.com/), a form of augmented reality
 
 
+### [Colab Code](https://colab.research.google.com/drive/1TjSsL1ojQ9BX34g6KNI8u08vqeYdZeK1?usp=sharing)
+
+In order to test OpenPose on your chosen YouTube video, make a copy of the included Colab code and replace YOUTUBE_ID with the number following "v=" in the YouTube link. This works best if the video is under 4 minutes and available in the country, which can be done using the filter option on YouTube searches. The start time of the five seconds that will be analyzed can also be changed.
+
 ## Reference
 
 [1] Cao, Zhe, et al. "OpenPose: Realtime Multi-Person 2D Pose Estimation using Part Affinity Fields" arXiv preprint arXiv:1812.08008 (2019).<br>
