@@ -16,7 +16,7 @@ date: 2022-01-26
 * [Improvement](https://github.com/NingWang1729/CS188-Projects-2022Winter/blob/main/_posts/2021-01-26-team01-sheet_music_recognition.md#improving-upon-the-paper)
 * [Results](https://github.com/NingWang1729/CS188-Projects-2022Winter/blob/main/_posts/2021-01-26-team01-sheet_music_recognition.md#results)
 * [Conclusions](https://github.com/NingWang1729/CS188-Projects-2022Winter/blob/main/_posts/2021-01-26-team01-sheet_music_recognition.md#overall-conclusions)
-* [Demonstration](https://github.com/NingWang1729/CS188-Projects-2022Winter/blob/main/_posts/2021-01-26-team01-sheet_music_recognition.md#demo)
+* [Demonstration](https://github.com/NingWang1729/CS188-Projects-2022Winter/blob/main/_posts/2021-01-26-team01-sheet_music_recognition.md#demonstration)
 * [Reference](https://github.com/NingWang1729/CS188-Projects-2022Winter/blob/main/_posts/2021-01-26-team01-sheet_music_recognition.md#reference)
 
 ## Main Content
