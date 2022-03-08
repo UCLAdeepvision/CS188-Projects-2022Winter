@@ -50,7 +50,7 @@ There are two types of components of the network. One type which looks at intera
 ### Polyline Subgraphs
 
 For a given polyline, $$P$$, a single layer of subgraph propagation is formulated as :
-$$ v*i^{(l+1)} = \varphi*{rel}(g*{enc}(v_i^{(l)}, \varphi*{agg}(\{g\_{enc}(v_j^{(l)})\}))$$
+$$ v_i^{(l+1)} = \varphi_{rel}(g_{enc}(v_i^{(l)}, \varphi_{agg}(\{g_{enc}(v_j^{(l)})\}))$$
 Where:
 
 - $$ v_i^{(l)}$$ is the node feature for the $$l$$-th layer of the subgraph network
@@ -86,7 +86,7 @@ Where:
   - It can be assumed that the polyline graph is a fully connected graph and $$A$$ can be computed using spatial distance as a heuristic.
 
 Future trajectories can thus be decoded from the nodes corresponding to the moving agents
-$$ v*i^{future} = \varphi*{traj}(p_i^{(L_t)}) $$
+$$ v_i^{future} = \varphi_{traj}(p_i^{(L_t)}) $$
 Where:
 
 - $$L_t$$ is the total number of $$\text{GNN}$$ layers.
@@ -99,7 +99,7 @@ Therefore the values produced by the last layer are passed through the decoder f
 An auxiliary objective is introduced to encourage the global interaction graph to better capture interactions among different trajectories and map polylines.
 
 During training time, the model randomly masks out the features for a subset of polyline nodes, say, $$p_i$$, and the objective is to recover the masked out features as :
-$$ \hat{p*i} = \varphi*{node}(p_i^{(L_t)}) $$
+$$ \hat{p_i} = \varphi_{node}(p_i^{(L_t)}) $$
 Where:
 
 - $$\varphi_{node}$$ is the node feature decoder implemented as an MLP. This is not used during inference.
@@ -112,7 +112,7 @@ This task is similar to that used by the BERT language model that predicts missi
 ### Overall Structure
 
 The objective function is thus :
-$$ L = L*{traj} + \alpha L*{node}$$
+$$ L = L_{traj} + \alpha L_{node}$$
 Where:
 
 - $$L_{traj}$$ is the negative Gaussian log-likelihood for the ground-truth future trajectories
@@ -211,12 +211,12 @@ $$ H_t^{t} \in \mathbb{R}^{N_0 \times N_0 \times D}$$
 
 given by :
 
-$$ H*t^i(m, n, :) = \sum*{j\in \mathcal{N}_i} 1_{mn}[x_t^j - x_t^i, y_t^j - y_t^i]h\_{t-1}^j $$
+$$ H_t^i(m, n, :) = \sum_{j\in \mathcal{N}_i} 1_{mn}[x_t^j - x_t^i, y_t^j - y_t^i]h_{t-1}^j $$
 
 Where:
 
 - $$h_{t-1}^j$$ is the hidden state of the LSTM for the $$j^{th}$$ person at time $$t-1$$.
-- $$ 1\_{mn}[x, y] $$ is an indicator function to check if $$(x, y)$$ is in the cell $$(m, n)$$ of the grid.
+- $$ 1_{mn}[x, y] $$ is an indicator function to check if $$(x, y)$$ is in the cell $$(m, n)$$ of the grid.
 - $$\mathcal{N}_i$$ is the set of neighbours corresponding to person $$i$$.
 
 So each grid cell corresponds to a certain distance from the agent $$i$$. For each grid position, if a neighbouring trajectory is at that distance from $$i$$, the hidden state for that trajectory at that time step is added to the tensor at that grid cell position. This is done for all neighbouring agents and for all grid cell positions.
@@ -237,23 +237,23 @@ Where :
 
 ## Position Estimation
 
-The hidden state at time $$t$$ is used to predict the distribution of the trajectory position $$ (\hat{x}, \hat{y})^i\_{t+1} $$ at the next time step $$t+1$.
+The hidden state at time $$t$$ is used to predict the distribution of the trajectory position $$ (\hat{x}, \hat{y})^i_{t+1} $$ at the next time step $$t+1$$.
 
-The authors assume that the coordinates are given by a bivariate Gaussian distribution parameterized by the bivariate mean, standard deviation, and correlation coefficient at time $t+1$. Thus,
+The authors assume that the coordinates are given by a bivariate Gaussian distribution parameterized by the bivariate mean, standard deviation, and correlation coefficient at time $$t+1$$. Thus,
 
-$$ (\hat{x}, \hat{y})\_t^i \sim \mathcal{N}(\mu_t^i, \sigma_t^i, \rho_t^i) $$
+$$ (\hat{x}, \hat{y})_t^i \sim \mathcal{N}(\mu_t^i, \sigma_t^i, \rho_t^i) $$
 
 Where the Gaussian distribution parameters are predicted by a linear layer with a $$5\times D$$ weight matrix $$W_p$$ as follows :
 
 $$ [\mu_t^i, \sigma_t^i, \rho_t^i] = W_ph_i^{t-1} $$
 
-The parameters of the LSTm are learned by minimizing the negative log-likelihood loss $L_i$ for the $i^{th}$ trajectory for each trajectory in the training data set.
+The parameters of the LSTm are learned by minimizing the negative log-likelihood loss $$L_i$$ for the $$i^{th}$$ trajectory for each trajectory in the training data set.
 
 Since the hidden states of all the LSTMs are coupled by the social pooling layer, backpropagation is jointly performed through multiple LSTMs in the scene at every time step.
 
 ## Inference
 
-During test time, the social LSTM model is used to predict the future position $$ (\hat{x}\_t^i, \hat{y}\_t^i) $$ of the $$i^{th}$$ person.
+During test time, the social LSTM model is used to predict the future position $$ (\hat{x}_t^i, \hat{y}_t^i) $$ of the $$i^{th}$$ person.
 
 At each time step, the positions predicted by the social LSTM for each of the previous time steps is used as the input of the model instead of the true coordinates. These predicted coordinates also replace the true coordinates when constructing the social hidden state tensor.
 
