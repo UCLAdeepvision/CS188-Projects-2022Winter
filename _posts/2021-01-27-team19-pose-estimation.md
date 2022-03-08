@@ -184,13 +184,28 @@ RSN was created with the goal of having the accuracy of the DenseNet model witho
 
 The creators claim that the RSN model outperforms its predecessors on the MS COCO dataset, with better performance in many cases as well.
 
-## Innovation
-
-TODO (not for Feb 24)
 
 ## Applications
 
-TODO (not for Feb 24)
+Pose estimation has applications in a number of areas.
+
+* **Human Health and Performance** 
+    * Performing motor assessments on patients remotely, especially in pediatrics
+        * <em>this can detect disorders that cause atypical development in children</em>
+    * Evaluating athletic performances
+    * Analyzing gait, especially for people having a stroke or with dementia
+
+* **Driver Safety** 
+    * Identifying driver drowsiness or distraction with head pose estimation
+    * Predicting cyclists' behavior by their hand signs
+    * Vehicle pose estimation
+
+* **Entertainment** 
+    * Tracking hand poses instead of having players hold controllers in VR
+    * Producing deepfakes of dancing, like [Sway](https://getsway.app/) from Humen.Ai
+    * Snapchat's [Lens Studio](https://lensstudio.snapchat.com/), a form of augmented reality
+
+
 
 ## Markdown Syntax (delete later)
 
