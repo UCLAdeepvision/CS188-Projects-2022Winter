@@ -189,7 +189,7 @@ Next, we examine the semantic model for the bass clef for the same portion of Ba
 The YOLO model was able to correctly identify grand staffs. However, the following OMR model was not so luckly. It misread the clefs for the semantic, which meant the result would be transposed to the wrong key. However, the agnostic model showed that out of context, it could read what the music has written. These inperfections may largely due to the fact that the OMR was trained on monophonic scores. Thus, it was not used to reading piano scores. The training data contained other staves than treble and bass, which made a large amount of the training data irrelevant to the piano music. The other test examples shared similar patterns as described for these two staves (misidentified clefs but largely correct notes when transposed). Due to the absurdly high level of musical understanding required to parse these results and overwhelming intensity of transposing between clefs not usually familiar to pianists, no further test cases were used for these detailed evaluations.
 
 ## Demonstration:
-https://colab.research.google.com/drive/1Qgn8U2iB3LoddkgIT2nSDSJwal-ECuOs#scrollTo=IG57jS66cVPz
+https://colab.research.google.com/drive/1Qgn8U2iB3LoddkgIT2nSDSJwal-ECuOs
 
 https://youtu.be/uD7JU61pI_U
 
