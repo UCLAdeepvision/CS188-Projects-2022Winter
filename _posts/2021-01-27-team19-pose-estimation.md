@@ -183,7 +183,28 @@ The creators claim that the RSN model outperforms its predecessors on the MS COC
 
 ## Applications
 
-TODO (not for Feb 24)
+Pose estimation has applications in a number of areas.
+
+* **Human Health and Performance** 
+    * Performing motor assessments on patients remotely, especially in pediatrics
+        * <em>this can detect disorders that cause atypical development in children</em>
+    * Evaluating athletic performances
+    * Analyzing gait, especially for people having a stroke or with dementia
+
+* **Driver Safety** 
+    * Identifying driver drowsiness or distraction with head pose estimation
+    * Predicting cyclists' behavior by their hand signs
+    * Vehicle pose estimation
+
+* **Entertainment** 
+    * Tracking hand poses instead of having players hold controllers in VR
+    * Producing deepfakes of dancing, like [Sway](https://getsway.app/) from Humen.Ai
+    * Snapchat's [Lens Studio](https://lensstudio.snapchat.com/), a form of augmented reality
+
+
+### [Colab Code](https://colab.research.google.com/drive/1TjSsL1ojQ9BX34g6KNI8u08vqeYdZeK1?usp=sharing)
+
+In order to test OpenPose on your chosen YouTube video, make a copy of the included Colab code and replace YOUTUBE_ID with the number following "v=" in the YouTube link. This works best if the video is under 4 minutes and available in the country, which can be done using the filter option on YouTube searches. The start time of the five seconds that will be analyzed can also be changed.
 
 ## Paper References
 
