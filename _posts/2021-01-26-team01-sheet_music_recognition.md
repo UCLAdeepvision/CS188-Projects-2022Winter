@@ -7,7 +7,7 @@ date: 2022-01-26
 ---
 
 
-> Sheet Music Recognition is a difficult task. [Zaragoza et al.](URL 'https://www.mdpi.com/2076-3417/8/4/606') devised a method for recognizing monophonic scores (one staff). We extend this functionality for piano sheet music (grand staff) that have are monophonic in each staff (treble and bass). https://github.com/NingWang1729/tf-end-to-end
+> Sheet Music Recognition is a difficult task. [Zaragoza et al.](URL 'https://www.mdpi.com/2076-3417/8/4/606') devised a method for recognizing monophonic scores (one staff). We extend this functionality for piano sheet music with multiple staves (treble and bass). https://github.com/NingWang1729/tf-end-to-end
 
 ## Table of contents
 * [Main Content](https://github.com/NingWang1729/CS188-Projects-2022Winter/blob/main/_posts/2021-01-26-team01-sheet_music_recognition.md#main-content)
@@ -20,7 +20,7 @@ date: 2022-01-26
 * [Reference](https://github.com/NingWang1729/CS188-Projects-2022Winter/blob/main/_posts/2021-01-26-team01-sheet_music_recognition.md#reference)
 
 ## Main Content
-This project was inspired by [Zaragoza et al.](URL 'https://www.mdpi.com/2076-3417/8/4/606'). We extend the monophonic score reader by parsing grand staves from piano sheet music. Thus, we add a stage in the pipeline to first identify any grand staves before separating them into treble and bass. Each individual staff is then feed into the current pipeline. 
+This project was inspired by [Zaragoza et al.](URL 'https://www.mdpi.com/2076-3417/8/4/606'). We extend the monophonic score reader by parsing grand staves from piano sheet music. Thus, we add a stage in the pipeline to first identify any grand staves before separating them into treble and bass. Each individual staff is then fed into the current pipeline. 
 
 
 # An End-to-End Approach to Optical Music Recognition
@@ -33,7 +33,7 @@ As its name suggests, OMR is the field of research focused on training computers
 
 Traditional methods, not based in deep learning, break down OMR into multiple stages. Among other things, an initial pass will clean up the image by removing staff lines, find the bars that break a stave into measures, and detect the clefs that affect the interpretation of notes in pitches. Next, symbols are isolated and run through a classifier. Finally, the individual components are reassembled and reinterpreted within the overall semantics of the piece.
 
-Unfortunately, such a piecewise approach typically fails to generalize.
+Unfortunately, such a piecewise approach typically fails to generalize beyond the intended musical formats, due to the manual parameter tuning required for some steps, such as staff-line removal. (Note, for instance, the tuning required in morphological erosion.)
 
 ## A Deep-Learning Solution
 
@@ -175,10 +175,10 @@ For object detection, rather than reinventing the wheel, we used YOLOv5 to detec
 
 Training data was bootstrapped from the first 9 inventions. These 9 inventions were each two pages of sheet music, with 5 or 6 grand staves per page. These staves were croppped and randomly sampled into 5 staves per page training examples and 6 staves per page training examples. 2500 examples were generated using bootstrap for 5 and 6 pages each respectively, for 5000 total training examples. These grand staff locations were manually labeled, and the new locations were passed on to the full sheet music examples. We used the pretrained weights yolov5l.pt for our training.
 
-The 10th through 12th inventions were used for validation of the grand staff identification. YOLOv5 was able to correctly identify each grand staff, for both the 5 and 6 grand staves per page examples. Finally, the 13th through 15th inventions were reserved as the sample space for the test set for both the object detection as well as the actual OMR. These images with labels were then used to crop the grand staves, which were split in half into treble and bass clefs. These single staves were then passed into the OMR script for semantic and agnostic predictions.
+The 10th through 12th inventions were used to validate the grand staff identification. YOLOv5 was able to correctly identify each grand staff, for both the 5 and 6 grand staves per page examples. Finally, the 13th through 15th inventions were reserved as the sample space for the test set for both the object detection as well as the actual OMR. These images with labels were then used to crop the grand staves, which were split in half into treble and bass clefs. These single staves were then passed into the OMR script for semantic and agnostic predictions.
 
 ## Results
-The grand staff detection had perfect accuracy. However, the results for the OMR part of the pipeline are more nuanced.
+The grand staff detection had perfect accuracy. However, the results for the OMR part of the pipeline are more nuanced; notably, the agnostic encoding proves better than the semantic encoding.
 
 First, we examine the semantic model for the treble clef of the first line of Bach's Invention no. 13 in A minor. Here we have a very interesting phenomenon. In piano, there are two clefs used: treble (G clef) and bass (F clef). However, there are other clefs used in other forms of music. Here, our model incorrectly predicted the clef to be the soprano clef, one of the C-clefs, when in reality it should be a treble clef. Thus, if strictly interpreting this as treble clef, we would have 0% accuracy for the notes. However, reading the soprano clef, we would have 95% accuracy for the notes, though one note was double counted. As for the non-note markings, the barlines are all predicted except for the first one. However, the slurs have been misread as ties. While the time signature was correctly read as C, for common time, the key signature was incorrectly interpreted as F major instead of A minor. The rests were correctly identified. On the other hand, the agnostic model performed superbly. Every single note was correctly identified with the correct line and direction of beams. The sharp was also identified, which was missed by the semantic version. In the key of A minor, this is the crucial leading tone of G-sharp for the harmonic minor. The model also identified the end of the slur, which was misread as a tie by the semantic model. However, the clef was still misread as a soprano C-clef rather than treble clef.
 
@@ -186,7 +186,7 @@ Next, we examine the semantic model for the bass clef for the same portion of Ba
 
 ## Overall conclusions
 
-The YOLO model was able to correctly identify grand staffs. However, the following OMR model was not so luckly. It misread the clefs for the semantic, which meant the result would be transposed to the wrong key. However, the agnostic model showed that out of context, it could read what the music has written. These inperfections may largely due to the fact that the OMR was trained on monophonic scores. Thus, it was not used to reading piano scores. The training data contained other staves than treble and bass, which made a large amount of the training data irrelevant to the piano music. The other test examples shared similar patterns as described for these two staves (misidentified clefs but largely correct notes when transposed). Due to the absurdly high level of musical understanding required to parse these results and overwhelming intensity of transposing between clefs not usually familiar to pianists, no further test cases were used for these detailed evaluations.
+The YOLO model was able to correctly identify grand staffs. However, the following OMR model was not so lucky. It misread the clefs for the semantic encoding, which meant the result would be transposed to the wrong key. However, the agnostic model showed that out of context, it could read what the music has written. These imperfections may largely be due to the fact that the OMR was trained on monophonic scores and was therefore not used to reading piano scores. The training data contained other staves than treble and bass, which made a large amount of the training data irrelevant to the piano music. The other test examples shared similar patterns as described for these two staves (misidentified clefs but largely correct notes when transposed). Due to the absurdly high level of musical understanding required to parse these results and overwhelming intensity of transposing between clefs not usually familiar to pianists, no further test cases were used for these detailed evaluations.
 
 ## Demonstration:
 https://colab.research.google.com/drive/1Qgn8U2iB3LoddkgIT2nSDSJwal-ECuOs
@@ -200,5 +200,6 @@ https://youtu.be/uD7JU61pI_U
 
 [3] Alfaro-Contreras M., Calvo-Zaragoza J., Iñesta J.M. (2019) Approaching End-to-End Optical Music Recognition for Homophonic Scores. In: Morales A., Fierrez J., Sánchez J., Ribeiro B. (eds) Pattern Recognition and Image Analysis. IbPRIA 2019. Lecture Notes in Computer Science, vol 11868. Springer, Cham.
 
+[4] Graves, Alex & Fernández, Santiago & Gomez, Faustino & Schmidhuber, Jürgen. (2006). Connectionist temporal classification: Labelling unsegmented sequence data with recurrent neural 'networks. ICML 2006 - Proceedings of the 23rd International Conference on Machine Learning. 2006. 369-376. 10.1145/1143844.1143891. 
 
 ---
