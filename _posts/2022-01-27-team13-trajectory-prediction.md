@@ -422,6 +422,10 @@ The main contribution from this paper is that GANs are well suited to modeling s
 
 The results illustrate that SGAN is able to outperform all other architectures in human trajectory prediction, and the Pooling Module encourages the model to predict more "socially" plausible paths.
 
+# Video Demo
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/U5lkLH0Gfvg" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
 ## Reference
 
 Please make sure to cite properly in your work, for example:
