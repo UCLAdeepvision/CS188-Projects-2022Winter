@@ -110,7 +110,6 @@ class FeatureExtractor(nn.Module):
         return o4, o3, o2, o1, o0
 ```
 
-
 <center> Figure 1: Example U-Net Implementation </center>
 
 ### Initialization
@@ -128,7 +127,6 @@ The authors also add an additional parameter to the model which they denote the 
 
 <center> Figure 2: Details of Propagation and Initialization Steps </center>
 
-This is an implementation of the warp step
 
 ```python
 @functools.lru_cache()
@@ -157,7 +155,7 @@ def disp_up(d, dx, dy, scale, tile_expand):
     return d
 ```
 
-
+<center> Figure 3: Implementation of the Warp Step </center>
 ### Propagation
 
 #### Warping
@@ -177,12 +175,60 @@ The CNN model $$U$$ is made or resnet blocks followed by dilated convolutions. T
 ### Loss
 The network uses multiple different losses: an initialization loss, propagation loss, slant loss, and confidence loss. These values are all weighted equally and used to optimize the model.
 
-### Training Results
+## StereoNet
+The main insight of StereoNet is that we can aggressively downsample the input disparity images so we can perform a much less costly alignment between two significantly reduced feature sizes. Unlike HITNet which saves computational costs by omitting 3D convolutions, StereoNet still makes these computations, just at a severely reduced resolution. The network uses a simple decoder encode approach, this time with a Siamese network (a neural network where there are
+two separate input vectors, connected to separate networks, but both of these networks have identical weights). Performing the cost volume computation on this vastly reduced representation of the input images allows the network to train/run much faster, but still attains quite good performance.
 
+
+![StereoNet]({{ '/assets/images/team25/StereoNet.png' | relative_url }})
+<center>Figure 4: The overall structure of StereoNet</center>
+
+### Feature Network
+The Siamese network first aggressively downsamples the two input images using a series of K 5x5 convolutions with a stride of 2 and 32 channels. Residual blocks with 3x3 convolutions, batch-normalization, and Leaky ReLus are then applied, followed by a 3x3 convolution layer, without any activation or activation. This outputs a 32-dim vector representation for each down sampled point. Through this representation there is a low dimensional representation of the input that stil has a fairly large receptive field.
+
+### Cost Volume
+After downsampling, like most conventional deep learning disparity models, the network computes a cost volume along scan lines (evaluates every possible offset in the x direction up to the value of the maximum disparity). The cost volume is then aggregated with four 3D convolutions of size 3x3x3, and once more batch-normalization + leaky ReLu activations. Finally an additional 3x3x3 layer without batch normalization + leaky ReLu is applied.
+
+```python
+def make_cost_volume(left, right, max_disp):
+    cost_volume = torch.ones(
+        (left.size(0), left.size(1), max_disp, left.size(2), left.size(3)),
+        dtype=left.dtype,
+        device=left.device,
+    )
+
+    cost_volume[:, :, 0, :, :] = left - right
+    for d in range(1, max_disp):
+        cost_volume[:, :, d, :, d:] = left[:, :, :, d:] - right[:, :, :, :-d]
+
+    return cost_volume
+```
+<center> Figure 5: Implementation of Cost Volume Computation </center>
+
+### Differentiable Arg Min
+Optimally the disparity with the mininum cost for each pixel would be selected but such a selection is not differentiable. The two approaches tried in the paper are a softmax combination of the selected disparity values and a probabilistic sampling during training over the softmax distribution to approximate the softmax function. This probabilistic approach performed much worse in the author's results, so we stuck with the first selection instead.
+
+The first (and much better performing) loss function.
+
+$$ d_i = \sum_{d=1}^D d \cdot \frac {\text{exp}(-C_i(d))} {\sum_{d'} \text{exp}(-C_i(d'))}$$
+
+The probabilistic loss function.
+
+<center> $$ d_i = d, \text{where}$$</center>
+
+<center> $$d \sim \sum_{d=1}^D d \cdot \frac {\text{exp}(-C_i(d))} {\sum_{d'} \text{exp}(-C_i(d'))}$$</center>
+
+### Upsampling
+To upsample the image the disparity map is first bilinearly upsampled to the output size. It then is passed through the refinement layer which first consists 3x3 convolutiion. This is followed by 6 residual blocks with 3x3 dilated convolutions (to increase the receptive field), with dilation factors of 1,2,4,8, and 1 respectiveley. The final output is run through a 3x3 convolutional layer. The authors tried two different techniques, one running the upsample once and another cascading the upsample layer for further refinement.
+### Loss Function
+Loss is computed as the difference between the ground truth disparity and the predicted disparity at $k$, the given refinement level (k = 0 denoting output before any refinement) and is given by the following equation.
+
+$$L = \sum_k p(d_i^k - \hat{d}_i)$$
+
+
+## Replicating Results
 To train both HITNet and StereoLab models ourselves, we heavily relied upon the work of GitHub user zjjMaiMai in their
-repository TinyHITNet [6], which implements both models in PyTorch.
-
-This is an example result on a training image after 3200 steps of  training the HITNet model on the KITTI 2015 dataset.
+repository TinyHITNet [6], which implements both models in PyTorch. This is an example result on a training image after 3200 steps of  training the HITNet model on the KITTI 2015 dataset.
 The top image is the ground truth from a laser scanner pointcloud. The second image is the predicted depth.
 The last two images are each of the camera views.
 
@@ -194,12 +240,32 @@ StereoNet has fewer parameters, requires less GPU memory, and trains faster than
 ![KITTI StereoNet trained for 11,700 steps]({{ '/assets/images/team25/kitti-stereonet-11700step.png' | relative_url }})
 
 This is the EPE error during training. The orange line is HITNet trained with batch size 1, and the blue line is
-StereoNet trained with batch size 2. We can see that StereoNet converges during training much faster. 
+StereoNet trained with batch size 2. We can see that StereoNet converges during training much faster.
 The steps themselves also ran faster than HITNet. There is still potential improvement in the optimization process.
-We also did not train HITNet enough because we did not have time yet. 
+We also did not train HITNet enough because we did not have time yet.
 
 ![Train Accuracy]({{ '/assets/images/team25/train-epe.png' | relative_url }})
 
+## Experimental Contributions
+When looking at the StereoNet Model we were somewhat curious what the effect of using a Siamese network had on the model, over training separate models for both left and right images. We surmised that there may be some differences in images depending on the side they were taken on and it might make sense to learn a different representation for each of these pieces of the network. As the feature refinement part of the network as well as the cost matrix are likely very similar in function, we only trained separate features for both model sizes. While this does effectively reduce by half our quantity of training data per weight in the feature generation of our network(as we are no longer training the weights per iteration on both the left and right images) we were hopeful it might result in a slight performance gain. We also experimented with the optimizer given in the paper, trying AdaBound in our new non-Siamese implementation to see if we could notice any improvement over the original paper.
+
+```python
+self.feature_extractor_left = [conv_3x3(3, 32, 2), ResBlock(32)]
+self.feature_extractor_right = [conv_3x3(3, 32, 2), ResBlock(32)]
+for _ in range(self.k - 1):
+    self.feature_extractor_left += [conv_3x3(32, 32, 2), ResBlock(32)]
+    self.feature_extractor_right += [conv_3x3(32, 32, 2), ResBlock(32)]
+self.feature_extractor_left += [nn.Conv2d(32, 32, 3, 1, 1)]
+self.feature_extractor_right += [nn.Conv2d(32, 32, 3, 1, 1)]
+
+self.feature_extractor_left = nn.Sequential(*self.feature_extractor_left)
+self.feature_extractor_right = nn.Sequential(*self.feature_extractor_right)
+```
+<center> Figure 6: Alterations to Implement Model as NonSiamese</center>
+
+<!--TODO(morleyd): Look into how to offset loss to account for the nonexisting pixels in the morph-->
+
+As camera alignment is often imperfect, we were curious if expanding the local convolution to include a y offset in the highest resolution layer of HITNet could result in a minor improvement in matching. For the pixels that are now misaligned we had to determine how to modify the loss computation. We decided to count the now nonexisting pixels as having an initialization value of 0, making it fairly unfavorable to use this offset, but still potentially better. While this would introduce a somewhat artificial penalty to choosing a displacement in the y direction, in the pedantic case, where the pixels have sharp boundaries and are all misaligned by some +-y, we would still notice a significant decrease in the loss. We thus decided this minor change was worth exploring in our modified implementation of HITNet, despite the minor increase in computational cost.
 
 ## Reference
 Please make sure to cite properly in your work, for example:
@@ -213,7 +279,5 @@ Please make sure to cite properly in your work, for example:
 [4] Nikolai Smolyanskiy, et al. ["On the Importance of Stereo for Accurate Depth Estimation: An Efficient Semi-Supervised Deep Neural Network Approach."](https://arxiv.org/abs/1803.09719) *Conference on Computer Vision and Pattern Recognition*. 2018.
 
 [5] Olaf Ronneberger, et al. ["U-Net: Convolutional Networks for Biomedical Image Segmentation"](https://arxiv.org/abs/1505.04597) *Conference on Computer Vision and Pattern Recognition*. 2015.
-
-[6] zjjMaiMai on GitHub. [TinyHITNet](https://github.com/zjjMaiMai/TinyHITNet) *GitHub*. 2021.
 
 ---
