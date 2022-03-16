@@ -7,7 +7,7 @@ date: 2022-01-28
 ---
 
 
-> Historical videos like old movies are all black and white before the invention of colored cameras. However, have you wondered how the good old time looked like with colors? We will attempt to colorize old videos with the power of deep generative models.
+> Historical videos like old movies are all black and white before the invention of colored cameras. However, have you wondered how the good old time looked like with colors? We will attempt to colorize old videos with the power of deep neural networks.
 
 <!--more-->
 {: class="table-of-content"}
@@ -32,9 +32,36 @@ Formally, video colorization is the problem where given a sequence of grayscale 
 
 ## 3. Image Colorization
 
+To colorize a video, we need to know how to colorize an image first, as a video is essentially a sequence of images. In this section, we explore two image colorization techniques proposed in recent years.
 
-### 3.1 Instance Aware Image Colorization (2020)
-Before the introduction of this paper, image colorization is mostly done in the whole iamge-level. Previous methods leverage the deep neural network to map input grayscale images to plausible color outputs directly. Arguing that without a clear figure-ground separation, one cannot effectively locate and learn meaningful semantics at object level, this paper proposed a novel network architecture that leverages off-the-shelf models to detect the object, and learn from large-scale data to extract image features at the instance and full-image level, and to optimize the feature fusion to obtain the smooth colorization results. The key insight is that a clear figure-ground separation can dramatically improve colorization performance.
+### 3.1 Colorful Image Colorization (2016)
+Introduction paragraph
+First, we take a look at Zhang's paper: *Colorful Image Colorization* [8]. In this paper, the author frames the task of image colorization as finding a mapping $$F: \mathbb{R}^{H\times W \times 1} \to \mathbb{R}^{H \times W \times 2}$$. The author uses [CIE LAB color space](https://en.wikipedia.org/wiki/CIELAB_color_space), thereby eliminating the need for predicting a third channel.  
+
+The task of colorization requires a special optimization objective. It's true that the sky is almost always blue, the grass is mostly green, but objects like a beach ball can be of any color. Due to the multimodal nature, using L2 loss leads to the model picking the mean of the modes. This doesn't result in a good result when the space of plausible coloring is non-convex. Thus, to acquire the colorings, Zhang takes a very convoluted approach.
+
+![colorful image colorization model]({{ '/assets/images/team12/colorful.png' | relative_url }}){: style="max-width: 80%;"}
+
+![CIELAB a* b* channels]({{ '/assets/images/team12/CIELAB.png' | relative_url }}){: style="max-width: 80%;"}
+
+First, using a deep CNN, the author maps the black and white image $$X$$ to a possible discrete distribution of the a* b* channels $$\hat{Z}$$. The ground truth image $$Y$$ is also converted to this space ($$Z$$) using soft-encoding: for each pixel, pick the five closest quantized bins in the a* b* space and weight them proportionally to their distance from the ground truth color. Finally, using a multinomial cross entropy loss, we have our optimization objective:  
+$$
+L(\hat{Z}, Z) = - \sum_{h, w} v(Z_{h, w}) \sum_{h, w, q} \log(\hat{Z}_{h, w, q})
+$$
+Here, $$v$$ returns a weight for each of the possible bins of color. As boring colors are very dominant in ImageNet images, to encourage the model to use vibrant colors, the author assigns a weight that is approximately inversely proportional to the probability of that color in the ImageNet dataset. More formally, for a given color $$q$$, the weight $$w \propto ((1-\lambda) P(q) + \frac{\lambda}{Q})^{-1}$$, where $$\lambda$$ is a parameter and $$Q$$ is the number of discrete values in the a* b* space.  
+
+Finally, after acquiring a predicted distribution $$\hat{Z}$$ in the a* b* space, we need to map it back to $$\mathbb{R}^{H\times W \times 2}$$ to find the a* and b* values. For each pixels, picking one of the modes often result in spatial inconsistency, while taking the mean results in a less vibrant result. The author attempts to achieve the best of both worlds by taking an annealed-mean of the distribution:  
+$$
+\begin{align*}
+\mathcal{H}(Z_{h, w}) &= \mathbb{E}[f_T(Z_{h,w})]\\
+f_T(z) &= \frac{e^{log(z)/T}}{\sum_{q} e^{log(z_q)/T}}
+\end{align*}
+$$
+![Annealed-mean examples]({{ '/assets/images/team12/annealedmean.png' | relative_url }}){: style="max-width: 80%;"}
+
+
+### 3.2 Instance Aware Image Colorization (2020)
+In 2020, Su proposed another way of approaching image colorization [9]. Before the introduction of this paper, image colorization is mostly done in the whole image-level. Previous methods leverage the deep neural network to map input grayscale images to plausible color outputs directly. Arguing that without a clear figure-ground separation, one cannot effectively locate and learn meaningful semantics at object level, this paper proposed a novel network architecture that leverages off-the-shelf models to detect the object, and learn from large-scale data to extract image features at the instance and full-image level, and to optimize the feature fusion to obtain the smooth colorization results. The key insight is that a clear figure-ground separation can dramatically improve colorization performance.
 
 The model consists of three parts, which is shown in figure below:
 
@@ -48,16 +75,13 @@ The model consists of three parts, which is shown in figure below:
 
 $$f^{\tilde X}_j=f^X_j\circ W_F + \sum\limits_{i=1}^Nf^{\bar X_i}_j\circ \bar W^i_I
 $$
-
 ![InstColor_Fusion]({{ '/assets/images/team12/instColor_Fusion.png' | relative_url }}){: style=" max-width: 80%;"}
 
 
 The loss function used in this paper is the smooth $$l_1$$ loss with $$\delta=1$$:
-
 $$
 L_\delta(x, y) = \frac{1}{2}(x-y)^2 1_{\{|x-y|<\delta\}}+\delta(x-y-\frac{1}{2}\delta)1_{\{|x-y|\geq\delta\}}
 $$
-
 During the training process, the model is first trained on the full-image colorization, and the weights are transfered to the instance network as initialization, which is then trained. Lastly, both the full iamge and object colorization model are freezed, and the fusion model is trained. 
 
 ## 4. Temporal Consistency
@@ -82,16 +106,13 @@ In each epoch, the model takes in each original black and white frame of the vid
 For the frame $$I_t$$ at time step $$t$$, we compute $$P_t = f(I_t), O_t = \hat{g}$$ and calculate the L1 distance between them. Then, we apply gradient descent to minimize the L1 distance. As we go through the video, the neural net $$\hat{g}$$ will approach $$f$$. As long as we stop before the neural net overfits, the unimodal inconsistency can be reduced very nicely.  
 
 This approach, however, does not solve multimodal inconsistency. As the pixel values cluster around two or more centers, the trained network $$\hat{g}$$ would output a value in between all centers (modes). If the modes are far apart, the resulting output color would be far from any of the modes, resulting in a wrong coloring of the frame. To solve this issue, the authors proposed Iteratively Reweighted Training (IRT). Instead of producing one output image from the network, we can produce two output frames, one representing the main mode we want ($$O^{main}_t$$), while the other one represents the other modes that we want to eliminate (outlier frame, $$O^{rest}_t$$). We compute a confidence mask $$C_t$$, determining whether a specific pixel on the main frame resembles $$P_t$$ more closely than the corresponding pixel on the outlier frame.  
-
 $$
 C_t =  \begin{cases} 
 1, & \text{main frame is closer}\\
 0, & \text{otherwise}
 \end{cases}
-$$  
-
+$$
 Define loss function $$L$$ as the follows:
-
 $$
 L = L_1(O^{main}_t \odot C_t, P_t \odot C_t) + L_1(O^{rest}_t \odot (1-C_t), P_t \odot (1-C_t))
 $$
@@ -162,4 +183,7 @@ Please make sure to cite properly in your work, for example:
 [5] Ronneberger, Olaf, Philipp Fischer, and Thomas Brox. "U-net: Convolutional networks for biomedical image segmentation." International Conference on Medical image computing and computer-assisted intervention. Springer, Cham, 2015.  
 [6] Lai, Wei-Sheng, et al. "Learning blind video temporal consistency." Proceedings of the European conference on computer vision (ECCV). 2018.
 [7] Richard Zhang, Jun-Yan Zhu, Phillip Isola, Xinyang Geng, Angela S. Lin, Tianhe Yu, and Alexei A. Efros. Realtime user-guided image colorization with learned deep priors. ACM TOG (Proc. SIGGRAPH), 36(4):119:1–119:11, 2017
----
+
+[8] Zhang, Richard, Phillip Isola, and Alexei A. Efros. "Colorful image colorization." European conference on computer vision. Springer, Cham, 2016.
+
+[9] Su, Jheng-Wei, Hung-Kuo Chu, and Jia-Bin Huang. "Instance-aware image colorization." *Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition*. 2020.
