@@ -43,4 +43,4 @@ You should make three pull requests before the following deadlines:
 
 *    January 27: Each group should determine the topic and list the 3 most relevant papers and their code repo.
 *    February 24: Each group should include technical details and algorithms/code
-*    March 14: Finalize blog article, Colab demo, and recorded video
+*    March 19 (updated): Finalize blog article, Colab demo (or github repo link), and recorded spotlight video
