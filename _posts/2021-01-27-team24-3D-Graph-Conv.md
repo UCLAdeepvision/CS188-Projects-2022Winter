@@ -19,9 +19,20 @@ date: 2022-01-27
 # Introduction
 Our project seeks to implement and improve upon graph convolution approaches to 3D point cloud classification and segmentation. We plan to explore the dynamic graph approaches proposed in [1] and [7] which create graphs between each layer with connections between nearby points and uses an asymmetric edge kernel that incorporates relative and absolute vertex locations. This approach contrasts with the typical approach to learning on point clouds which operates directly on sets of points. PointNet [8] is one popular implementation that takes this approach, learning spatial features for each point and using pooling to later perform classification or segmentation. 
 
+<!-- POINTNET IMAGE --> 
+![PointNet]({{ '/assets/images/team24/pointnet.jpg' | relative_url }})
+{: style="width: 700px; max-width: 100%;"}
+*Fig 1. PointNet for learning classification and segmentation tasks on 3D point clouds* [8].
+
+
 # Introduction To Graph Neural Networks
 
 Graph Neural Networks, or GNNs, are as the name suggests, neural networks that make sense of graph informaton. This umbrella term covers graph-level tasks (which our project focuses on), node-level tasks (e.g. predicting the property of a node), and edge-level tasks. GNNs take some input graph $$G = (V, E)$$ and transform that graph in some sequence to produce a desired prediction. A basic GNN might look like several layers, each composed of some non-linear function $$f$$ (e.g. an MLP) that takes in the current graph $$\mathcal{G}_i$$. Depending on the GNN, the graph structure, commonly represented by an adjacency matrix, may stay the same throughout the layers, or change at each layer. The node and/or edge features are progessively transformed by this non-linear mapping and, if the task is graph-level classification, some pooling operation is typically performed to reduce the dimensionality.Depending on the GNN, the graph structure, commonly represented by an adjacency matrix, may stay the same throughout the layers, or change at each layer. For this project, we explored multiple implementations of GNNs, which are explained here. 
+
+<!-- GRAPH VISUALIZATION IMAGE (GOOGLE) --> 
+![Distill]({{ '/assets/images/team24/distill.svg' | relative_url }})
+{: style="width: 800px; max-width: 100%;"}
+*Fig 2. Convolutions are understood for structured data, but graphs pose a unique problem.* [16].
 
 # DGCNN
 Our first approach was a Graph Convolutional Network (GCN) that used the influential EdgeConv [1] operation for convolution. We follow in their approach in modifying our graph size at each layer, performing max pooling after each EdgeConv layer. We chose the Dynamic Graph CNN (DGCNN) approach since it keeps the maximum receptive field, but reduces the number of parameters required at each sucessive layer. We also describe the EdgeConv operation below for completeness.
@@ -39,7 +50,7 @@ Here, $$\square$$ represents the chosen aggregation function, such as a summatio
 
 ![EdgeConv]({{ '/assets/images/team24/edge_pic.png' | relative_url }})
 {: style="width: 800px; max-width: 100%;"}
-*Fig 1. The EdgeConv operation* [1].
+*Fig 3. The EdgeConv operation* [1].
 
 The choice of $$\square$$ and $$h$$ can greatly affect the performance of the model. For example, in the case where  
 
@@ -69,11 +80,18 @@ In the original network architecture, shown in Fig 2, four EdgeConv layers are u
 
 ![EdgeArch]({{ '/assets/images/team24/edgeconv.png' | relative_url }})
 {: style="width: 800px; max-width: 100%;"}
-*Fig 2. EdgeConv architecture for classification and segmentation* [1].
+*Fig 4. EdgeConv architecture for classification and segmentation* [1].
 
 # 2D-3D Fusion
 
-Our second network was also a GCN that relies on a backbone for feature extraction but differs in both the data flow and convolution operation. Instead of using a single graph network that takes in the points and associated features, we create two separate graphs, one representing 3D geometric features, and the second represending 2D texture features. The 2D texture features are extracted from the backbone and paired with a downsampled point cloud. The 3D geometric features, on the other hand, are solely based on the point cloud and depth data and are the result of using Attention Graph Convolution (AGC) [10] for both the euclidean and feature neighborhoods. This AGC operation is similar to EdgeConv with an attention mechanism except that AGC only includes edge attributes in its attention mechanism and not the features themselves. This is distinct from graph attention networks (GAT) [9] which takes a more common form of attention in which the attention mechanism takes into account the features of both nodes (not only the difference between the features) and also includes a normalization of the attention coefficient. We use an aggregation of a euclidean and feature-based AGC, which [11] calls MUNEGC and is seen below.
+Our second network was also a GCN inspired by [11] that relies on a backbone for feature extraction but differs in both the data flow and convolution operation. Instead of using a single graph network that takes in the points and associated features, we create two separate graphs, one representing 3D geometric features, and the second represending 2D texture features. 
+
+<!-- MUNEGC OVERALL NETWORK -->
+![MUNEGCNet]({{ '/assets/images/team24/munegc.jpg' | relative_url }})
+{: style="width: 700px; max-width: 100%;"}
+*Fig 5. The MUNEGC network high level overview* [11].
+
+The 2D texture features are extracted from the backbone and paired with a downsampled point cloud. The 3D geometric features, on the other hand, are solely based on the point cloud and depth data and are the result of using Attention Graph Convolution (AGC) [10] for both the euclidean and feature neighborhoods. This AGC operation is similar to EdgeConv with an attention mechanism except that AGC only includes edge attributes in its attention mechanism and not the features themselves. This is distinct from graph attention networks (GAT) [9] which takes a more common form of attention in which the attention mechanism takes into account the features of both nodes (not only the difference between the features) and also includes a normalization of the attention coefficient. We use an aggregation of a euclidean and feature-based AGC, which [11] calls MUNEGC and is seen below.
 
 $$
 \begin{equation}
@@ -85,8 +103,18 @@ $$
 \end{equation}
 $$
 
+
+<!-- MUNEGC OPERATION -->
+![MUNEGCOp]({{ '/assets/images/team24/munegc_op.jpg' | relative_url }})
+{: style="width: 800px; max-width: 100%;"}
+*Fig 6. The Multi-Neighborhood Graph Convolution (MUNEGC) operation* [11].
+
 The pooling operation used alongside MUNEGC is a modification of traditional voxel pooling named Nearest Voxel Pooling (NVP) [11]. With standard voxel pooling, voxels of resolution $$r_p$$ are created and points from the point cloud inside each voxel are replaced with their centroid with a feature computed through either an average or maximum operation. NVP builds on this by then reassigning each point in the original point cloud to the nearest centroid, and grouping all points with the same centroid. Centroids without assigned points are removed, and each remaining centroid is given a new position equal to the average position of its group and feature equal to either the maximum or average of its group's features.
 
+<!-- NVP -->
+![NVP]({{ '/assets/images/team24/nvp.png' | relative_url }})
+{: style="width: 700px; max-width: 100%;"}
+*Fig 7. A comparison of voxel pooling (left) and Nearest Voxel Pooling (right)* [11].
 
 # GeoMat Dataset
 To assess the performance of our DGCNN and fusion networks on point cloud classification, and specifically material prediction, we chose the GeoMat dataset since it includes both RGB and Sparse Depth unlike many other RGB-only material datasets [7]. In addition to the RGBD data, the GeoMat dataset provides camera intrinsics and extrinsics, calculated surface normals, as well as the position of the image patch in the larger image. We use the provided camera intrinsics and sparse depth to project the 2D image points into 3D space and generate a point cloud. 
@@ -95,9 +123,12 @@ We also pre-processed the image data to improve training by normalizing the RGB 
 
 The dataset consists of a total of 19 different materials, with each category consisting of 400 training and 200 testing examples. Training examples from the Cement - Granular, Grass, and Brick classes along with their constructed 3D point clouds are shown in Fig 3. 
 
-![Exam]({{ '/assets/images/team24/train_ex.jpg' | relative_url }})
-{: style="width: 800px; max-width: 100%;"}
-*Fig 2. GeoMat training images for Cement, Grass, and Brick, along with constructed pointclouds* [7].
+![Exam]({{ '/assets/images/team24/geomat.png' | relative_url }})
+{: style="width: 700px; max-width: 100%;"}
+*Fig 8. GeoMat training images for Cement, Grass, and Brick, along with constructed pointclouds* [7].
+
+
+<!-- GEOMAT CODE -->
 
 
 # Implementation
@@ -134,30 +165,58 @@ The 3D geometric features are generated with a GCN which makes use of the MUNEGC
 #### Fusion
 The geometric and texture feature networks are trained individually and their weights are then frozen. We then implement the "Multi-model group fusion" proposed in [11]. In our case, we have the geometric point features with $$\verb'dim 128'$$ and the texture features with $$\verb'dim 1920'$$, which are first projected to 3D space. We then pass both sets of features through a ReLu activation before performing 1D convolution to match their dimensionality to $$\verb'dim 512'$$. This is the first step to fusing the features. These features are then fused using a modified version of the Nearest Voxel Pooling used in obtaining the 3D geometric features. Initially, points from the 2D and 3D features are assigned to a centroid in the same 2-step procedure used in NVP and centroids without assigned points are removed. Next, for a given centroid $$c_i$$, the averages of all the assigned 3D and 2D features points are calculated separately, and then the two averages are concatenated to create the final feature. In the case that a centroid has only one type of feature point, the missing feature average is replaced with all ones. The location of the new centroid is chosen as the average of all the 2D and 3D feature points in the group. The network consists of this NVP layer with a radius of 0.24, followed by a classification network with batch normalization, ReLU activation, global average pooling, dropout of 0.5, and a final fully connected layer with output size 19.
 
+<!-- FUSION IMAGE -->
+![Fusion]({{ '/assets/images/team24/fusion.png' | relative_url }})
+{: style="width: 800px; max-width: 100%;"}
+*Fig 9. Fusing 2D (blue) and 3D (green) features with NVP* [11].
+
 # Results
-The results of our experiments are shared here. Training curves are shown in \ref{asf} confusion matrices on the test set are shown in \ref{confusion}.
+The results of our experiments are shared here. Training curves are shown in Fig. 10, 11 and test set results are shown in Fig. 12.
+
+<!-- TRAINING CURVES -->
+![TrainLoss]({{ '/assets/images/team24/train_loss.png' | relative_url }})
+{: style="width: 800px; max-width: 100%;"}
+*Fig 10. Training loss*.
+
+![TrainAcc]({{ '/assets/images/team24/train_acc.png' | relative_url }})
+{: style="width: 800px; max-width: 100%;"}
+*Fig 11. Training accuracy*.
+
+
+<!-- TEST TABLE -->
+![TestAcc]({{ '/assets/images/team24/test_metrics.png' | relative_url }})
+{: style="width: 800px; max-width: 100%;"}
+*Fig 12. Test results. Accuracy taken as best from all epochs, training loss and accuracy after 45 epochs*.
 
 ### DeepTen
 With the DeepTen network structure consisting of our feature backbone, encoding layer, and fully connected layer, we are able to achieve $$\textbf{68.55%}$$ accuracy on the test set.
+
+<!-- CONVNEXT MATRIX -->
+![Conf1]({{ '/assets/images/team24/confusion_deep.png' | relative_url }})
+{: style="width: 800px; max-width: 100%;"}
+*Fig 13. Confusion matrix for DeepTen network*.
 
 ### DGCNN
 With our DGCNN using only depth data, we are able to achieve $$\textbf{38.00%}$$ accuracy on the test set $$(\textit{DG-V1})$$. Adding RGB channels as node features dramatically improves our results, with $$\textbf{61.45%}$$ test accuracy $$(\textit{DG-V2})$$. Our best result is achieved using our feature backbone in addition to the RGBD features per node, and a 4 layer network with EdgeConv with 2 following fully connected layers. This results in a test accuracy of $$\textbf{76.55%}$$ $$(\textit{DG-V3})$$.
 
 We also develop a much lighter version of our DGCNN that uses just two EdgeConv layers followed by two fully-connected layers, and a lighter feature backbone, $$\verb'convnext_base'$$. This results in 89 million parameters, including the backbone, compared to the 198 million parameters in $$\textit{DG-V3}$$. For this model, we only pass the image features to the fully connected layer, and bypass the EdgeConv layers to reduce computation. We achieve $$\textbf{75.08%}$$ accuracy on the test set $$(\textit{DG-V4})$$, confirming our assumption that the graph convolution layers are most effective at processing the raw pixel-wise data and not the preprocessed and interpolated image features since these lack meaningful structure.
 
+<!-- DGCNN MATRIX -->
+![Conf2]({{ '/assets/images/team24/confusion_v6.png' | relative_url }})
+{: style="width: 800px; max-width: 100%;"}
+*Fig 14. Confusion matrix for DG-V3 network*.
+
 ### Fusion
-Our fusion network combining 2D image and 3D depth features achieves $$\textbf{77.21%}$$ accuracy on the test set, outperforming the best result of 73.84% from [7] by more than 3%. We can see from the confusion matrix \ref{confusion} that the most common errors occur between the asphalt, cement, and concrete classes of which there are 5 in total.
+Our fusion network combining 2D image and 3D depth features achieves $$\textbf{77.21%}$$ accuracy on the test set, outperforming the best result of 73.84% from [7] by more than 3%. We can see from the confusion matrix in Fig. 15 that the most common errors occur between the asphalt, cement, and concrete classes of which there are 5 in total.
 
-RESULTS TABLE
-
-CONFUSION MATRICES
-
-TRAINING CURVES
-
+<!-- FUSION MATRIX -->
+![Conf3]({{ '/assets/images/team24/confusion.png' | relative_url }})
+{: style="width: 800px; max-width: 100%;"}
+*Fig 15. Confusion matrix for fusion network*.
 
 # Discussion
 
-However, we iteratively improved our DGCNN by adding image features, fine-tuning the backbone and increasing the KNN param, all of which contribute to the improved results seen in Table \ref{table}.
+We iteratively improved our DGCNN by adding image features, fine-tuning the backbone and increasing the KNN param, all of which contribute to the improved results seen in Fig 12.
 
 We also see that the geometric features are only able to achieve 33.66% accuracy on the test set when not augmented with image features. We attribute this result to both the dataset type and resolution of the depth data. As there are several material types in the dataset with similar physical geometry, it is likely that the sparse depth data is simply insufficient for classification. It is possible that utilizing the contextual depth data (e.g. the rest of the scene) may improve the geometric classification results similar to how contextual encoding of image features has been shown to improve RGB-only semantic segmentation [15]. Nonetheless, we do see an improvement with both the DGCNN and the fusion networks compared to the image-only DeepTen model. 
 
@@ -196,6 +255,8 @@ We also see that the fusion network that utilizes attention graph convolution (A
 [14] H. Zhang, J. Xue, and K. Dana. Deep ten: Texture encoding network. In Proceedings of the IEEE conference on computer vision and pattern recognition, pages 708–717, 2017.
 
 [15] H. Zhang, K. Dana, J. Shi, Z. Zhang, X. Wang, A. Tyagi, and A. Agrawal. Context encoding for semantic segmentation. In Proceedings of the IEEE conference on Computer Vision and Pattern Recognition, pages 7151–7160, 2018.
+
+[16] Daigavane, et al., "Understanding Convolutions on Graphs", Distill, 2021.
 
 ## Code Repository
 [1] [Dynamic Graph CNN for Learning on Point Clouds](https://github.com/WangYueFt/dgcnn)
