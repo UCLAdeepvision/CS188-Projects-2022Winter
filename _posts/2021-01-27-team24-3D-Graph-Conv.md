@@ -1,13 +1,13 @@
 ---
 layout: post
 comments: true
-title: Enhanced Self-Driving with combination of camera and lidar inputs.
+title: Graph Convolution Networks for fusion of RGB-D images
 author: Alexander Swerdlow, Puneet Nayyar
-date: 2022-01-27
+date: 2022-03-16
 ---
 
 
-> 3D Point Cloud understanding is critical for many robotics applications with unstructured environments such as self-driving cars. LIDAR sensors provide accurate, high-resolution point clouds that provide a clear view of the environment but making sense of this data can be computationally expensive and is generally difficult. Graph convolutional networks aim to exploit geometric information in the scene that is difficult for 2D based image recognition approaches to reason about.
+> 3D Point Cloud understanding is critical for many robotics applications with unstructured environments. Point Cloud Data can be obtained directly (e.g. LIDAR) or indirectly through depth maps (stereo cameras, depth from de-focus, etc.), however efficient merging the information gained from point clouds with 2D image features and textures is an open problem. Graph convolutional networks have the ability to exploit geometric information in the scene that is difficult for 2D based image recognition approaches to reason about and we test how these features can improve classification models.
 
 
 <!--more-->
@@ -151,7 +151,61 @@ $$\textit{DG-V2}: k=20$$, 4 EdgeConv layers $$\verb'[6, 64],[128,64],[128, 128],
 
 $$\textit{DG-V3}$$: 1 2D Conv for the feature backbone: $$\verb'[1344, 128]'$$, 4 EdgeConv layers $$\verb'[268, 64],[128,128],[256,256]'$$ and 2 MLP layers $$\verb'[576, 1024],[1024, 512, 256, 19]'$$. 
 
-$$\textit{DG-V4}$$: one 2D Conv for the feature backbone: $$\verb'[64]'$$, 4 EdgeConv layers $$\verb'[6, 64],[128,64]'$$ and 2 MLP layers $$\verb'[192, 1024],[1024, 512, 256, 19]'$$.
+$$\textit{DG-V4}$$: 1 2D Conv for the feature backbone: $$\verb'[64]'$$, 4 EdgeConv layers $$\verb'[6, 64],[128,64]'$$ and 2 MLP layers $$\verb'[192, 1024],[1024, 512, 256, 19]'$$.
+
+We see a simplified version of $$\textit{DG-V4}$$ below:
+
+```
+class DGCNN(torch.nn.Module):
+    def __init__(self, out_channels, k=20, aggr="max", dropout=0.8):
+        super().__init__()
+        self.conv1 = DynamicEdgeConv(MLP([2 * (3 + 3), 64], act="LeakyReLU", act_kwargs={"negative_slope": 0.2}, dropout=dropout), k, aggr)
+        self.conv2 = DynamicEdgeConv(MLP([2 * 64, 64], act="LeakyReLU", act_kwargs={"negative_slope": 0.2}, dropout=dropout), k, aggr)
+        self.fc1 = MLP([64 + 64, 1024], act="LeakyReLU", act_kwargs={"negative_slope": 0.2}, dropout=dropout)
+        self.fc2 = MLP([1024 + 2304, 512, 256, out_channels], dropout=dropout)
+
+        self.img_model = timm.create_model("convnext_base", num_classes=2, drop_path_rate=dropout).cuda()
+        self.img_model.eval() # Don't finetune layers to reduce computation
+        self.filter_conv = nn.Conv2d(1920, 64, 1)  # reduce filter size
+
+    def forward(self, data):
+        pos, x, batch = (data.pos.cuda(), data.x.cuda(), data.batch.cuda())
+        features = self.img_model.get_features_concat(data.image.cuda().permute(0, 3, 1, 2).float())
+        features = self.filter_conv(features)
+        x1 = self.conv1(torch.cat((pos, x), dim=1).float(), batch)
+        x2 = self.conv2(x1, batch)
+        out = self.fc1(torch.cat((x1, x2), dim=1))
+        out = global_max_pool(out, batch)
+        out = self.fc2(torch.cat((out, features.reshape(features.shape[0], -1)), dim=1))
+        return F.log_softmax(out, dim=1)
+```
+
+We also show the implementation of the EdgeConv operator (seen above as `DynamicEdgeConv`). The core of the code is the forward method where the KNN function is called and the message function where x_i and x_i - x_j are passed through the specified nonlinear function (in our case an MLP):
+
+```
+class DynamicEdgeConv(MessagePassing):
+    ...
+    def forward(self, x, batch):
+        if isinstance(x, Tensor):
+            x: PairTensor = (x, x)
+
+        ...
+
+        b = (None, None)
+        if isinstance(batch, Tensor):
+            b = (batch, batch)
+        elif isinstance(batch, tuple):
+            assert batch is not None
+            b = (batch[0], batch[1])
+
+        edge_index = knn(x[0], x[1], self.k, b[0], b[1]).flip([0])
+
+        # propagate_type: (x: PairTensor)
+        return self.propagate(edge_index, x=x, size=None)
+
+    def message(self, x_i, x_j):
+        return self.nn(torch.cat([x_i, x_j - x_i], dim=-1))
+```
 
 ### 2D-3D Fusion
 The fusion approach uses 3 separately trained networks, two of which are used to extract 2D and 3D features from the input data, and one which fuses the 2D and 3D features for the final classification.
@@ -160,10 +214,81 @@ The fusion approach uses 3 separately trained networks, two of which are used to
 We use the same ConvNext [12] feature backbone for our texture graph and perform avg 2D pooling to reduce our point lattice to match the feature size $$(\verb'14x14')$$. 
 
 #### 3D Features
-The 3D geometric features are generated with a GCN which makes use of the MUNEGC and NVP layers described previously. The main building block consists of a MUNEGC layer followed by batch normalization, ReLU activation, and NVP pooling with maximum aggregation. The network uses 4 of these blocks, with output feature dimensions and pooling radius of $$\verb'16'$$ and $$\verb'0.05'$$, $$\verb'16'$$ and $$\verb'0.08'$$, $$\verb'32'$$ and $$\verb'0.12'$$, and $$\verb'64' and \verb'0.24'$$, respectively. This is then followed by another MUNEGC layer with output size $$\verb'128'$$ with batch normalization and ReLU activation. For training, a classification network also follows, with average global pooling, dropout of 0.2, and a fully connected layer with an output size of 19. After completing training, the output after the 5th MUNEGC layer is extracted to obtain the 3D geometric features which have a feature size of $$\verb'128'$$.
+The 3D geometric features are generated with a GCN which makes use of the MUNEGC and NVP layers described previously. The main building block consists of a MUNEGC layer followed by batch normalization, ReLU activation, and NVP pooling with maximum aggregation. The network uses 4 of these blocks, with output feature dimensions and pooling radius of $$\verb'16'$$ and $$\verb'0.05'$$, $$\verb'16'$$ and $$\verb'0.08'$$, $$\verb'32'$$ and $$\verb'0.12'$$, and $$\verb'64' and \verb'0.24'$$, respectively. This is then followed by another MUNEGC layer with output size $$\verb'128'$$ with batch normalization and ReLU activation. For training, a classification network also follows, with average global pooling, dropout of 0.2, and a fully connected layer with an output size of 19. After completing training, the output after the 5th MUNEGC layer is extracted to obtain the 3D geometric features which have a feature size of $$\verb'128'$$. Partial implementation of the AGC operator is shown below, courtesy of [10]. 
+
+```
+class AGC(torch.nn.Module):
+    ...
+    def forward(self, x, edge_index, edge_attr):
+        x = x.unsqueeze(-1) if x.dim() == 1 else x
+        edge_attr = edge_attr.unsqueeze(-1) if edge_attr.dim() == 1 else edge_attr
+
+        i, j = (0, 1) if self.flow == "target_to_source" else (1, 0)
+
+        src_indx = edge_index[j]
+        target_indx = edge_index[i]
+
+        # weights computation
+        out = self._wg(edge_attr)
+        out = out.view(-1, self.in_channels, self.out_channels)
+
+        N, C = x.size()
+
+        feat = x[src_indx]
+
+        out = torch.matmul(feat.unsqueeze(1), out).squeeze(1)
+        out = scatter(out, target_indx, dim=0, dim_size=N, reduce=self.aggr)
+
+        if self.bias is not None:
+            out = out + self.bias
+
+        return out
+```
 
 #### Fusion
-The geometric and texture feature networks are trained individually and their weights are then frozen. We then implement the "Multi-model group fusion" proposed in [11]. In our case, we have the geometric point features with $$\verb'dim 128'$$ and the texture features with $$\verb'dim 1920'$$, which are first projected to 3D space. We then pass both sets of features through a ReLu activation before performing 1D convolution to match their dimensionality to $$\verb'dim 512'$$. This is the first step to fusing the features. These features are then fused using a modified version of the Nearest Voxel Pooling used in obtaining the 3D geometric features. Initially, points from the 2D and 3D features are assigned to a centroid in the same 2-step procedure used in NVP and centroids without assigned points are removed. Next, for a given centroid $$c_i$$, the averages of all the assigned 3D and 2D features points are calculated separately, and then the two averages are concatenated to create the final feature. In the case that a centroid has only one type of feature point, the missing feature average is replaced with all ones. The location of the new centroid is chosen as the average of all the 2D and 3D feature points in the group. The network consists of this NVP layer with a radius of 0.24, followed by a classification network with batch normalization, ReLU activation, global average pooling, dropout of 0.5, and a final fully connected layer with output size 19.
+The geometric and texture feature networks are trained individually and their weights are then frozen. We then implement the "Multi-model group fusion" proposed in [11]. In our case, we have the geometric point features with $$\verb'dim 128'$$ and the texture features with $$\verb'dim 1920'$$, which are first projected to 3D space. We then pass both sets of features through a ReLu activation before performing 1D convolution to match their dimensionality to $$\verb'dim 512'$$. This is the first step to fusing the features. These features are then fused using a modified version of the Nearest Voxel Pooling used in obtaining the 3D geometric features. Initially, points from the 2D and 3D features are assigned to a centroid in the same 2-step procedure used in NVP and centroids without assigned points are removed. Next, for a given centroid $$c_i$$, the averages of all the assigned 3D and 2D features points are calculated separately, and then the two averages are concatenated to create the final feature. In the case that a centroid has only one type of feature point, the missing feature average is replaced with all ones. The location of the new centroid is chosen as the average of all the 2D and 3D feature points in the group. The network consists of this NVP layer with a radius of 0.24, followed by a classification network with batch normalization, ReLU activation, global average pooling, dropout of 0.5, and a final fully connected layer with output size 19. We show part of the fusion network below:
+
+```
+class MultiModalGroupFusion(torch.nn.Module):
+    ...
+    def forward(self, b1, b2):
+        pos = torch.cat([b1.pos, b2.pos], 0)
+        batch = torch.cat([b1.batch, b2.batch], 0)
+
+        batch, sorted_indx = torch.sort(batch)
+        inv_indx = torch.argsort(sorted_indx)
+        pos = pos[sorted_indx, :]
+
+        start = pos.min(dim=0)[0] - self.pool_rad * 0.5
+        end = pos.max(dim=0)[0] + self.pool_rad * 0.5
+
+        cluster = torch_geometric.nn.voxel_grid(pos, self.pool_rad, batch, start=start, end=end)
+        cluster, perm = consecutive_cluster(cluster)
+
+        superpoint = scatter(pos, cluster, dim=0, reduce="mean")
+        new_batch = batch[perm]
+
+        cluster = nearest(pos, superpoint, batch, new_batch)
+
+        cluster, perm = consecutive_cluster(cluster)
+
+        pos = scatter(pos, cluster, dim=0, reduce="mean")
+        branch_mask = torch.zeros(batch.size(0)).bool()
+        branch_mask[0 : b1.batch.size(0)] = 1
+
+        cluster = cluster[inv_indx]
+
+        nVoxels = len(cluster.unique())
+
+        x_b1 = torch.ones(nVoxels, b1.x.shape[1], device=b1.x.device)
+        x_b2 = torch.ones(nVoxels, b2.x.shape[1], device=b2.x.device)
+
+        x_b1 = scatter(b1.x, cluster[branch_mask], dim=0, out=x_b1, reduce="mean")
+        x_b2 = scatter(b2.x, cluster[~branch_mask], dim=0, out=x_b2, reduce="mean")
+
+        x = torch.cat([x_b1, x_b2], 1)
+        ...
+```
 
 <!-- FUSION IMAGE -->
 ![Fusion]({{ '/assets/images/team24/fusion.png' | relative_url }})
