@@ -1,7 +1,7 @@
 ---
 layout: post
 comments: true
-title: Enhanced Self-Driving with combination of map and lidar inputs.
+title: Enhanced Self-Driving with combination of camera and lidar inputs.
 author: Alexander Swerdlow, Puneet Nayyar
 date: 2022-01-27
 ---
@@ -15,14 +15,18 @@ date: 2022-01-27
 * TOC
 {:toc}
 
-## Introduction
-Our project seeks to implement and improve upon graph convolution approaches to 3D point cloud classification and segmentation. We plan to use the dynamic graph approach proposed by [1] which creates a graph between each layer with connections between nearby points and uses an asymmetric edge kernel that incorporates relative and absolute vertex locations. This approach contrasts with the typical approach to learning on point clouds which operates directly on sets of points. PointNet [8] is one popular implementation that takes this approach, learning spatial features for each point and using pooling to later perform classification or segmentation.
 
-## Introduction To Graph Neural Networks
+# Introduction
+Our project seeks to implement and improve upon graph convolution approaches to 3D point cloud classification and segmentation. We plan to explore the dynamic graph approaches proposed in [1] and [7] which create graphs between each layer with connections between nearby points and uses an asymmetric edge kernel that incorporates relative and absolute vertex locations. This approach contrasts with the typical approach to learning on point clouds which operates directly on sets of points. PointNet [8] is one popular implementation that takes this approach, learning spatial features for each point and using pooling to later perform classification or segmentation. 
 
-Graph Neural Networks, or GNNs, are as the name suggests, neural networks that make sense of graph informaton. This umbrella term covers graph-level tasks (which our project focuses on), node-level tasks (e.g. predicting the property of a node), and edge-level tasks. GNNs take some input graph $$G = (V, E)$$ and transform that graph in some sequence to produce a desired prediction. A basic GNN might look like several layers, each composed of some non-linear function $$f$$ (e.g. an MLP) that takes in the current graph $$\mathcal{G}_i$$. Depending on the GNN, the graph structure, commonly represented by an adjacency matrix, may stay the same throughout the layers, or change at each layer. The node and/or edge features are progessively transformed by this non-linear mapping and, if the task is graph-level classification, some pooling operation is typically performed to reduce the dimensionality.Depending on the GNN, the graph structure, commonly represented by an adjacency matrix, may stay the same throughout the layers, or change at each layer.
+# Introduction To Graph Neural Networks
 
-## EdgeConv
+Graph Neural Networks, or GNNs, are as the name suggests, neural networks that make sense of graph informaton. This umbrella term covers graph-level tasks (which our project focuses on), node-level tasks (e.g. predicting the property of a node), and edge-level tasks. GNNs take some input graph $$G = (V, E)$$ and transform that graph in some sequence to produce a desired prediction. A basic GNN might look like several layers, each composed of some non-linear function $$f$$ (e.g. an MLP) that takes in the current graph $$\mathcal{G}_i$$. Depending on the GNN, the graph structure, commonly represented by an adjacency matrix, may stay the same throughout the layers, or change at each layer. The node and/or edge features are progessively transformed by this non-linear mapping and, if the task is graph-level classification, some pooling operation is typically performed to reduce the dimensionality.Depending on the GNN, the graph structure, commonly represented by an adjacency matrix, may stay the same throughout the layers, or change at each layer. For this project, we explored multiple implementations of GNNs, which are explained here. 
+
+# DGCNN
+Our first approach was a Graph Convolutional Network (GCN) that used the influential EdgeConv [1] operation for convolution. We follow in their approach in modifying our graph size at each layer, performing max pooling after each EdgeConv layer. We chose the Dynamic Graph CNN (DGCNN) approach since it keeps the maximum receptive field, but reduces the number of parameters required at each sucessive layer. We also describe the EdgeConv operation below for completeness.
+
+### EdgeConv
 In order to tackle the problem of maintaining a graph's permutation invariance while also exploiting the geometric relationship between nodes, Wang et al. proposed a novel differentiable approach called EdgeConv [1]. The method resembles that of typical convolutions in CNNs, where local neighborhood graphs are created for each point and convolution operations are applied on the edges in this neighborhood. Additionally, in contrast to the approaches employed by other graph based networks, these local neighborhoods change after every layer. More specifically, the graph is recomputed after each layer such that the nearest neighbors are now those closest in the feature space. These dynamic graph updates allow the embeddings to be updated globally, and the authors show that this distinction leads to the best results for point cloud classification and segmentation. 
 
 Formally, at each layer $$l$$, a directed graph $$\mathcal{G^{(l)}} = (\mathcal{V^{(l)}}, \mathcal{E^{(l)}})$$ is constructed where each point $$\text{x}_i^{(l)}$$ is connected to $$k_l$$ other points through edges $$(i, j_{i1}) \ldots (i, j_{i k_l})$$. To perform this dynamic graph recomputation, the authors compute the pairwise distance between each point in the feature space $$\mathbb{R}^{F}$$, and the $$k_l$$ nearest neighbors are chosen for each point. With this graph constructed, the output of the actual EdgeConv operation is defined as the aggregation of weighted edge features for each edge in the neighborhood,
@@ -61,170 +65,105 @@ $$
 \text{x}'_{im} =  \mathop{\text{max}}_{j:(i,j)\in\mathcal{E}} h_{\Theta}(\text{x}_i, \text{x}_j)_m.
 $$
 
-For the final network architecture, shown in Fig 2, four EdgeConv layers are used to find geometric features from the input pointclouds. For each of these layers, the number of nearest neighbors $$k$$ is chosen as 20. The features from each layer are concatenated and passed through a global max pooling layer followed by two fully connected layers with a dropout of $$p=0.5$$. In addition, each layer uses a Leaky ReLU activation with batch normalization. Training is performed using SGD with momentum equal to 0.9, a learning rate of 0.1, and learning rate decay with cosine annealing [1].
+In the original network architecture, shown in Fig 2, four EdgeConv layers are used to find geometric features from the input pointclouds. For each of these layers, the number of nearest neighbors $$k$$ is chosen as 20. The features from each layer are concatenated and passed through a global max pooling layer followed by two fully connected layers with a dropout of $$p=0.5$$. In addition, each layer uses a Leaky ReLU activation with batch normalization. Training is performed using SGD with momentum equal to 0.9, a learning rate of 0.1, and learning rate decay with cosine annealing [1].
 
 ![EdgeArch]({{ '/assets/images/team24/edgeconv.png' | relative_url }})
 {: style="width: 800px; max-width: 100%;"}
 *Fig 2. EdgeConv architecture for classification and segmentation* [1].
 
+# 2D-3D Fusion
 
-## GeoMat Dataset
-To assess the performance of EdgeConv on point cloud classification, and specifically material prediction, we chose the GeoMat dataset since it includes both RGB and Sparse Depth unlike many other RGB-only material datasets [7]. In addition to the RGBD data, the GeoMat dataset provides camera intrinsics and extrinsics, calculated surface normals, as well as the position of the image patch in the larger image. We use the provided camera intrinsics and sparse depth to project the 2D image points into 3D space and generate a point cloud. 
+Our second network was also a GCN that relies on a backbone for feature extraction but differs in both the data flow and convolution operation. Instead of using a single graph network that takes in the points and associated features, we create two separate graphs, one representing 3D geometric features, and the second represending 2D texture features. The 2D texture features are extracted from the backbone and paired with a downsampled point cloud. The 3D geometric features, on the other hand, are solely based on the point cloud and depth data and are the result of using Attention Graph Convolution (AGC) [10] for both the euclidean and feature neighborhoods. This AGC operation is similar to EdgeConv with an attention mechanism except that AGC only includes edge attributes in its attention mechanism and not the features themselves. This is distinct from graph attention networks (GAT) [9] which takes a more common form of attention in which the attention mechanism takes into account the features of both nodes (not only the difference between the features) and also includes a normalization of the attention coefficient. We use an aggregation of a euclidean and feature-based AGC, which [11] calls MUNEGC and is seen below.
 
-```
-from torch_geometric.data import (Data, Dataset)
+$$
+\begin{equation}
+\begin{array}{r}
+\mathbf{x}_{i}^{\prime}=\Box\left\{\frac{1}{\left|N_{e}(i)\right|} \sum_{j \in N_{e}(i)} tanh(W_{e}^{l}\left(A_{i j}\right)) \mathbf{x}_{j}+b_{e}^{l},\right. \\
+\left.\frac{1}{\left|N_{f}(i)\right|} \sum_{j \in N_{f}(i)} tanh(W_{f}^{l}\left(A_{i j}\right)) \mathbf{x}_{j}+b_{f}^{l}\right\}
+\end{array}
+  \label{eq:agc}
+\end{equation}
+$$
 
-class GeoMat(Dataset):
-    def __init__(self, root, train=True, transform=None,
-                pre_transform=None, pre_filter=None):
+The pooling operation used alongside MUNEGC is a modification of traditional voxel pooling named Nearest Voxel Pooling (NVP) [11]. With standard voxel pooling, voxels of resolution $$r_p$$ are created and points from the point cloud inside each voxel are replaced with their centroid with a feature computed through either an average or maximum operation. NVP builds on this by then reassigning each point in the original point cloud to the nearest centroid, and grouping all points with the same centroid. Centroids without assigned points are removed, and each remaining centroid is given a new position equal to the average position of its group and feature equal to either the maximum or average of its group's features.
 
-        self.train_raw = self.read_txt(osp.join(root, 'raw_train.txt'))
-        self.test_raw = self.read_txt(osp.join(root, 'raw_test.txt'))
-        self.train_proc = self.read_txt(osp.join(root, 'processed_train.txt'))
-        self.test_proc = self.read_txt(osp.join(root, 'processed_test.txt'))
 
-        super().__init__(root, transform, pre_transform, pre_filter)
-        self.train = train
-        self.data = self.train_proc if self.train else self.test_proc
-    ... 
-    def process(self):
-        raw_filenames = self.raw_paths
-        processed_filenames = self.processed_paths
-        for raw_fn, proc_fn in zip(raw_filenames, processed_filenames):
-            f = sio.loadmat(raw_fn)
-            label = torch.from_numpy(f['Class'][0]).to(torch.long) - 1 
-            depth = np.ascontiguousarray(f['Depth'].astype(np.float32))
-            rgb = np.ascontiguousarray(f['Image']) 
-            intrinsics = f['Intrinsics'].astype(np.float64)
-            extrinsics = np.vstack([f['Extrinsics'].astype(np.float64), [0, 0, 0, 1]])
+# GeoMat Dataset
+To assess the performance of our DGCNN and fusion networks on point cloud classification, and specifically material prediction, we chose the GeoMat dataset since it includes both RGB and Sparse Depth unlike many other RGB-only material datasets [7]. In addition to the RGBD data, the GeoMat dataset provides camera intrinsics and extrinsics, calculated surface normals, as well as the position of the image patch in the larger image. We use the provided camera intrinsics and sparse depth to project the 2D image points into 3D space and generate a point cloud. 
 
-            im_rgb, im_depth = o3d.geometry.Image(rgb), o3d.geometry.Image(-depth)
-            rgbd = o3d.geometry.RGBDImage.create_from_color_and_depth(im_rgb, 
-                                                                      im_depth, 
-                                                                      convert_rgb_to_intensity=False)
-            intrinsics = o3d.camera.PinholeCameraIntrinsic(rgb.shape[1], 
-                                                           rgb.shape[0], 
-                                                           intrinsics[0,0], 
-                                                           intrinsics[1,1], 
-                                                           intrinsics[0,2], 
-                                                           intrinsics[1,2])
-            pcd = o3d.geometry.PointCloud.create_from_rgbd_image(rgbd, 
-                                                                 intrinsics, 
-                                                                 extrinsics, 
-                                                                 project_valid_depth_only=True)
-
-            pointcloud = torch.from_numpy(np.asarray(pcd.points))
-            pointcloud_rgb = torch.from_numpy(np.asarray(pcd.colors))
-            data = Data(pos=pointcloud, x=pointcloud_rgb, y=label)
-            if self.pre_filter is not None and not self.pre_filter(data):
-                continue
-            if self.pre_transform is not None:
-                data = self.pre_transform(data)
-            os.makedirs(osp.dirname(proc_fn), exist_ok=True)
-            torch.save(data, proc_fn)
-```
+We also pre-processed the image data to improve training by normalizing the RGB images by channel. We also augment the 2D image data by performing random flips and rotations. After projecting the depth map to a 3D point cloud, we normalize the positions of each point to the interval (-1, 1). When training to obtain the 3D geometric features, we augmented the point cloud and depth features by performing random dropout, randomly rotating about the z-axis between 0 and 180 degrees, and randomly flipping horizontally. In addition, we employ a random 3D cropping method proposed by [11], in which a random point is chosen from the point cloud and a cropping radius is found which includes only a specified fraction $$f$$ of the original number of points.
 
 The dataset consists of a total of 19 different materials, with each category consisting of 400 training and 200 testing examples. Training examples from the Cement - Granular, Grass, and Brick classes along with their constructed 3D point clouds are shown in Fig 3. 
 
 ![Exam]({{ '/assets/images/team24/train_ex.jpg' | relative_url }})
 {: style="width: 800px; max-width: 100%;"}
-*Fig 2. GeoMat training images for Cement, Grass, and Brick, along with constrcuted pointclouds* [7].
+*Fig 2. GeoMat training images for Cement, Grass, and Brick, along with constructed pointclouds* [7].
 
 
-## Implementation
+# Implementation
+Here we outline the more specific network architectures that were implemented. For training all of these networks, we used an RAdam optimizer with a learning rate of 0.001 and betas of 0.9 and 0.999 as a default. We also used cross-entropy loss with label-smoothing to reduce overconfidence of our models. We used the PyTorch Geometric framework since it provides common operations on graphs and allows for efficient dataloading, sampling, and training.
 
-We chose 4 EdgeConv layers as in [1] with single linear layers between the convolutions. Each linear layer has batch normalization and we used Leaky ReLu as our activation function. We used an Adam optimizer with learning rate equal to 0.001 and decay of 0.5 every 20 epochs. We use PyTorch-Geometric [5] since it provides common operations on graphs and allows for efficient dataloading, sampling, and training.
+### Feature backbone
 
-```
-from torch_geometric.loader import DataLoader
-from torch_geometric.nn import MLP, DynamicEdgeConv, global_max_pool
+We utilized a convolutional network to generate features that serve as input to downstream networks. We chose ConvNext [12] given its state-of-the-art performance. We used pre-trained weights for $$\verb'convnext_large'$$ and finetuned the lower 3 convolutional blocks as well as the classification head. The convolutional layers have the following filter sizes and depths: $$\verb'192, 384, 768, 1536', \verb'3, 3, 27, 3'$$. Taking inspiration from [13], we pick the 3rd layer with dimensions $$\verb'512x14x14'$$ and perform max pooling for layers 1 & 2 with kernel sizes 4 & 2 respectively and interpolate the final layer, in order to match the dimensions of the 3rd layer. This produces a feature size of $$\verb'2880x14x14'$$. In order to reduce the dimensionality of these features, we then perform 2D convolution with a kernel size of 1 and output dimension of 32 filters.
 
-class Net(torch.nn.Module):
-    def __init__(self, in_channels, out_channels, k=20, aggr="max"):
-        super().__init__()
-        self.conv1 = DynamicEdgeConv(MLP([2 * in_channels, 64], 
-            act="LeakyReLU", act_kwargs={"negative_slope": 0.2}), k, aggr)
-        self.conv2 = DynamicEdgeConv(MLP([2 * 64, 64], 
-            act="LeakyReLU", act_kwargs={"negative_slope": 0.2}), k, aggr)
-        self.conv3 = DynamicEdgeConv(MLP([2 * 64, 128], 
-            act="LeakyReLU", act_kwargs={"negative_slope": 0.2}), k, aggr)
-        self.conv4 = DynamicEdgeConv(MLP([2 * 128, 256], 
-            act="LeakyReLU", act_kwargs={"negative_slope": 0.2}), k, aggr)
-        self.fc1 = MLP([64 + 64 + 128 + 256, 1024], 
-            act="LeakyReLU", act_kwargs={"negative_slope": 0.2}, dropout=0.5)
-        self.fc2 = MLP([1024, 512, 256, out_channels], dropout=0.5)
+### DeepTen
+The baseline image-approach for comparison was based on Deep Texture Encoding Network (DeepTEN) [14], which uses dictionary learning and a residual encoding to learn domain-specific information. This encoding layer was specifically proposed for material recognition tasks and serves as a generalization of encoding schemes such as Fisher Vectors which showed the best performance in [7]. We used ConvNext [12] as our feature backbone, a dictionary with $$\verb'32x128'$$ codewords.
 
-    def forward(self, data):
-        pos, x, batch = data.pos, data.x, data.batch
-        x1 = self.conv1(torch.cat((pos, x), dim=1).float(), batch)
-        x2 = self.conv2(x1, batch)
-        x3 = self.conv3(x2, batch)
-        x4 = self.conv4(x3, batch)
-        out = self.fc1(torch.cat((x1, x2, x3, x4), dim=1))
-        out = global_max_pool(out, batch)
-        out = self.fc2(out)
-        return F.log_softmax(out, dim=1)
+### DGCNN
 
-def train():
-    model.train()
-    train_loss, train_pred, train_true = 0, [], []
-    for data in train_loader:
-        data = data.to(device)
-        optimizer.zero_grad()
-        out = model(data)
-        loss = criterion(out, data.y)
-        loss.backward()
-        optimizer.step()
-        preds = out.max(dim=1)[1]
-        train_loss += loss.item() * data.num_graphs
-        train_true.append(data.y.cpu().numpy())
-        train_pred.append(preds.detach().cpu().numpy())
+All MLPs used a dropout of 0.8 and a leaky ReLu activation slope of -0.2 in our DGCNN networks. Each sample consisted of 1000 randomly sampled points, as opposed to the 10000 generated by the projection, in order to conserve GPU memory. We note that the MLP for each EdgeConv layer must take in double the dimensions of the layer input.
 
-    train_true = np.concatenate(train_true)
-    train_pred = np.concatenate(train_pred)
-    return train_loss / len(train_dataset), 
-        metrics.accuracy_score(train_true, train_pred), 
-        metrics.balanced_accuracy_score(train_true, train_pred)
+$$\textit{DG-V1}: k=40$$, 3 EdgeConv layers $$\verb'[6, 64],[128,128],[256,256]'$$ and 2 MLP layers $$\verb'[448, 1024],[1024, 512, 256, 19]'$$. 
+
+$$\textit{DG-V2}: k=20$$, 4 EdgeConv layers $$\verb'[6, 64],[128,64],[128, 128],[256,256]'$$ and 2 MLP layers $$\verb'[512, 1024],[1024, 512, 256, 19]'$$. 
+
+$$\textit{DG-V3}$$: 1 2D Conv for the feature backbone: $$\verb'[1344, 128]'$$, 4 EdgeConv layers $$\verb'[268, 64],[128,128],[256,256]'$$ and 2 MLP layers $$\verb'[576, 1024],[1024, 512, 256, 19]'$$. 
+
+$$\textit{DG-V4}$$: one 2D Conv for the feature backbone: $$\verb'[64]'$$, 4 EdgeConv layers $$\verb'[6, 64],[128,64]'$$ and 2 MLP layers $$\verb'[192, 1024],[1024, 512, 256, 19]'$$.
+
+### 2D-3D Fusion
+The fusion approach uses 3 separately trained networks, two of which are used to extract 2D and 3D features from the input data, and one which fuses the 2D and 3D features for the final classification.
+
+#### 2D Features
+We use the same ConvNext [12] feature backbone for our texture graph and perform avg 2D pooling to reduce our point lattice to match the feature size $$(\verb'14x14')$$. 
+
+#### 3D Features
+The 3D geometric features are generated with a GCN which makes use of the MUNEGC and NVP layers described previously. The main building block consists of a MUNEGC layer followed by batch normalization, ReLU activation, and NVP pooling with maximum aggregation. The network uses 4 of these blocks, with output feature dimensions and pooling radius of $$\verb'16'$$ and $$\verb'0.05'$$, $$\verb'16'$$ and $$\verb'0.08'$$, $$\verb'32'$$ and $$\verb'0.12'$$, and $$\verb'64' and \verb'0.24'$$, respectively. This is then followed by another MUNEGC layer with output size $$\verb'128'$$ with batch normalization and ReLU activation. For training, a classification network also follows, with average global pooling, dropout of 0.2, and a fully connected layer with an output size of 19. After completing training, the output after the 5th MUNEGC layer is extracted to obtain the 3D geometric features which have a feature size of $$\verb'128'$$.
+
+#### Fusion
+The geometric and texture feature networks are trained individually and their weights are then frozen. We then implement the "Multi-model group fusion" proposed in [11]. In our case, we have the geometric point features with $$\verb'dim 128'$$ and the texture features with $$\verb'dim 1920'$$, which are first projected to 3D space. We then pass both sets of features through a ReLu activation before performing 1D convolution to match their dimensionality to $$\verb'dim 512'$$. This is the first step to fusing the features. These features are then fused using a modified version of the Nearest Voxel Pooling used in obtaining the 3D geometric features. Initially, points from the 2D and 3D features are assigned to a centroid in the same 2-step procedure used in NVP and centroids without assigned points are removed. Next, for a given centroid $$c_i$$, the averages of all the assigned 3D and 2D features points are calculated separately, and then the two averages are concatenated to create the final feature. In the case that a centroid has only one type of feature point, the missing feature average is replaced with all ones. The location of the new centroid is chosen as the average of all the 2D and 3D feature points in the group. The network consists of this NVP layer with a radius of 0.24, followed by a classification network with batch normalization, ReLU activation, global average pooling, dropout of 0.5, and a final fully connected layer with output size 19.
+
+# Results
+The results of our experiments are shared here. Training curves are shown in \ref{asf} confusion matrices on the test set are shown in \ref{confusion}.
+
+### DeepTen
+With the DeepTen network structure consisting of our feature backbone, encoding layer, and fully connected layer, we are able to achieve $$\textbf{68.55%}$$ accuracy on the test set.
+
+### DGCNN
+With our DGCNN using only depth data, we are able to achieve $$\textbf{38.00%}$$ accuracy on the test set $$(\textit{DG-V1})$$. Adding RGB channels as node features dramatically improves our results, with $$\textbf{61.45%}$$ test accuracy $$(\textit{DG-V2})$$. Our best result is achieved using our feature backbone in addition to the RGBD features per node, and a 4 layer network with EdgeConv with 2 following fully connected layers. This results in a test accuracy of $$\textbf{76.55%}$$ $$(\textit{DG-V3})$$.
+
+We also develop a much lighter version of our DGCNN that uses just two EdgeConv layers followed by two fully-connected layers, and a lighter feature backbone, $$\verb'convnext_base'$$. This results in 89 million parameters, including the backbone, compared to the 198 million parameters in $$\textit{DG-V3}$$. For this model, we only pass the image features to the fully connected layer, and bypass the EdgeConv layers to reduce computation. We achieve $$\textbf{75.08%}$$ accuracy on the test set $$(\textit{DG-V4})$$, confirming our assumption that the graph convolution layers are most effective at processing the raw pixel-wise data and not the preprocessed and interpolated image features since these lack meaningful structure.
+
+### Fusion
+Our fusion network combining 2D image and 3D depth features achieves $$\textbf{77.21%}$$ accuracy on the test set, outperforming the best result of 73.84% from [7] by more than 3%. We can see from the confusion matrix \ref{confusion} that the most common errors occur between the asphalt, cement, and concrete classes of which there are 5 in total.
+
+RESULTS TABLE
+
+CONFUSION MATRICES
+
+TRAINING CURVES
 
 
-def test(loader):
-    model.eval()
-    correct = 0
-    for data in loader:
-        data = data.to(device)
-        with torch.no_grad():
-            pred = model(data).max(dim=1)[1]
-        correct += pred.eq(data.y).sum().item()
-    return correct / len(loader.dataset)
+# Discussion
 
-pre_transform, transform = T.NormalizeScale(), T.FixedPoints(1024)  # T.SamplePoints(1024)
-train_dataset = GeoMat(path, True, transform, pre_transform)
-test_dataset = GeoMat(path, False, transform, pre_transform)
-train_loader = DataLoader(train_dataset, batch_size=24, shuffle=True, num_workers=6)
-test_loader = DataLoader(test_dataset, batch_size=24, shuffle=False, num_workers=6)
-model = Net(in_channels=6, out_channels=19, k=20).to(device)
-optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
-scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.5)
-```
+However, we iteratively improved our DGCNN by adding image features, fine-tuning the backbone and increasing the KNN param, all of which contribute to the improved results seen in Table \ref{table}.
 
-## Results
-Preliminary results are shown here. 
+We also see that the geometric features are only able to achieve 33.66% accuracy on the test set when not augmented with image features. We attribute this result to both the dataset type and resolution of the depth data. As there are several material types in the dataset with similar physical geometry, it is likely that the sparse depth data is simply insufficient for classification. It is possible that utilizing the contextual depth data (e.g. the rest of the scene) may improve the geometric classification results similar to how contextual encoding of image features has been shown to improve RGB-only semantic segmentation [15]. Nonetheless, we do see an improvement with both the DGCNN and the fusion networks compared to the image-only DeepTen model. 
 
-![TrainLoss]({{ '/assets/images/team24/Loss_train.svg' | relative_url }})
-{: style="width: 400px; max-width: 100%;"}
-*Fig 5. Training loss vs. Epoch*.
+We also see that the fusion network that utilizes attention graph convolution (AGC) outperforms our DGCNN with EdgeConv by 0.66% in accuracy on the test set. However, due to the differences in the respective networks, it is hard to draw a direct comparison. We do, however, see evidence that incorporating the image features after the graph convolution steps, is critical to retaining the texture information. Both the fusion network and the successful DGCNN networks $$(\textit{DG-V3}, \textit{DG-V4})$$ either separated the features entirely, or added a skip connection over the graph convolution layers. It is clear between the performance of $$\textit{DG-V2}$$ and $$\textit{DG-V3}$$ that this skip connection leads to a large performance improvement.
 
-![TrajnAcc]({{ '/assets/images/team24/Accuracy_train.svg' | relative_url }})
-{: style="width: 400px; max-width: 100%;"}
-*Fig 6. Training accuracy vs. Epoch*.
 
-![TrainAccB]({{ '/assets/images/team24/Balanced_Accuracy_train.svg' | relative_url }})
-{: style="width: 400px; max-width: 100%;"}
-*Fig 7. Balanced training accuracy vs. Epoch*.
-
-![TestAcc]({{ '/assets/images/team24/Accuracy_test.svg' | relative_url }})
-{: style="width: 400px; max-width: 100%;"}
-*Fig 8. Test accuracy vs. Epoch*.
 
 ## Reference
 
@@ -244,6 +183,19 @@ Preliminary results are shown here.
 
 [8] R. Q. Charles, H. Su, M. Kaichun, and L. J. Guibas, “PointNet: Deep learning on point sets for 3D classification and segmentation,” in Proc. IEEE CVPR, Jul. 2017
 
+[9] P. Velickovic, G. Cucurull, A. Casanova, A. Romero, P. Lio, and Y. Bengio. Graph attention networks. arXiv preprint arXiv:1710.10903, 2017.
+
+[10] A. Mosella-Montoro and J. Ruiz-Hidalgo. Residual attention graph convolutional network for geometric 3d scene classification. In Proceedings of the IEEE/CVF International Conference on Computer Vision Workshops, pages 0–0, 2019.
+
+[11] A. Mosella-Montoro and J. Ruiz-Hidalgo. 2d–3d geometric fusion network using multi-neighbourhood graph convolution for rgb-d indoor scene classification. Information Fusion, 76:46–54, 2021.
+
+[12] Z. Liu, H. Mao, C.-Y. Wu, C. Feichtenhofer, T. Darrell, and S. Xie. A convnet for the 2020s. arXiv preprint arXiv:2201.03545, 2022.
+
+[13] S. Casas, A. Sadat, and R. Urtasun. Mp3: A unified model to map, perceive, predict and plan. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition, pages 14403–14412, 2021.
+
+[14] H. Zhang, J. Xue, and K. Dana. Deep ten: Texture encoding network. In Proceedings of the IEEE conference on computer vision and pattern recognition, pages 708–717, 2017.
+
+[15] H. Zhang, K. Dana, J. Shi, Z. Zhang, X. Wang, A. Tyagi, and A. Agrawal. Context encoding for semantic segmentation. In Proceedings of the IEEE conference on Computer Vision and Pattern Recognition, pages 7151–7160, 2018.
 
 ## Code Repository
 [1] [Dynamic Graph CNN for Learning on Point Clouds](https://github.com/WangYueFt/dgcnn)
