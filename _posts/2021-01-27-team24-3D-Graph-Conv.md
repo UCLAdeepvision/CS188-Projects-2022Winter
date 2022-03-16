@@ -1,13 +1,13 @@
 ---
 layout: post
 comments: true
-title: Enhanced Self-Driving with combination of camera and lidar inputs.
+title: Graph Convolution Networks for fusion of RGB-D images
 author: Alexander Swerdlow, Puneet Nayyar
-date: 2022-01-27
+date: 2022-03-16
 ---
 
 
-> 3D Point Cloud understanding is critical for many robotics applications with unstructured environments such as self-driving cars. LIDAR sensors provide accurate, high-resolution point clouds that provide a clear view of the environment but making sense of this data can be computationally expensive and is generally difficult. Graph convolutional networks aim to exploit geometric information in the scene that is difficult for 2D based image recognition approaches to reason about.
+> 3D Point Cloud understanding is critical for many robotics applications with unstructured environments. Point Cloud Data can be obtained directly (e.g. LIDAR) or indirectly through depth maps (stereo cameras, depth from de-focus, etc.), however efficient merging the information gained from point clouds with 2D image features and textures is an open problem. Graph convolutional networks have the ability to exploit geometric information in the scene that is difficult for 2D based image recognition approaches to reason about and we test how these features can improve classification models.
 
 
 <!--more-->
@@ -215,7 +215,49 @@ class AGC(torch.nn.Module):
 ```
 
 #### Fusion
-The geometric and texture feature networks are trained individually and their weights are then frozen. We then implement the "Multi-model group fusion" proposed in [11]. In our case, we have the geometric point features with $$\verb'dim 128'$$ and the texture features with $$\verb'dim 1920'$$, which are first projected to 3D space. We then pass both sets of features through a ReLu activation before performing 1D convolution to match their dimensionality to $$\verb'dim 512'$$. This is the first step to fusing the features. These features are then fused using a modified version of the Nearest Voxel Pooling used in obtaining the 3D geometric features. Initially, points from the 2D and 3D features are assigned to a centroid in the same 2-step procedure used in NVP and centroids without assigned points are removed. Next, for a given centroid $$c_i$$, the averages of all the assigned 3D and 2D features points are calculated separately, and then the two averages are concatenated to create the final feature. In the case that a centroid has only one type of feature point, the missing feature average is replaced with all ones. The location of the new centroid is chosen as the average of all the 2D and 3D feature points in the group. The network consists of this NVP layer with a radius of 0.24, followed by a classification network with batch normalization, ReLU activation, global average pooling, dropout of 0.5, and a final fully connected layer with output size 19.
+The geometric and texture feature networks are trained individually and their weights are then frozen. We then implement the "Multi-model group fusion" proposed in [11]. In our case, we have the geometric point features with $$\verb'dim 128'$$ and the texture features with $$\verb'dim 1920'$$, which are first projected to 3D space. We then pass both sets of features through a ReLu activation before performing 1D convolution to match their dimensionality to $$\verb'dim 512'$$. This is the first step to fusing the features. These features are then fused using a modified version of the Nearest Voxel Pooling used in obtaining the 3D geometric features. Initially, points from the 2D and 3D features are assigned to a centroid in the same 2-step procedure used in NVP and centroids without assigned points are removed. Next, for a given centroid $$c_i$$, the averages of all the assigned 3D and 2D features points are calculated separately, and then the two averages are concatenated to create the final feature. In the case that a centroid has only one type of feature point, the missing feature average is replaced with all ones. The location of the new centroid is chosen as the average of all the 2D and 3D feature points in the group. The network consists of this NVP layer with a radius of 0.24, followed by a classification network with batch normalization, ReLU activation, global average pooling, dropout of 0.5, and a final fully connected layer with output size 19. We show part of the fusion network below:
+
+```
+class MultiModalGroupFusion(torch.nn.Module):
+    ...
+    def forward(self, b1, b2):
+        pos = torch.cat([b1.pos, b2.pos], 0)
+        batch = torch.cat([b1.batch, b2.batch], 0)
+
+        batch, sorted_indx = torch.sort(batch)
+        inv_indx = torch.argsort(sorted_indx)
+        pos = pos[sorted_indx, :]
+
+        start = pos.min(dim=0)[0] - self.pool_rad * 0.5
+        end = pos.max(dim=0)[0] + self.pool_rad * 0.5
+
+        cluster = torch_geometric.nn.voxel_grid(pos, self.pool_rad, batch, start=start, end=end)
+        cluster, perm = consecutive_cluster(cluster)
+
+        superpoint = scatter(pos, cluster, dim=0, reduce="mean")
+        new_batch = batch[perm]
+
+        cluster = nearest(pos, superpoint, batch, new_batch)
+
+        cluster, perm = consecutive_cluster(cluster)
+
+        pos = scatter(pos, cluster, dim=0, reduce="mean")
+        branch_mask = torch.zeros(batch.size(0)).bool()
+        branch_mask[0 : b1.batch.size(0)] = 1
+
+        cluster = cluster[inv_indx]
+
+        nVoxels = len(cluster.unique())
+
+        x_b1 = torch.ones(nVoxels, b1.x.shape[1], device=b1.x.device)
+        x_b2 = torch.ones(nVoxels, b2.x.shape[1], device=b2.x.device)
+
+        x_b1 = scatter(b1.x, cluster[branch_mask], dim=0, out=x_b1, reduce="mean")
+        x_b2 = scatter(b2.x, cluster[~branch_mask], dim=0, out=x_b2, reduce="mean")
+
+        x = torch.cat([x_b1, x_b2], 1)
+        ...
+```
 
 # Results
 The results of our experiments are shared here. Training curves are shown in \ref{asf} confusion matrices on the test set are shown in \ref{confusion}.
