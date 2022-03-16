@@ -7,7 +7,11 @@ date: 2022-01-28
 ---
 
 
+<<<<<<< HEAD
 > Historical videos like old movies are all black and white before the invention of colored cameras. However, have you wondered how the good old time looked like with colors? We will attempt to colorize old videos with the power of deep neural networks.
+=======
+> Historical videos like old movies are all black and white before the invention of colored cameras. However, have you wondered how the good old time looked like with colors? We will attempt to colorize old videos with the power of deep generative models.
+>>>>>>> 7e7564ee762018539dc7f059328a7a2b544c8163
 
 <!--more-->
 {: class="table-of-content"}
@@ -77,6 +81,7 @@ $$f^{\tilde X}_j=f^X_j\circ W_F + \sum\limits_{i=1}^Nf^{\bar X_i}_j\circ \bar W^
 $$
 ![InstColor_Fusion]({{ '/assets/images/team12/instColor_Fusion.png' | relative_url }}){: style=" max-width: 80%;"}
 
+### 4.1 Blind Video Temporal Consistency via Deep Video Prior (2020)
 
 The loss function used in this paper is the smooth $$l_1$$ loss with $$\delta=1$$:
 $$
