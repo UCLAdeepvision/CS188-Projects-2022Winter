@@ -3,7 +3,7 @@ layout: post
 comments: true
 title: Pose Estimation
 author: Nicholas Dean and Ellie Krugler
-date: 2022-03-08
+date: 2022-03-15
 ---
 
 > Pose estimation is the use of machine learning to estimate the pose of a person or animal from an image or a video by examining the spatial locations of key body joints. Our project will consist of two main parts: (1) this article, detailing pose estimation background and modeling techniques (2) an interative Google Colaboratory document demonstrating pose estimation in action.
@@ -12,6 +12,12 @@ date: 2022-03-08
 {: class="table-of-content"}
 * TOC
 {:toc}
+
+## Spotlight Presentation
+
+Below, you can find a video overview of the below article and a walkthrough of how to use our Google Colaboratory demo.
+
+insert video here
 
 ## Background
 
@@ -143,9 +149,13 @@ $$
 f = \sum^{T_P}_{t=1} f^t_L + \sum^{T_P + T_C}_{t= T_P + 1} f^t_S
 $$
 
-This concludes our technical discussion of OpenPose. Below, you can find additional information on Confidence Maps and Part Affinity Fields for further reading.
+Below, you can see some of the test results that OpenPose had on the COCO test-dev dataset.
 
-(Consider adding tables and graphs of OpenPose results on datasets, just pull from the paper)
+![OpenPose Results]({{ '/assets/images/team19/OpenPoseResults.png' | relative_url }})
+{: style="width: 500px; max-width: 100%;"}
+*Fig 3. OpenPose performance on COCO test-dev dataset.*
+
+This concludes our technical discussion of OpenPose. Below, you can find additional information on Confidence Maps and Part Affinity Fields for further reading.
 
 **OpenPose Confidence Maps**
 
@@ -171,15 +181,114 @@ Once a CNN extracts features from the image, a Region Proposal Network generates
 
 This is similar to a top-down approach, except that the person detection step and the body joint estimation step happen in parallel.
 
+As we discussed in class, what is cool about the Mask R-CNN is from the base Mask R-CNN, we can apply different per-region heads that allow us to perform various downstream tasks. Obviously, in our case, we apply a "head" that allows for keypoint prediction.
+
+![Diagram of Mask R-CNN]({{ '/assets/images/team19/Mask R-CNN.png' | relative_url }})
+{: style="width: 500px; max-width: 100%;"}
+*Fig 4. Diagram of Mask R-CNN and keypoint prediction head applied.*
+
 ## Innovation
 
-### Residual Steps Network (RSN) -- REVISE/Add more detail
+### Residual Steps Network (RSN)
 
-Now, we will discuss a modern architecture for pose estimation that was the winner of the COCO KeyPoint Detection Challenge in 2019.
+While this is not our improvement, we wanted to highlight one of the more modern architectures for pose estimation as we felt it was important to discuss innovations in the field. The RSN model [3] was the winner of the COCO KeyPoint Detection Challenge in 2019.
 
-RSN was created with the goal of having the accuracy of the DenseNet model without the huge network capacity requirements. It uses a Residual Steps Block, or RSB, to fuse features with element-wise sum operations rather than concatenation. 
+RSN [3] was created with the goal of having the accuracy of the DenseNet model without the huge network capacity requirements. It incorporates ideas from ResNet, and it uses a Residual Steps Block, or RSB, to fuse features with element-wise sum operations rather than concatenation. 
 
-The creators claim that the RSN model outperforms its predecessors on the MS COCO dataset, with better performance in many cases as well.
+Below, we have included the source code of the `RSN` class to help readers get an idea of how the creators went about having the RSN aggregate features in order to learn delicate local representations within the image in order to obtain precise keypoint locations.
+
+```
+class RSN(nn.Module):
+    
+    def __init__(self, cfg, run_efficient=False, **kwargs):
+        super(RSN, self).__init__()
+        self.top = ResNet_top()
+        self.stage_num = cfg.MODEL.STAGE_NUM
+        self.output_chl_num = cfg.DATASET.KEYPOINT.NUM
+        self.output_shape = cfg.OUTPUT_SHAPE
+        self.upsample_chl_num = cfg.MODEL.UPSAMPLE_CHANNEL_NUM
+        self.ohkm = cfg.LOSS.OHKM
+        self.topk = cfg.LOSS.TOPK
+        self.ctf = cfg.LOSS.COARSE_TO_FINE
+        self.mspn_modules = list() 
+        for i in range(self.stage_num):
+            if i == 0:
+                has_skip = False
+            else:
+                has_skip = True
+            if i != self.stage_num - 1:
+                gen_skip = True
+                gen_cross_conv = True
+            else:
+                gen_skip = False 
+                gen_cross_conv = False 
+            self.mspn_modules.append(
+                    Single_stage_module(
+                        self.output_chl_num, self.output_shape,
+                        has_skip=has_skip, gen_skip=gen_skip,
+                        gen_cross_conv=gen_cross_conv,
+                        chl_num=self.upsample_chl_num,
+                        efficient=run_efficient,
+                        **kwargs
+                        )
+                    )
+            setattr(self, 'stage%d' % i, self.mspn_modules[i])
+
+    def _calculate_loss(self, outputs, valids, labels):
+        # outputs: stg1 -> stg2 -> ... , res1: bottom -> up
+        # valids: (n, 17, 1), labels: (n, 5, 17, h, h)
+        loss1 = JointsL2Loss()
+        if self.ohkm:
+            loss2 = JointsL2Loss(has_ohkm=self.ohkm, topk=self.topk)
+        
+        loss = 0
+        for i in range(self.stage_num):
+            for j in range(4):
+                ind = j
+                if i == self.stage_num - 1 and self.ctf:
+                    ind += 1 
+                tmp_labels = labels[:, ind, :, :, :]
+
+                if j == 3 and self.ohkm:
+                    tmp_loss = loss2(outputs[i][j], valids, tmp_labels)
+                else:
+                    tmp_loss = loss1(outputs[i][j], valids, tmp_labels)
+
+                if j < 3:
+                    tmp_loss = tmp_loss / 4
+
+                loss += tmp_loss
+
+        return dict(total_loss=loss)
+        
+    def forward(self, imgs, valids=None, labels=None):
+        x = self.top(imgs)
+        skip1 = None
+        skip2 = None
+        outputs = list()
+        for i in range(self.stage_num):
+            res, skip1, skip2, x = eval('self.stage' + str(i))(x, skip1, skip2)
+            outputs.append(res)
+
+        if valids is None and labels is None:
+            return outputs[-1][-1]
+        else:
+            return self._calculate_loss(outputs, valids, labels)
+```
+
+Below, you can see some of the test results that RSN had on the COCO test-dev and COCO test-challenge datasets.
+
+![RSN Results on COCO test-dev]({{ '/assets/images/team19/RSN_results_dev.png' | relative_url }})
+{: style="width: 700px; max-width: 100%;"}
+*Fig 3. RSN performance on COCO test-dev dataset. ”*” means using ensembled models.
+Pretrain = pretrain the backbone on the ImageNet classification task.*
+
+![RSN Results on COCO test-dev]({{ '/assets/images/team19/RSN_results_challenge.png' | relative_url }})
+{: style="width: 700px; max-width: 100%;"}
+*Fig 3. RSN performance on COCO test-challenge dataset. ”*” means using ensembled models.
+Pretrain = pretrain the backbone on the ImageNet classification task.*
+
+As you can see from these results, RSN has a considerable performance improvement compared to OpenPose.
 
 ## Applications
 
@@ -202,21 +311,29 @@ Pose estimation has applications in a number of areas.
     * Snapchat's [Lens Studio](https://lensstudio.snapchat.com/), a form of augmented reality
 
 
-### [Colab Code](https://colab.research.google.com/drive/1TjSsL1ojQ9BX34g6KNI8u08vqeYdZeK1?usp=sharing)
+### Google Colaboratory Demo
 
-In order to test OpenPose on your chosen YouTube video, make a copy of the included Colab code and replace YOUTUBE_ID with the number following "v=" in the YouTube link. This works best if the video is under 4 minutes and available in the country, which can be done using the filter option on YouTube searches. The start time of the five seconds that will be analyzed can also be changed.
+Below, please see the Google Colaboratory demo we have put together to show pose estimation in action! You will be able to upload your own YouTube video and observe pose estimation applied to it.
+
+[Demo](https://colab.research.google.com/drive/1TjSsL1ojQ9BX34g6KNI8u08vqeYdZeK1?usp=sharing)
+
 
 ## Paper References
 
 [1] Cao, Zhe, et al. "OpenPose: Realtime Multi-Person 2D Pose Estimation using Part Affinity Fields" arXiv preprint arXiv:1812.08008 (2019).<br>
 [[Paper]](https://arxiv.org/abs/1812.08008) [[Code]](https://github.com/CMU-Perceptual-Computing-Lab/openpose)
 
-[2] Luo, Zhengyi, et al. "Dynamics-Regulated Kinematic Policy for Egocentric Pose Estimation." arXiv preprint arXiv:2106.05969 (2021).<br>
+[2] Luo, Zhengyi, et al. "Dynamics-Regulated Kinematic Policy for Egocentric Pose Estimation" arXiv preprint arXiv:2106.05969 (2021).<br>
 [[Paper]](https://arxiv.org/abs/2106.05969) [[Code]](https://github.com/KlabCMU/kin-poly)
 
-[3] paper on RSN
+[3] Cai, Yuanhao, et al. "Learning Delicate Local Representations for
+Multi-Person Pose Estimation" arXiv preprint arXiv:2003.04030 (2020).<br>
 [[Paper]](https://arxiv.org/abs/2003.04030) [[Code]](https://github.com/caiyuanhao1998/RSN)
 
 ## Learning References
+
+[4] Odemakinde, Elisha. “Human Pose Estimation with Deep Learning – Ultimate Overview in 2022.” Viso.ai, [https://viso.ai/deep-learning/pose-estimation-ultimate-overview/](https://viso.ai/deep-learning/pose-estimation-ultimate-overview/). Accessed 16 Mar. 2022. 
+
+[5] Research Team. “An Overview of Human Pose Estimation with Deep Learning.” BeyondMinds, [https://beyondminds.ai/blog/an-overview-of-human-pose-estimation-with-deep-learning/](https://beyondminds.ai/blog/an-overview-of-human-pose-estimation-with-deep-learning/). Accessed 16 Mar. 2022. 
 
 ---
