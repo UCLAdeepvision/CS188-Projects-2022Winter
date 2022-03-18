@@ -195,13 +195,13 @@ def forward(self, source_image, kp_driving, kp_source):
         return output_dict
 ```
 
-### Other Methods of Image Animations
+### Global-Flow Local-Attention Model
 
 Although the first-order motion model achieves pretty good performance, it actually leads to compromised results in some cases. For example, we tried to set the images of ourselves as the source image. However, the keypoints detection were not accurate and the animation result looks unnatuaral in some cases, especially when the source image is not cropped to roughly align with the driving video. 
 
 Additionally, for the first order motion model, the pretrained model is highly sensitive and only works well on the images similar to its training set. If, for exmaple, the model is trained on face images, then the model will perform poorly for images where the face only takes up a small portion. (To try out yourself, the Colab [demo](https://drive.google.com/drive/folders/1RRiqMyUGs4wAJ_pcQ56I_WKjuZKXqZVV?usp=sharing) we provide might be helpful.)
 
-Here we also introduce another framework that can accomplish the Image Animation task, [the Global-Flow Local-Attention framework](https://arxiv.org/abs/2003.00696). Similar to the first-order motion model, this framework composes of two parts: **Global Flow Field Estimator** and **Local Neural Texture Renderer**. The Global Flow Field Estimator employs a flow-based method to extract the global correlations and generate flow fields, while the Local Neural Texture Renderer uses a local-attention mechanism to spatially transform the information from the source to target. Below shows a example video generated from the source image. Since this method is originally proposed for the task of pose-guided person image generation, edge guidance is also shown. (resolution of the demo slightly compromised when converting from video to gif) 
+Here we also introduce another framework that can accomplish the Image Animation task, the [Global-Flow Local-Attention Model](https://arxiv.org/abs/2003.00696). Similar to the first-order motion model, this framework composes of two parts: **Global Flow Field Estimator** and **Local Neural Texture Renderer**. The Global Flow Field Estimator employs a flow-based method to extract the global correlations and generate flow fields, while the Local Neural Texture Renderer uses a local-attention mechanism to spatially transform the information from the source to target. Below shows a example video generated from the source image. Since this method is originally proposed for the task of pose-guided person image generation, edge guidance is also shown. (resolution of the demo slightly compromised when converting from video to gif) 
 
 {:.center}
 ![Global-Flow Local-Attention demo]({{ '/assets/images/team08/global-flow-local-attention.gif' | relative_url }})
@@ -403,8 +403,11 @@ For StyleGAN, the synthesized image is highly dependent on the abosulte coordina
 {: style="width: 800; max-width: 150%;"}
 *Fig 12. Demo for StyleGAN3. (Image source: <https://nvlabs.github.io/stylegan3/>)*
 
+## Video Demo
+<iframe width="560" height="315" src="https://www.youtube.com/embed/saKWbS-JPMo" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
-
+## Colab Demo
+Please see [deepFake_demo.ipynb](https://drive.google.com/file/d/1igF22CmWuPAewM6hiVpbsIpQZ8yibh4E/view?usp=sharing) in [the google drive folder](https://drive.google.com/drive/folders/1RRiqMyUGs4wAJ_pcQ56I_WKjuZKXqZVV?usp=sharing).
 
 ## Relevant Papers
 
