@@ -281,7 +281,7 @@ The StarGAN v2 model is an image-to-image translation framework that can generat
 
 * Learning objective functions<br>
     Notations that we will use below: an input image $$\mathbf{x} \in \mathcal{X}$$ and its original domain $$\mathbf{y} \in \mathcal{Y}$$; a latent code $$\mathbf{z} \in \mathcal{Z}$$; a target domain $$\tilde{y} \in \mathcal{Y}$$ and style code $$\tilde{\mathbf{s}}$$.
-    - **Adversial objective** 
+    - **Adversarial objective** 
 
         $$
         \mathcal{L}_{adv} = \mathbb{E}_{\mathbf{x}, y}[\log{D_y(\mathbf{x})}] + \mathbb{E}_{\mathbf{x}, \tilde{y}, \mathbf{z}}[\log{(1 - D_{\tilde{y}} (G(\mathbf{x}, \tilde{\mathbf{s}})))}]
@@ -289,7 +289,7 @@ The StarGAN v2 model is an image-to-image translation framework that can generat
 
         where the latent code $$\mathbf{z}$$ and target domain $$\tilde{y}$$ are sampled randomly in training and $$\tilde{s} = F_{\tilde{y}}(\mathbf{z})$$. 
 
-        Below are the code snip defining the adversial loss:
+        Below are the code snip defining the adversarial loss:
         ```python
         def adv_loss(logits, target):
             assert target in [1, 0]
