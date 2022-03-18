@@ -413,7 +413,31 @@ For the StyleGAN, the synthesisted image is highly dependent on the abosulte coo
 
 ## Relevant Papers
 
-1. [First Order Motion Model for Image Animation](https://arxiv.org/abs/2003.00196)<br>
+[1] Siarohin, Aliaksandr, et al. "First Order Motion Model for Image Animation." *Conference and Workshop on Neural Information Processing Systems*. 2019.
+
+[2] Choi, Yunjey, et al. "StarGAN v2: Diverse Image Synthesis for Multiple Domains." *IEEE Conference on Computer Vision and Pattern Recognition*. 2020.
+
+[3] Choi, Yunjey, et al. "StarGAN: Unified Generative Adversarial Networks for Multi-Domain Image-to-Image Translation." IEEE Conference on Computer Vision and Pattern Recognition*. 2018.
+
+[4] Zhu, Jun-Yan, et al. "Unpaired Image-to-Image Translation Using Cycle-Consistent Adversarial Networks." *IEEE International Conference on Computer Vision*. 2017.
+
+[5] Isola， Phillip, et al. "Image-to-Image Translation with Conditional Adversarial Nets." *IEEE Conference on Computer Vision and Pattern Recognition*. 2017.
+
+[6] Mao, Qi, et al. "Mode Seeking Generative Adversarial Networks for Diverse Image Synthesis." *IEEE Conference on Computer Vision and Pattern Recognition*. 2019.
+
+[7] Huang, Xun, et al. "Arbitrary Style Transfer in Real-time with Adaptive Instance Normalization." *IEEE International Conference on Computer Vision*. 2017.
+
+[8] Huang, Xun, et al. "Multimodal Unsupervised Image-to-Image Translation." *The European Conference on Computer Vision*. 2018.
+
+[9] Ren, Yurui, et al. "Deep Image Spatial Transformation for Person Image Generation." *IEEE Conference on Computer Vision and Pattern Recognition*. 2020.
+
+[10] Karras, Tero, et al. "A Style-Based Generator Architecture for Generative Adversarial Networks." *IEEE Transactions on Pattern Analysis and Machine Intelligence*. 2021.
+
+[11] Zeno, Bassel, et al. "Comparative Review of Cross-Domain Generative Adversarial Networks." *IBIMA conference*. 2019.
+
+[12] Karras, Tero, et al. "Alias-Free Generative Adversarial Networks (StyleGAN3)." *Conference and Workshop on Neural Information Processing Systems*. 2021.
+
+<!-- 1. [First Order Motion Model for Image Animation](https://arxiv.org/abs/2003.00196)<br>
     [[GitHub Link]](https://github.com/AliaksandrSiarohin/first-order-model)
 
 2. [StarGAN v2: Diverse Image Synthesis for Multiple Domains](https://arxiv.org/abs/1912.01865)<br>
@@ -437,4 +461,4 @@ For the StyleGAN, the synthesisted image is highly dependent on the abosulte coo
 
 11. [Comparative Review of Cross-Domain Generative Adversarial Networks](https://www.researchgate.net/publication/336880524_Comparative_Review_of_Cross-Domain_Generative_Adversarial_Networks/fulltext/5db875904585151435d1609a/Comparative-Review-of-Cross-Domain-Generative-Adversarial-Networks.pdf)
 
-12. [Alias-Free Generative Adversarial Networks (StyleGAN3)](https://nvlabs.github.io/stylegan3/)
+12. [Alias-Free Generative Adversarial Networks (StyleGAN3)](https://nvlabs.github.io/stylegan3/) -->
