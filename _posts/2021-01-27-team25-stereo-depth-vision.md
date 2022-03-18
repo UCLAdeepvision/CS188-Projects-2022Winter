@@ -17,13 +17,14 @@ date: 2022-01-27
 
 ## Background
 Stereo matching is the process of aligning two images taken by distinct cameras of the same object. In the very simple case,
-with perfect images, and one object at constant depth, one can compute the disparity (pixel alignment offset) required to align both the left and right camera images. This information can be used, along with the distance between the two cameras, to compute a distance estimation for this object. In the real world case, this problem becomes much more complicated. Many objects reside in the scene with different textures, shadows, etc, and performing an alignment between all these points is difficult, making it more challenging to estimate distance than in the simple case. There are two different forms of stereo matching: active and passive. In the active case, one simplifies the problems of alignment by projecting light (ofter laser dot matrix) and using other adaptive mechanisms to make it easier to align the two camera images. This hardware is much more expensive however and thus not as likely to see widespread use. Passive stereo imaging just involves two statically placed cameras and thus is a much harder problem that we will explore for our final project.
+with perfect images, and one object at constant depth, one can compute the disparity (pixel alignment offset) required to align both the left and right camera images. This information can be used, along with the distance between the two cameras, to compute a distance estimation for this object. In the real world case, this problem becomes much more complicated. Many objects reside in the scene with different textures, shadows, etc, and performing an alignment between all these points is difficult, making it more challenging to estimate distance than in the simple case. There are two different forms of stereo matching: active and passive. In the active case, one simplifies the problems of alignment by projecting light (ofter via a laser dot matrix) and using other adaptive mechanisms to make it easier to align the two camera images. This hardware is much more expensive however and thus not as likely to see widespread use. Passive stereo imaging just involves two statically placed cameras and thus is a much harder problem that we will explore for our final project.
 
 A natural question that also might be asked, is why not use a single camera for depth estimation? There are some models that explore this, but it is much more difficult to get accurate depth measurements, and there is a large gap between depth accuracies (as shown in 4)).
 
 ## Paper Choice
-We evaluated multiple different papers when deciding on what we wanted to choose for our final project. As we purchased an OAK-D Lite stereo camera for use in our actual environment, we favored algorithms that could run in close to real time, so we'd be able to observe the depth estimations of objects as we walked
-by them. We first considered the Pyramid Matching Network, which had a rather simple multilayer convolutional model, but weren't the most confident in its real time performance, given the author's reliance on a fairly powerful GPU. We then considered both HITNet (a recent network, although admittedly a somewhat complex one) authored this year Google, and StereoNet (a model which uses a 2 pass Siamese Network). We decided to do a deep dive into HITNet due to its more complex design, and compared our results to the pretrained HITNet model, along with an implementation of StereoNet. Below we give an explanation of the HITNet Model.
+We evaluated multiple different papers when deciding on what we wanted to choose for our final project. As we were particularly interested in stereo depth matching for robotics applications, we favored algorithms that could run in close to real time, so we'd be able to observe the depth estimations of objects as we walked
+by them.
+We considered both HITNet (a recent network, although admittedly a somewhat complex one) authored this year Google, and StereoNet (a model which uses a 2 pass Siamese Network). The HITNet model seemed like a good choice due to its adaptation of many techniques used in conventional active stereo matching to the passive stereo matching field as well as its omission of a cost volume (a common source of expense in stereo matching models due to the need to use 3D convolutions). StereoNet seemed like a reasonable choice as well as it was a much more simple and understandable model that instead solved the problem of expensive cost volume computation by heavily downsampling the input image and using refinement on this output with the original input image to give its prediction. As these models take fundamentally different approaches, we figured understanding them would give us a good overview of the stereo depth matching problem.
 
 ## HITNet
 HITNet is a recent model that works to use some of the recent techniques from active stereo depth applied to the passive stereo problem. It is  optimized for speed, using a combination of a fast multi-resolution initial step, and 2d disparity propagation, instead of much more costly 3D convolutions. Although it performs slightly worse than the 3D convolutional models, it takes only milliseconds to process an image pair, compared to seconds from those models.
@@ -218,7 +219,7 @@ The probabilistic loss function.
 
 <center> $$d \sim \sum_{d=1}^D d \cdot \frac {\text{exp}(-C_i(d))} {\sum_{d'} \text{exp}(-C_i(d'))}$$</center>
 
-### Upsampling
+### Upsampling (Refinement)
 To upsample the image the disparity map is first bilinearly upsampled to the output size. It then is passed through the refinement layer which first consists 3x3 convolutiion. This is followed by 6 residual blocks with 3x3 dilated convolutions (to increase the receptive field), with dilation factors of 1,2,4,8, and 1 respectiveley. The final output is run through a 3x3 convolutional layer. The authors tried two different techniques, one running the upsample once and another cascading the upsample layer for further refinement.
 ### Loss Function
 Loss is computed as the difference between the ground truth disparity and the predicted disparity at $k$, the given refinement level (k = 0 denoting output before any refinement) and is given by the following equation.
@@ -226,28 +227,32 @@ Loss is computed as the difference between the ground truth disparity and the pr
 $$L = \sum_k p(d_i^k - \hat{d}_i)$$
 
 
-## Replicating Results
+### Implementation
 To train both HITNet and StereoLab models ourselves, we heavily relied upon the work of GitHub user zjjMaiMai in their
-repository TinyHITNet [6], which implements both models in PyTorch. This is an example result on a training image after 3200 steps of  training the HITNet model on the KITTI 2015 dataset.
-The top image is the ground truth from a laser scanner pointcloud. The second image is the predicted depth.
-The last two images are each of the camera views.
+repository TinyHITNet [6], which implements both models in PyTorch. As our models were (justifiably) smaller and not as well trained as those in the original papers (they used much more computational power and training time than we had available) we compared our results to those in the GitHub repo, while still giving a reference to those provided in the original paper. To offer a consistent baseline when comparing the two models we chose to use the Kitti 2015 dataset.
 
-![KITTI HITNet trained for 3200 steps]({{ '/assets/images/team25/kitti-hitnet-3200step.png' | relative_url }})
+### Results
+For evaluating results we used one of the metrics common to both papers: End-Point-Error (EPE). This metric is a measurement of the absolute distance in disparity space between the predicted output and the ground truth.
 
-This is an example result on a training image after 11,700 steps of training the StereoNet model on the KITTI 2015 dataset.
-StereoNet has fewer parameters, requires less GPU memory, and trains faster than HITNet.
-
-![KITTI StereoNet trained for 11,700 steps]({{ '/assets/images/team25/kitti-stereonet-11700step.png' | relative_url }})
-
-This is the EPE error during training. The orange line is HITNet trained with batch size 1, and the blue line is
-StereoNet trained with batch size 2. We can see that StereoNet converges during training much faster.
-The steps themselves also ran faster than HITNet. There is still potential improvement in the optimization process.
-We also did not train HITNet enough because we did not have time yet.
+We found that HITNet performed very well overall and we didn't have to make too many tweaks to its implementation to see results that qualitatively looked quite good.
 
 ![Train Accuracy]({{ '/assets/images/team25/train-epe.png' | relative_url }})
 
-## Experimental Contributions
-When looking at the StereoNet Model we were somewhat curious what the effect of using a Siamese network had on the model, over training separate models for both left and right images. We surmised that there may be some differences in images depending on the side they were taken on and it might make sense to learn a different representation for each of these pieces of the network. As the feature refinement part of the network as well as the cost matrix are likely very similar in function, we only trained separate features for both model sizes. While this does effectively reduce by half our quantity of training data per weight in the feature generation of our network(as we are no longer training the weights per iteration on both the left and right images) we were hopeful it might result in a slight performance gain. We also experimented with the optimizer given in the paper, trying AdaBound in our new non-Siamese implementation to see if we could notice any improvement over the original paper.
+
+
+#### Issues with Reflection
+As mentioned in the original StereoNet paper, the StereoNet model struggles a bit with relections as its refinement network doesn't have a good structure for solving the inpainting problem. As a window that has depth both behind it and at the window's surface has ambiguous depth, but the loss is computed based on whatever the lidar reports, the model can score a bit lower on evaluation metrics for actually trying to report depth of objects behind the window surface. The author's mention that some of the models that perform better than theirs likely learn to paint over this surface (inpainting) and thus ignore the object behind the window glass.
+
+<!-- Image illustrating the details of the reflection problem-->
+
+#### Issues with Unlabeled Sky
+In the Kitti 2015 dataset images point cloud often only extend to the upper half of the image. We found that this could be problematic for learning the depth map for the sky as this is a fairly textureless region and thus many possible disparity values are valid. This makes the softmax over the cost volume have many equal value paths, and the model seems to learn to favor a lower disparity in these cases, creating many artifacts in the sky. The ideal way to fix this would be to augment the sky with additional data points (likely labeling the sky as close to infinity) so the refinement network could learn to treat the sky differently than the rest of the model. As attaining additional labeled data is difficult, we instead proposed a different solution using some of the features from HITNet in an attempt to solve this issue.
+
+
+### Experimental Contributions
+
+#### NonSiamese StereoNet
+When looking at the StereoNet Model we were somewhat curious what the effect of using a Siamese network had on the model, over training separate models for both left and right images. We surmised that there may be some differences in images depending on the side they were taken on and it might make sense to learn a different representation for each of these pieces of the network. As the feature refinement part of the network as well as the cost matrix are likely very similar in function, we only trained separate features for both model sizes. While this does effectively reduce by half our quantity of training data per weight in the feature generation of our network(as we are no longer training the weights per iteration on both the left and right images) we were hopeful it might result in a slight performance gain.
 
 ```python
 self.feature_extractor_left = [conv_3x3(3, 32, 2), ResBlock(32)]
@@ -265,7 +270,14 @@ self.feature_extractor_right = nn.Sequential(*self.feature_extractor_right)
 
 <!--TODO(morleyd): Look into how to offset loss to account for the nonexisting pixels in the morph-->
 
-As camera alignment is often imperfect, we were curious if expanding the local convolution to include a y offset in the highest resolution layer of HITNet could result in a minor improvement in matching. For the pixels that are now misaligned we had to determine how to modify the loss computation. We decided to count the now nonexisting pixels as having an initialization value of 0, making it fairly unfavorable to use this offset, but still potentially better. While this would introduce a somewhat artificial penalty to choosing a displacement in the y direction, in the pedantic case, where the pixels have sharp boundaries and are all misaligned by some +-y, we would still notice a significant decrease in the loss. We thus decided this minor change was worth exploring in our modified implementation of HITNet, despite the minor increase in computational cost.
+We quickly realized that this was not a good idea as the loss of the model went down much much more slowly and it became clear it wouldn't converge to anything relevant very quickly. Reflecting on this once more, this does make some sense, as we likely want the main features of hte left and right images to be the same, just with minor tweaks per model. It may make sense to finetune the siamese network allowing each side to train separately using this logic, but due to a limitation on remaining Google cloud credits, we decided not to test this hypothesis and move on to other ideas.
+
+#### Adam Optimizer+Adjusted Loss Params StereoNet
+In the original StereoNet paper the authors used RMSProp, which we found a bit strange as generally Adam seems to be the go to choice of optimizer. The authors' also make use of a robust loss function with params of $$\alpha = 1$$ and $$ c = 2$$, which we found adjusting slightly resulted in the model training a bit faster.
+
+<!-- Results for this model displayed here -->
+
+#### HITNet Initialization in FineTuning Loss Optimization of StereoNet Refinement
 
 ## Reference
 Please make sure to cite properly in your work, for example:
