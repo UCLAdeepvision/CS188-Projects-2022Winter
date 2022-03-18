@@ -3,7 +3,7 @@ layout: post
 comments: true
 title: Pose Estimation
 author: Nicholas Dean and Ellie Krugler
-date: 2022-03-15
+date: 2022-03-16
 ---
 
 > Pose estimation is the use of machine learning to estimate the pose of a person or animal from an image or a video by examining the spatial locations of key body joints. Our project will consist of two main parts: (1) this article, detailing pose estimation background and modeling techniques (2) an interative Google Colaboratory document demonstrating pose estimation in action.
@@ -17,7 +17,7 @@ date: 2022-03-15
 
 Below, you can find a video overview of the below article and a walkthrough of how to use our Google Colaboratory demo.
 
-insert video here
+<iframe width="560" height="315" src="https://www.youtube.com/embed/FfL9fXsM454?start=1" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
 ## Background
 
@@ -310,13 +310,11 @@ Pose estimation has applications in a number of areas.
     * Producing deepfakes of dancing, like [Sway](https://getsway.app/) from Humen.Ai
     * Snapchat's [Lens Studio](https://lensstudio.snapchat.com/), a form of augmented reality
 
-
 ### Google Colaboratory Demo
 
 Below, please see the Google Colaboratory demo we have put together to show pose estimation in action! You will be able to upload your own YouTube video and observe pose estimation applied to it.
 
 [Demo](https://colab.research.google.com/drive/1TjSsL1ojQ9BX34g6KNI8u08vqeYdZeK1?usp=sharing)
-
 
 ## Paper References
 
