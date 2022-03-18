@@ -3,15 +3,12 @@ layout: post
 comments: true
 title: DeepFake Generation
 author: Zhengtong Liu, Chenda Duan
-date: 2022-03-06
+date: 2022-03-17
 ---
-
-> [Note] For better understanding and for fun, we have create a [demo](https://drive.google.com/drive/folders/1RRiqMyUGs4wAJ_pcQ56I_WKjuZKXqZVV?usp=sharing). You may need to create a copy and modify the path in the deepFake_demo.ipynb file.
  
-> This is the blog will record and explain technical details for Zhengtong Liu and Chenda Duan's CS188 DLCV project.
-> We will investigate the state-of-the-art Image Animation and Image-to-image Translation methods.
-
-
+> This is the blog that records and explains technical details for Chenda Duan and Zhengtong Liu's CS188 DLCV project.
+> We investigate some novel and powerful methods of two topics in DeepFake Generation: Image Animation and Image-to-Image Translation methods. 
+> For better understanding and for fun, we have create a [demo](https://drive.google.com/drive/folders/1RRiqMyUGs4wAJ_pcQ56I_WKjuZKXqZVV?usp=sharing). You may need to create a copy and modify the path in the deepFake_demo.ipynb file.
 
 <!--more-->
 {: class="table-of-content"}
@@ -33,7 +30,7 @@ Here is an example of using DeepFake generation:
 As DeepFake generation might cause many problems (such as fake news!), the other popular sub-topic is DeepFake detection, where we try to build the network that can identify real images from fake, generated images.
 
 ## Core ideas: GAN
-GAN ("Generative adversarial network") is the core framework behind most of the DeepFake algorithms. The idea is simple, for DeepFake generators, the more easily you can trick the human eyes, the better your algorithm is. And for the DeepFake detector, the more easily you can detect the fake image, the better. However, we cannot train a DeepFake generators by manually evaluating how good the result is-we need the help of the detector. 
+GAN ("Generative adversarial network") is the core framework behind most of the DeepFake algorithms. The idea is simple, for DeepFake generators, the more easily you can trick the human eyes, the better your algorithm is. And for the DeepFake detector, the more easily you can detect the fake image, the better. However, we cannot train a DeepFake generators by manually evaluating how good the result is, and we need the help of the detector. 
 
 That brings the idea of "adversarial": the generator tries to fool the detector, and the detector tries to detect every fake image produced by the generator. And we train these two network at the same time.
 
@@ -41,7 +38,7 @@ That brings the idea of "adversarial": the generator tries to fool the detector,
 {: style="width: 800; max-width: 150%;"}
 *Fig 2. A simple structure for GAN network. (Image source: <https://neptune.ai/blog/6-gan-architectures>)*
 
-Below we mainly focus on two applications, **Image Animation** and **Image-to-image Translation**, of the DeepFake generation. 
+Below we mainly focus on two applications, **Image Animation** and **Image-to-Image Translation**, of the DeepFake generation. 
 
 ## Image Animation
 
@@ -202,7 +199,7 @@ def forward(self, source_image, kp_driving, kp_source):
 
 Although the first-order motion model achieves pretty good performance, it actually leads to compromised results in some cases. For example, we tried to set the images of ourselves as the source image. However, the keypoints detection were not accurate and the animation result looks unnatuaral in some cases, especially when the source image is not cropped to roughly align with the driving video. 
 
-Additionally, for the first order motion model, the pretrained-model is highly sensitive and only works well on the images similar to its training set. If, for exmaple, the model is trained on face images, then the model will perform poorly for images where the face takes small place. (To try out yourself, the Colab [demo](https://drive.google.com/drive/folders/1RRiqMyUGs4wAJ_pcQ56I_WKjuZKXqZVV?usp=sharing) we provide might be helpful.)
+Additionally, for the first order motion model, the pretrained model is highly sensitive and only works well on the images similar to its training set. If, for exmaple, the model is trained on face images, then the model will perform poorly for images where the face only takes up a small portion. (To try out yourself, the Colab [demo](https://drive.google.com/drive/folders/1RRiqMyUGs4wAJ_pcQ56I_WKjuZKXqZVV?usp=sharing) we provide might be helpful.)
 
 Here we also introduce another framework that can accomplish the Image Animation task, [the Global-Flow Local-Attention framework](https://arxiv.org/abs/2003.00696). Similar to the first-order motion model, this framework composes of two parts: **Global Flow Field Estimator** and **Local Neural Texture Renderer**. The Global Flow Field Estimator employs a flow-based method to extract the global correlations and generate flow fields, while the Local Neural Texture Renderer uses a local-attention mechanism to spatially transform the information from the source to target. Below shows a example video generated from the source image. Since this method is originally proposed for the task of pose-guided person image generation, edge guidance is also shown. (resolution of the demo slightly compromised when converting from video to gif) 
 
@@ -215,13 +212,11 @@ However, this method also has some drawbacks. This method requires an explicit e
 
 We do not provide a detailed explanation of the Global-Flow Local-Attention framework here. Readers who are interested in this method may refer to the original paper.
 
-## Image-to-image Translation
+## Image-to-Image Translation
 
-
+Image-to-Image Translation has been a popular topic in DeepFake generation. As we learned in class, StyleGAN v3 is the current state-of-the-art method. In this part, we choose to mainly introduce a novel method called StarGAN (particularly, StarGAN v2). This model adopts many ideas from previous works. Therefore, we will introduce interesting methods used in StarGAN v2 model aside from StarGAN v2 itself below, which hopefully can help the readers to have a more comprehensive view of this model and the Image-to-Image Translation field as a whole.
 
 ### StarGAN v2: Diverse Image Synthesis for Multiple Domains
-
-Different from the First Order Motion Model above, which is largely a stand-alone method, StarGAN v2 adopts many ideas from previous works. Therefore, we will introduce interesting methods used in StarGAN v2 model aside from StarGAN v2 itself below, which hopefully can help the readers to have a more comprehensive view of this model and the Image-to-image Translation field as a whole.
 
 The StarGAN v2 model is an image-to-image translation framework that can generate diverse images of multiple domains with good scalibility. In this paper, *domain* refers to a set of images that can be grouped as a visually distinctive category (e.g. images of cats and dogs can be two domains); while *style* means a unqiue appearance of an image (e.g. hairstyle). Briefly speaking, this framework uses domain-specific decoders to interpret latent style codes to achieve style diversity, and the generator takes an additional domain information so that images of multiple domains can be handled using a single framework. Next, we introduce StarGAN v2 from the framework and the learning objective functions.
 
@@ -387,22 +382,22 @@ The StarGAN v2 model is an image-to-image translation framework that can generat
     ```
 
 
-### StyleGan: Synthesize the Style
+### StyleGAN: Synthesize the Style
 
-Learning about StarGAN, and how it uses AdaIN to fuse the style features and the input features, we have to mention the first work that propose AdaIN: StyleGAN.
+Learning about StarGAN, and how it uses AdaIN to fuse the style features and the input features, we will breifly introduce the first work that propose AdaIN: StyleGAN.
 
 We know that for traiditonal GAN, the generator ususally takes a randomly generated latent vector and generates the images. However, people actually have little control over the latent vector. What if, say, we want to fuse two images, and take one image's overall looks and the other image's styles? We cannot brute-forcely add up, or take the mean of, their latent vector. We need to somehow disentangle the parts of the vector that controls the style.
 
-So that's the reason of the Style GAN and its AdaIN. The general architure of the generator of StyleGAN is already list above (when introducing the AdaIN). The basic idea is that, different part of the generators (4x4 and 8x8) controls different features. The paper mentioned that the first half of the generator controls more on the overall looks of the images (i.e, male or female), whereas the latter part of the network controls more on the style (hair, glasses, expressions). Thus, by feeding two style vectors from different source images, we can essentially fuse the style of one images into the other.
+So that's the reason of the StyleGAN and its AdaIN. The general architure of the generator of StyleGAN is already list above (when introducing the AdaIN). The basic idea is that, different part of the generators (4x4 and 8x8) controls different features. The paper mentioned that the first half of the generator controls more on the overall looks of the images (i.e, male or female), whereas the latter part of the network controls more on the style (hair, glasses, expressions). Thus, by feeding two style vectors from different source images, we can essentially fuse the style of one images into the other.
 ![StyleGAN Demo]({{ '/assets/images/team08/stylegan.png' | relative_url }})
 {: style="width: 800; max-width: 150%;"}
 *Fig 11. Demo for StyleGAN. (Image source: <https://arxiv.org/pdf/1812.04948.pdf>)*
 
 No one is perfect, and so does the GAN. There are some drawbacks for the networks we mentioned. Note some of them are found by ourselves and may not being well-analyzed.
 
-For the StarGAN, according to the [analysis](https://www.researchgate.net/publication/336880524_Comparative_Review_of_Cross-Domain_Generative_Adversarial_Networks/fulltext/5db875904585151435d1609a/Comparative-Review-of-Cross-Domain-Generative-Adversarial-Networks.pdf) and from our experiment (please see the [demo](https://drive.google.com/drive/folders/1RRiqMyUGs4wAJ_pcQ56I_WKjuZKXqZVV?usp=sharing) in the Colab), it poorly handles some specific attributes, such as age and glasses. It will produce unrealistic images in such cases.
+For StarGAN, according to the [analysis](https://www.researchgate.net/publication/336880524_Comparative_Review_of_Cross-Domain_Generative_Adversarial_Networks/fulltext/5db875904585151435d1609a/Comparative-Review-of-Cross-Domain-Generative-Adversarial-Networks.pdf) and from our experiment (please see the [demo](https://drive.google.com/drive/folders/1RRiqMyUGs4wAJ_pcQ56I_WKjuZKXqZVV?usp=sharing) in the Colab), it poorly handles some specific attributes, such as age and glasses. It will produce unrealistic images in such cases.
 
-For the StyleGAN, the synthesisted image is highly dependent on the abosulte coordinates of the pixel. The recent version, StyleGAN3, handles the problem as shown in the demonstration below.
+For StyleGAN, the synthesized image is highly dependent on the abosulte coordinates of the pixel. The recent version, StyleGAN3, handles the problem as shown in the demonstration below.
 
 ![StyleGAN3 Demo]({{ '/assets/images/team08/styleganv3.gif' | relative_url }})
 {: style="width: 800; max-width: 150%;"}
