@@ -6,7 +6,7 @@ Project page: https://ucladeepvision.github.io/CS188-Projects-2022Winter/
 
 1. Follow the first 2 steps in [pull-request-instruction](pull-request-instruction.md)
 
-2. Installing Ruby with version at least 3.0.0, check https://www.ruby-lang.org/en/documentation/installation/ for instruction.
+2. Installing Ruby with version 3.0.0 if you are using a Mac, and ruby 2.7 should work for Linux, check https://www.ruby-lang.org/en/documentation/installation/ for instruction.
 
 3. Installing Bundler and jekyll with
 ```
@@ -43,4 +43,4 @@ You should make three pull requests before the following deadlines:
 
 *    January 27: Each group should determine the topic and list the 3 most relevant papers and their code repo.
 *    February 24: Each group should include technical details and algorithms/code
-*    March 14: Finalize blog article, Colab demo, and recorded video
+*    March 19 (updated): Finalize blog article, Colab demo (or github repo link), and recorded spotlight video

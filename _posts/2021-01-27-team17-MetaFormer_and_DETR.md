@@ -23,7 +23,8 @@ Our project is based on previous work [End-to-End Object Detection with Transfor
 ## <ins>**2. Technical Details**<ins>
 
 Our implementation of the following algorithms (Multihead Attention, MLP Mixer, Metaformer) can be found in this [Google Colab Notebook.](https://colab.research.google.com/drive/1OCKHvZa6Mf6tQWztIbCpckudYB9GO2bS?usp=sharing)
-s
+
+
 ### **2.1 Attention and Multihead Attention**
 
 
@@ -65,6 +66,7 @@ $$
 
 
 
+
 ### <ins>2.2 MLP-Mixer</ins>
 
 
@@ -96,6 +98,7 @@ With JFT-300M pretrained Vision Transformer, Resnet, and MLP-Mixer tested with t
 MetaFormer is an architecture mentioned by Weihao Yu in his paper: MetaFormer is Actually What You Need for Vision. He discovers that traditional Transformer and MLP-Mixer share similar structure, which is a combination of some formats of Token Mixer cross spatial location and Channel Mixer cross features channels. In Transformer, this Token Mixer is the Multi-Head Attention mechanism and in MLP-Mixer, it is the Spatial MLP. MetaFormer is exactly structure with this format adding skip-connections and Normalization.
 
 The paper proves that the general architecture shared cross Transformer and MLP-Mixer is actually more important than the specific token-mixing modules being used. To verify this, the author proposes to use extremely simple operation, Average Pooling, as the token mixer. This module is called PoolFormer block. By stacking multiple PoolFormer blocks together, the model achieve state-of-the-art performances on various computer vision tasks such as image classification, object detection, and instance segmentation. Even more, PoolFormer outperforms Transformer architecture and MLP-Mixer in some specific settings.
+
 
 
 ### **2.4 DETR**
@@ -154,6 +157,7 @@ The architecture of the model is actually very straightforward. First the image 
 
 The Object Queries (inputs to the Decoder Module) has similar functionalities to the Query Matrix of the embeddings passed into the encoder. In the Decoder, using the information about the objects and the encoded embeddings of the input image, the output embeddings are generated and further passed to 2 independent Feedforward Network to get the object class and bounding box.
 
+<<<<<<< HEAD
 In this architecture, obviously the heart will be the Multi-Head Self-Attention module, which Weihao et.al [2] defined as a "Token Mixer", and they also pointed out that many replacements to this attention mechanism were actually examined. Attracted by this interesting topic, we will go beyond discussing DETR to evaluate different token mixers (Pooling DETR) in this post as well.  
 
 
@@ -198,6 +202,7 @@ For work in the future, if we can have access to more powerful computation platf
 4. The Hugging Face Python Lib<br>
     [Github Link](https://github.com/huggingface/transformers)
 
+
 ## Reference
 [1] Carion, Nicolas, et al. "End-to-End Object Detection with Transformer", ICCV, 2021
 
@@ -206,5 +211,3 @@ For work in the future, if we can have access to more powerful computation platf
 [3] Vaswani, Ashish, et al. "Attention Is All You Need", Proc. of 31st Intl. Conf. on Neural Information Processing Systems (NeurIPS), 2017
 
 [4] wolf, Thomas, et al. " Transformers: State-of-the-Art Natural Language Processing", Conference on Empirical Methods in Natural Language Processing: System Demonstrations, 2020
-
----
