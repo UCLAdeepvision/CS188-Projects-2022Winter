@@ -17,11 +17,13 @@ date: 2022-01-27
 
 ## Background
 Stereo matching is the process of aligning two images taken by distinct cameras of the same object. In the very simple case,
-with perfect images, and one object at constant depth, one can compute the disparity (pixel alignment offset) required to align both the left and right camera images. This information can be used, along with the distance between the two cameras, to compute a distance estimation for this object. In the real world case, this problem becomes much more complicated. Many objects reside in the scene with different textures, shadows, etc, and performing an alignment between all these points is difficult, making it more challenging to estimate distance than in the simple case. There are two different forms of stereo matching: active and passive. In the active case, one simplifies the problems of alignment by projecting light (ofter via a laser dot matrix) and using other adaptive mechanisms to make it easier to align the two camera images. This hardware is much more expensive however and thus not as likely to see widespread use. Passive stereo imaging just involves two statically placed cameras and thus is a much harder problem that we will explore for our final project.
+with perfect images, and one object at constant depth, one can compute the disparity (pixel alignment offset) required to align both the left and right camera images. This information can be used, along with the distance between the two cameras, to compute a distance estimation for this object. In the real world case, this problem becomes much more complicated. Many objects reside in the scene with different textures, shadows, etc, and performing an alignment between all these points is difficult, making it more challenging to estimate distance than in the simple case.
 
-A natural question that also might be asked, is why not use a single camera for depth estimation? There are some models that explore this, but it is much more difficult to get accurate depth measurements, and there is a large gap between depth accuracies (as shown in 4)).
+There are two different forms of stereo matching: active and passive. In the active case, one simplifies the problems of alignment by projecting light (ofter via a laser dot matrix) and using other adaptive mechanisms to make it easier to align the two camera images. This hardware is much more expensive however and thus not as likely to see widespread use. Passive stereo imaging just involves two statically placed cameras and thus is a much harder problem that we will explore for our final project.
 
-## Paper Choice
+A natural question that also might be asked, is why not use a single camera for depth estimation? There are some models that explore this, but it is much more difficult to get accurate depth measurements, and there is a large gap between depth accuracies (as shown in [4]).
+
+## Model Choice
 We evaluated multiple different papers when deciding on what we wanted to choose for our final project. As we were particularly interested in stereo depth matching for robotics applications, we favored algorithms that could run in close to real time, so we'd be able to observe the depth estimations of objects as we walked
 by them.
 We considered both HITNet (a recent network, although admittedly a somewhat complex one) authored this year Google, and StereoNet (a model which uses a 2 pass Siamese Network). The HITNet model seemed like a good choice due to its adaptation of many techniques used in conventional active stereo matching to the passive stereo matching field as well as its omission of a cost volume (a common source of expense in stereo matching models due to the need to use 3D convolutions). StereoNet seemed like a reasonable choice as well as it was a much more simple and understandable model that instead solved the problem of expensive cost volume computation by heavily downsampling the input image and using refinement on this output with the original input image to give its prediction. As these models take fundamentally different approaches, we figured understanding them would give us a good overview of the stereo depth matching problem.
@@ -347,7 +349,10 @@ Another idea we had for addressing the issue with the sky was adding an artifici
 You can find a link to our final presentation, our presentation video, and a demo notebook of our results here.
 
 [Final Presentation Slides](https://docs.google.com/presentation/d/1OSzT6G4szjOHHcMXQbv9oGyHX6hS3t-7HiQqEe3Iemg/edit?usp=sharing)
-[Final Project Notebook](https://drive.google.com/file/d/1KxTGVt6ezBB9cNOEI2u1FRHzOxvREyia/view?usp=sharing)
+
+[Evaluation Notebook](https://drive.google.com/file/d/1KxTGVt6ezBB9cNOEI2u1FRHzOxvREyia/view?usp=sharing)
+
+[Training Notebook](https://drive.google.com/file/d/1stENelnEyXD83FO2Y8FnyXJTuKFHhlRQ/view?usp=sharing)
 
 ## Reference
 
