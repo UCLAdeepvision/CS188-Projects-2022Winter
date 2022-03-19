@@ -170,7 +170,7 @@ def disp_up(d, dx, dy, scale, tile_expand):
 <center> Figure 3: Implementation of the Warp Step </center>
 
 #### Update
-A CNN model $$U$$ then takes n tile hypotheses as input and predicts a change for the tile plus a confidence value $$w$$. This convolutional layer is useful as it allows the use of neighboring information from other tiles, along with the multidimensional inputs to be used in updating the tile hypothesis. The tile hypothesis is augmented with the matching costs $$\phi$$ computed during the warping step, with the warp costs stored for the current estimate and offset +-1 to give a local cost volume. In the paper the augmented tile map is denoted as follows:
+A CNN model $$U$$ then takes n tile hypotheses as input and predicts a change for the tile plus a confidence value $$w$$. This convolutional layer is useful as it allows the use of neighboring information from other tiles, along with the multidimensional inputs to be used in updating the tile hypothesis. The tile hypothesis is augmented with the matching costs $$\phi$$ computed during the warping step, with the warp costs stored for the current estimate and offset +-1 to give a local cost volume. This allows the disparity value to be iteratively updated at different scales without the need for an explicit cost volume. In the paper the augmented tile map is denoted as follows:
 
 $$a_{l,x,y} = [h_{l,x,y}, \phi(e_l, d - 1), \phi(e_l, d), \phi(e_l, d +1)]$$
 
@@ -294,20 +294,20 @@ We notice that all these images have some artifacts at the top of the image (lik
 
 ### StereoNet Issues
 #### Reflection
-As mentioned in the original StereoNet paper, the StereoNet model struggles a bit with relections as its refinement network doesn't have a good structure for solving the inpainting problem. As a window that has depth both behind it and at the window's surface has ambiguous depth, but the loss is computed based on whatever the lidar reports, the model can score a bit lower on evaluation metrics for actually trying to report depth of objects behind the window surface. The author's mention that some of the models that perform better than theirs likely learn to paint over this surface (inpainting) and thus ignore the object behind the window glass. We can see in Figure 7 the model struggles to with the relections on the window of the store front.
+As mentioned in the original StereoNet paper, the StereoNet model struggles a bit with relections as its refinement network doesn't have a good structure for solving the inpainting problem. As a window that has depth both behind it and at the window's surface has ambiguous depth, but the loss is computed based on whatever the lidar reports, the model can score a bit lower on evaluation metrics for actually trying to report depth of objects behind the window surface. The author's mention that some of the models that perform better than theirs likely learn to paint over this surface (inpainting) and thus ignore the object behind the window glass. We can see in Figure 7 the model struggles with the reflections on the window of the store front.
 
 <!-- TODO(morleyd) Image illustrating the details of the reflection problem-->
 ![]({{ '/assets/images/team25/Reflection.png' | relative_url }})
 <center> Figure 7: Canonical Example of the Reflection Problem </center>
 
 #### Unlabeled Sky
-In the Kitti 2015 dataset images point cloud often only extend to the upper half of the image. We found that this could be problematic for learning the depth map for the sky as this is a fairly textureless region and thus many possible disparity values are valid. This makes the softmax over the cost volume have many equal value paths, and the model seems to learn to favor a lower disparity in these cases, creating many artifacts in the sky. The ideal way to fix this would be to augment the sky with additional data points (likely labeling the sky as close to infinity) so the refinement network could learn to treat the sky differently than the rest of the model. As attaining additional labeled data is difficult, we instead proposed a different solution using some of the features from HITNet in an attempt to solve this issue.
+In the Kitti 2015 dataset, point clouds often only extend to the upper half of the image. We found that this could be problematic for learning the depth map for the sky as this is a fairly textureless region and thus many possible disparity values are valid. This makes the softmax over the cost volume have many equal value paths, and the model seems to learn to favor a lower disparity in these cases, creating many artifacts in the sky. The ideal way to fix this would be to augment the sky with additional data points (likely labeling the sky as close to infinity) so the refinement network could learn to treat the sky differently than the rest of the model. As attaining additional labeled data is difficult, we instead proposed a different solution using some of the features from HITNet in an attempt to solve this issue.
 <!-- TODO(morleyd) Image demonstrating the unlabeled sky problem -->
 ![]({{ '/assets/images/team25/CanonicalSky.png' | relative_url }})
 <center> Figure 7: Canonical Example of the Unlabeled Sky Problem </center>
 
 #### Rough Object Boundaries
-We finally notice that some of our boundaries on objects in StereoNet are a bit rough. This is due to the model needing more training time on the refinement network and not an issue with the actual model design.
+We finally notice that some of our boundaries on objects in StereoNet are a bit bloblike and not as precise as one may expect. This is due to the model needing more training time on the refinement network and not an issue with the actual model design.
 
 ### Experimental Contributions
 
@@ -329,7 +329,7 @@ self.feature_extractor_right = nn.Sequential(*self.feature_extractor_right)
 ```
 <center> Figure 7: Alterations to Implement Model as NonSiamese</center>
 
-We quickly realized that this was not a good idea as the loss of the model went down much much more slowly and it became clear it wouldn't converge to anything relevant very quickly. Reflecting on this once more, this does make some sense, as we likely want the main features of hte left and right images to be the same, just with minor tweaks per model. It may make sense to finetune the siamese network allowing each side to train separately using this logic, but due to a limitation on remaining Google cloud credits, we decided not to test this hypothesis and move on to other ideas.
+We quickly realized that this was not a good idea as the loss of the model went down much much more slowly and it became clear it wouldn't converge to anything relevant very quickly. Reflecting on this once more, this does make some sense, as we likely want the main features of the left and right images to be the same, just with minor tweaks per model. It may make sense to finetune the Siamese network allowing each side to train separately using this logic, but due to a limitation on remaining Google cloud credits, we decided not to test this hypothesis and move on to other ideas.
 
 #### Optimizer and Loss Function Tweaks
 In the original StereoNet paper and in the implementation we based ours off the authors used RMSProp.
@@ -340,8 +340,8 @@ This contradicts the original StereoNet paper, and in theory is more susceptible
 LeakyReLU activation.
 
 #### Model Structure
-In StereoNet, after computing the 3D cost volume it filters it with 5 layers of 3D convolutions with kernel size 3.
-In theory this should allow for learning to correct inaccuracies in the cost volume, but it also means that the model must learn
+In StereoNet, after computing the 3D cost volume, the model filters it with 5 layers of 3D convolutions with kernel size 3.
+In theory, this should allow for learning to correct inaccuracies in the cost volume, but it also means that the model must learn
 to not lose the original cost volume features.
 We theorized that the model would train faster by placing 3D convolutions in ResNet blocks with shortcuts.
 In our results, we indeed see that the model trains much faster, achieving the same train accuracy in one quarter of the time,
