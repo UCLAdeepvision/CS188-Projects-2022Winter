@@ -236,7 +236,7 @@ $$WE=\sum\limits_{t=2}^T\dfrac{hw}{hw-\sum(M_t)}M_t||v_t-W(O_{t-1\rightarrow t},
 Where $$v_t$$ is the generated frame at $$t$$ and $$W(O_{t-1\rightarrow t}, v_{t-1})$$ is the warped previous frame. $$M_t$$ is a binary mask that considers both occlusion regions and motion boundaries.
 
 ## 6. Conclusion
-We will complete this section once we have finished running our experiments.
+Video colorization is a field that has increasing attention these days. From our experience with this project, current models can have adequate performance on short videos with relative static scenes, but suffers from flickering effect, graying, and color inconsistency when rendering long videos with complex scenes. Therefore, a potential future work is to try making the video more stable for these more complicated videos. Also, as new video dataset has been proposed, like Youtube8M, future works should also consider incorporating these datasets in their training.
 
 
 
