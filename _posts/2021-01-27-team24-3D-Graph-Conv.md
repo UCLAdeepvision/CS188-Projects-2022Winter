@@ -348,6 +348,12 @@ We also see that the geometric features are only able to achieve 33.66% accuracy
 We also see that the fusion network that utilizes attention graph convolution (AGC) outperforms our DGCNN with EdgeConv by 0.66% in accuracy on the test set. However, due to the differences in the respective networks, it is hard to draw a direct comparison. We do, however, see evidence that incorporating the image features after the graph convolution steps, is critical to retaining the texture information. Both the fusion network and the successful DGCNN networks $$(\textit{DG-V3}, \textit{DG-V4})$$ either separated the features entirely, or added a skip connection over the graph convolution layers. It is clear between the performance of $$\textit{DG-V2}$$ and $$\textit{DG-V3}$$ that this skip connection leads to a large performance improvement.
 
 
+## More
+
+Here's a link to our [Github](https://github.com/alexanderswerdlow/DGCNN_Material_Recognition) repository where our work can be found.
+
+Also, our video spotlight is below.
+<iframe width="560" height="315" src="https://www.youtube.com/embed/W4qs6hQ8DD4" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
 ## Reference
 
