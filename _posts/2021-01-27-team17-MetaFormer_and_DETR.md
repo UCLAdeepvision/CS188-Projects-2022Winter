@@ -3,7 +3,7 @@ layout: post
 comments: true
 title: MetaFormer and DETR
 author: Guofeng Zhang, Zihao Dong
-date: 2022-01-27
+date: 2022-03-17
 ---
 
 
@@ -154,38 +154,49 @@ The architecture of the model is actually very straightforward. First the image 
 
 The Object Queries (inputs to the Decoder Module) has similar functionalities to the Query Matrix of the embeddings passed into the encoder. In the Decoder, using the information about the objects and the encoded embeddings of the input image, the output embeddings are generated and further passed to 2 independent Feedforward Network to get the object class and bounding box.
 
-In this architecture, obviously the heart will be the Multi-Head Self-Attention module, which Weihao et.al [2] defined as a "Token Mixer", and they also pointed out that many replacements to this attention mechanism were actually examined. Attracted by this interesting topic, we will go beyond discussing DETR to evaluate different token mixers (Poolformer, MLP-Mixer-Former) in this post as well.  
+In this architecture, obviously the heart will be the Multi-Head Self-Attention module, which Weihao et.al [2] defined as a "Token Mixer", and they also pointed out that many replacements to this attention mechanism were actually examined. Attracted by this interesting topic, we will go beyond discussing DETR to evaluate different token mixers (Pooling DETR) in this post as well.  
 
 
 ## <ins>**3. Results and Discussion**<ins>
 
-### 3.1 Training ###
-
-For Training, we modified the original github repository of [DETR](https://github.com/facebookresearch/detr) by changing the 2 self-attention modules to nn.AvgPooling2d with corresponding kernel size, and trained the model using COCO-2017 (118K) dataset. According to the DETR repo, training the DETR network on the COCO-2017-118K dataset using 8 32G GPUs will take approximately 30min per epoch, and they trained their baseline using 300 epochs, which will take over a week to train using their GPUs. Therefore, considering the size of dataset and the model and the fact that we do not have access to such computational power, we trained the DETR and our modified version of DETR using 4 12G GPUs for low number of epochs to see the overall trend of the training losses. If the Poolformer architecture is able to achieve state-of-the-art performance like the classical ViT, we would expect the losses and accuracies of the 2 models to exhibit similar patterns during our training epochs.
+For Training, we modified the original github repository of [DETR](https://github.com/facebookresearch/detr) by changing the 2 self-attention modules to nn.AvgPooling2d with corresponding kernel size, and trained the model using COCO-2017 (118K) dataset. According to the DETR repo, training the DETR network on the COCO-2017-118K dataset using 8 32G GPUs will take approximately 30min per epoch, and they trained their baseline using 300 epochs, which will take over a week to train using their GPUs. Therefore, considering the size of dataset and the model and the fact that we do not have access to such computational power, we trained the DETR and our modified version of DETR using 4 12G GPUs for low number of epochs to see the overall trend of the training losses. If the Poolformer architecture is able to achieve state-of-the-art performance like the classical ViT, we would expect the losses and accuracies of the 2 models to exhibit similar patterns during our training epochs. In the below plots, the DETR result are generated from the training log files provided in the original DETR Github [Repository](https://gist.github.com/szagoruyko/b4c3b2c3627294fc369b899987385a3f). Because we are only able to train our modified (Pooling) version of DETR for 20 epochs, we only compare the curves in the first 20 epochs (using default learning rates and hyperparameters, controling the variables for comparison purpose).
 
 
-![detr_class]({{ '/assets/images/team17/DETR_class_err.png' | relative_url }})
-![detr_loss]({{ '../assets/images/team17/DETR_loss.png' | relative_url }})
-![detr_loss_box]({{ '../assets/images/team17/DETR_loss_bbox.png' | relative_url }})
-![detr_loss_giou]({{ '../assets/images/team17/DETR_loss_giou.png' | relative_url }})
-<div align="center">Fig 7. DETR Training Results</div>
+![comp_class_err]({{ '/assets/images/team17/comp_training_class_err.png' | relative_url }})
+![comp_loss]({{ '/assets/images/team17/comp_training_loss.png' | relative_url }})
+![comp_loss_box]({{ '/assets/images/team17/comp_training_loss_bbox.png' | relative_url }})
+![comp_loss_giou]({{ '/assets/images/team17/comp_training_loss_giou.png' | relative_url }})
+<div align="center">Fig 7. DETR and Pooling DETR Training Results</div>
 
-Below are the results we obtained training the Poolformer Version of DETR on a 4GPU machine for 20 epochs.
+![Pool_mAP05]({{ '/assets/images/team17/Pool_mAP05.png' | relative_url }})
+![Pool_mAP0595]({{ '/assets/images/team17/Pool_mAP0595.png' | relative_url }})
+<div align="center">Fig 8. Pooling Version DETR mAP</div>
 
-![Pool_class]({{ '/assets/images/team17/Pool_class_err.png' | relative_url }})
-![Pool_loss]({{ '../assets/images/team17/Pool_loss.png' | relative_url }})
-![Pool_loss_box]({{ '../assets/images/team17/Pool_loss_bbox.png' | relative_url }})
-![Pool_loss_giou]({{ '../assets/images/team17/Pool_loss_giou.png' | relative_url }})
-<div align="center">Fig 8. Pooling Version DETR Training Results</div>
+From the above training results, we can see that although we exchanged the self-attention modules of the DETR model with Pooling, we can still gain comparative training losses in the first 20 epochs. Moreover, the mAP of the Pooling DETR is also continuously increasing (reaching 0.25+ in first 20 epochs). We are not able to get access to the training mAP statistics of the original DETR, so do not have an evaluation of the resulting mAP currently. From this experiment, it is reasonable to hypothesize that, if we are able to train the Pooling DETR using faster machines, and train for more epochs, the Pooling DETR is likely to achieve similar results to the original DETR. 
+
+However, we also put a question mark on the performance of the Pooling DETR if we train further because as we can see from the graphs, although both models are trained from scratch, the losses and errors of our Pooling DETR flutuates a lot, whereas the curves for original DETR are smooth. we noticed that one of the strengths of attention is capturing long-term dependencies, meaning that attention module is able to calculate the relation between every two image patches through its querying mechanism, whereas pooling operation restricts the information exchange in a much local scale. We think this difference may be a factor contributing to the fluctuation demonstrated in the curves.
+
+Note: We provided a toy demo in this [Google Colab Notebook](https://colab.research.google.com/drive/1OCKHvZa6Mf6tQWztIbCpckudYB9GO2bS?usp=sharing). The original DETR prediction is implemented using the python Hugging Face library [4], and our Pooling DETR checkpoint is the one that generated the above statistics (as a result, may not be as accurate as the original DETR because we trained for far less epochs).
+
+## <ins>**4. Conclusion**<ins>
+
+In this project, we have investigated the DETR model proposed by Carion et al, especially its structure and the attention mechanism which it relies on. We also combined the idea of Metaformer adopted in Weihao et al's paper into the DETR model by changing the attention module to other so called Token Mixers (Pooling, possibly MLP in the future), training the modified model, and comparing performances in the first 20 epochs. We can see that although Pooling DETR achieves a similar loss and error decrease in the first 20 epochs, there are much more fluctuations in the training curver, which posts question mark on the performance if we train the model for more epochs. 
 
 
-### Relevant papers and their repo:
+## <ins>**5. Future Work**<ins>
+
+For work in the future, if we can have access to more powerful computation platform, we can further develop this project by training both DETR and Pooling DETR for more epochs to get more detailed statistic for both training and testing, and analyzing in depth the reasons underlying the difference in performance or why the model can still achieve similar performances to the originl DETR. We also plan to evaluate more different Token Mixers mentioned in Weihao et al.'s paper, for example Multi-Layer Perceptrons, and compare the performance of these new models to the original DETR [2].
+
+
+## Relevant papers and their repo:
 1. End-to-End Object Detection with Transformers<br>
     [GitHub Link](https://github.com/facebookresearch/detr)
 2. MetaFormer is Actually What You Needed for Vision<br>
     [GitHub Link](https://github.com/sail-sg/poolformer)
 3. Attention is All You Needed<br>
     [GitHub Link](https://github.com/jadore801120/attention-is-all-you-need-pytorch/tree/fec78a687210851f055f792d45300d27cc60ae41)
+4. The Hugging Face Python Lib<br>
+    [Github Link](https://github.com/huggingface/transformers)
 
 ## Reference
 [1] Carion, Nicolas, et al. "End-to-End Object Detection with Transformer", ICCV, 2021
@@ -193,5 +204,7 @@ Below are the results we obtained training the Poolformer Version of DETR on a 4
 [2] Weihao, Yu, et al. "Metaformer is Actually What You Need For Vision", CVPR, 2021
 
 [3] Vaswani, Ashish, et al. "Attention Is All You Need", Proc. of 31st Intl. Conf. on Neural Information Processing Systems (NeurIPS), 2017
+
+[4] wolf, Thomas, et al. " Transformers: State-of-the-Art Natural Language Processing", Conference on Empirical Methods in Natural Language Processing: System Demonstrations, 2020
 
 ---
