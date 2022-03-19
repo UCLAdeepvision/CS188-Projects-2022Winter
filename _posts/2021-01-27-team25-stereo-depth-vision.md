@@ -26,7 +26,7 @@ A natural question that also might be asked, is why not use a single camera for 
 ## Model Choice
 We evaluated multiple different papers when deciding on what we wanted to choose for our final project. As we were particularly interested in stereo depth matching for robotics applications, we favored algorithms that could run in close to real time, so we'd be able to observe the depth estimations of objects as we walked
 by them.
-We considered both HITNet (a recent network, although admittedly a somewhat complex one) authored this year Google, and StereoNet (a model which uses a 2 pass Siamese Network). The HITNet model seemed like a good choice due to its adaptation of many techniques used in conventional active stereo matching to the passive stereo matching field as well as its omission of a cost volume (a common source of expense in stereo matching models due to the need to use 3D convolutions). StereoNet seemed like a reasonable choice as well as it was a much more simple and understandable model that instead solved the problem of expensive cost volume computation by heavily downsampling the input image and using refinement on this output with the original input image to give its prediction. As these models take fundamentally different approaches, we figured understanding them would give us a good overview of the stereo depth matching problem.
+We considered both HITNet (a recent network, although admittedly a somewhat complex one) authored this year by Google, and StereoNet (a model which uses a 2 pass Siamese Network). The HITNet model seemed like a good choice due to its adaptation of many techniques used in conventional active stereo matching to the passive stereo matching field, as well as its omission of a cost volume (a common source of expense in stereo matching models due to the need to use 3D convolutions). StereoNet also seemed like a reasonable choice as it was a much simpler and understandable model that instead solved the problem of expensive cost volume computation by heavily downsampling the input image and using refinement on this output with the original input images. As these models take fundamentally different approaches, we figured understanding them would give us a good overview of the stereo depth matching problem.
 
 ## HITNet
 HITNet is a recent model that works to use some of the recent techniques from active stereo depth applied to the passive stereo problem. It is  optimized for speed, using a combination of a fast multi-resolution initial step, and 2d disparity propagation, instead of much more costly 3D convolutions. Although it performs slightly worse than the 3D convolutional models, it takes only milliseconds to process an image pair, compared to seconds from those models.
@@ -64,7 +64,7 @@ class UpsampleBlock(nn.Module):
 <center> Figure 1.1: U-Net Upsample </center>
 
 ### Initialization
-The key idea of the initialization step of HITNet is the use of an encoder decoder network, with the model using the results of all the different resolution layers output by the decoder. The initialization phase builds on top of U-Net (such a decoder-encoder network) which is shown in Figure 1. After generating different resolution features for both $$I_R$$ and $$I_L$$ (the left and right images) we obtain two multiscale representations denoted $$ \epsilon^R $$ and $$\epsilon^L$$. Taking $$\epsilon^R$$ and $$\epsilon^L $$ we then attempt to align tiles of these images. The idea here is for each resolution, we want to tile that image and map tiles in $$\epsilon^L$$ to $$\epsilon^R$$. We denote the feature map for a specific resolution l as $$e_l$$.
+The key idea of the initialization step of HITNet is the use of an encoder decoder network, with the model using the results of all the different resolution layers output by the encoder. The initialization phase builds on top of U-Net (such a decoder-encoder network) which is shown in Figure 1. After generating different resolution features for both $$I_R$$ and $$I_L$$ (the left and right images) we obtain two multiscale representations denoted $$ \epsilon^R $$ and $$\epsilon^L$$. Taking $$\epsilon^R$$ and $$\epsilon^L $$ we then attempt to align tiles of these images. The idea here is for each resolution, we want to tile that image and map tiles in $$\epsilon^L$$ to $$\epsilon^R$$. We denote the feature map for a specific resolution l as $$e_l$$.
 
 ```python
 class FeatureExtractor(nn.Module):
@@ -129,7 +129,7 @@ $$d_{l,x,y}^{init} = argmin_{d \in [0,D]}c(l,x,y,d)$$
 
 This search is exhaustive over all potential disparity values.
 
-The authors also add an additional parameter to the model which they denote the tile feature descriptor $$p_{l,x,y}^{init}$$ for each point (x,y) and resolution l. This is a value which the output of a perceptron and leaky ReLU fed the costs of the best matching disparity d, and the embedding for that specific feature at that point. The idea of this feature is to pass along the confidence of the match to the network laters.
+The authors also add an additional parameter to the model which they denote the tile feature descriptor $$p_{l,x,y}^{init}$$ for each point (x,y) and resolution l. This is a value which is the output of a perceptron and leaky ReLU fed the costs of the best matching disparity d, and the embedding for that specific feature at that point. The idea of this feature is to pass along the confidence of the match to the network laters.
 
 ![HITNet]({{ '/assets/images/team25/HITNet.png' | relative_url }})
 
@@ -178,7 +178,7 @@ Our model then outputs deltas for each of the n tile hypothesis maps and new con
 
 $$(\Delta h_l^1, w^1, \cdots, \Delta h_l^n, w^n) = U_l(a_l^1, \cdots, a_l^n; \theta_{U_l})$$
 
-The CNN model $$U$$ is made or resnet blocks followed by dilated convolutions. The update is performed starting at lowest resolution feature, moving up, so at the second resolution feature there are now two inputs, and then three, and so on and so forth. This action can be seen in Figure 2. Tiles are upsampled as they move up layers to maintain they all stay the appropriate dimension. At each location the hypothesis with the largest confidence is selected until the starting resolution is reached. They then run the model one additional time on the optimal tiles for further refinement and output this as the disparity map result.
+The CNN model $$U$$ is made or resnet blocks followed by dilated convolutions. The update is performed starting at lowest resolution feature, moving up, so at the second resolution feature there are now two inputs, and then three, and so on and so forth. This action can be seen in Figure 2. Tiles are upsampled as they move up layers to ensure they all stay the appropriate dimension. At each location the hypothesis with the largest confidence is selected until the starting resolution is reached. The model is then run one additional time on the optimal tiles for further refinement and the final output is the disparity map result.
 
 ### Loss
 The network uses multiple different losses: an initialization loss, propagation loss, slant loss, and confidence loss. These values are all weighted equally and used to optimize the model.
@@ -215,7 +215,7 @@ Finally, the paper introduces a loss which increases the confidence $w$ of a pre
 $$L^w(w) = \text{max}(1-w, 0)_{\chi_{\lvert d^{diff} \rvert < C_1}} + \text{max}(w, 0)_{\chi_{\lvert d^{diff} \rvert > C_2}}$$
 
 ## StereoNet
-The main insight of StereoNet is that we can aggressively downsample the input disparity images so we can perform a much less costly alignment between two significantly reduced feature sizes. Unlike HITNet which saves computational costs by omitting 3D convolutions, StereoNet still makes these computations, just at a severely reduced resolution. The network uses a simple decoder encode approach, this time with a Siamese network (a neural network where there are
+The main insight of StereoNet is that we can aggressively downsample the input disparity images so we can perform a much less costly alignment between two significantly reduced feature sizes. Unlike HITNet which saves computational costs by omitting 3D convolutions, StereoNet still makes these computations, just at a severely reduced resolution. The network uses a simple decoder encoder approach, this time with a Siamese network (a neural network where there are
 two separate input vectors, connected to separate networks, but both of these networks have identical weights). Performing the cost volume computation on this vastly reduced representation of the input images allows the network to train/run much faster, but still attains quite good performance.
 
 
@@ -226,7 +226,7 @@ two separate input vectors, connected to separate networks, but both of these ne
 The Siamese network first aggressively downsamples the two input images using a series of K 5x5 convolutions with a stride of 2 and 32 channels. Residual blocks with 3x3 convolutions, batch-normalization, and Leaky ReLus are then applied, followed by a 3x3 convolution layer, without any activation or activation. This outputs a 32-dim vector representation for each down sampled point. Through this representation there is a low dimensional representation of the input that stil has a fairly large receptive field.
 
 ### Cost Volume
-After downsampling, like most conventional deep learning disparity models, the network computes a cost volume along scan lines (evaluates every possible offset in the x direction up to the value of the maximum disparity). The cost volume is then aggregated with four 3D convolutions of size 3x3x3, and once more batch-normalization + leaky ReLu activations. Finally an additional 3x3x3 layer without batch normalization + leaky ReLu is applied.
+After downsampling, like most conventional deep learning disparity models, the network computes a cost volume along scan lines (evaluates every possible offset in the x direction up to the value of the maximum disparity). The cost volume is then aggregated with four 3D convolutions of size 3x3x3, and once more batch-normalization + leaky ReLu activations. Finally, an additional 3x3x3 layer without batch normalization + leaky ReLu is applied.
 
 ```python
 def make_cost_volume(left, right, max_disp):
@@ -258,9 +258,9 @@ The probabilistic loss function.
 <center> $$d \sim \sum_{d=1}^D d \cdot \frac {\text{exp}(-C_i(d))} {\sum_{d'} \text{exp}(-C_i(d'))}$$</center>
 
 ### Upsampling (Refinement)
-To upsample the image the disparity map is first bilinearly upsampled to the output size. It then is passed through the refinement layer which first consists 3x3 convolutiion. This is followed by 6 residual blocks with 3x3 dilated convolutions (to increase the receptive field), with dilation factors of 1,2,4,8, and 1 respectiveley. The final output is run through a 3x3 convolutional layer. The authors tried two different techniques, one running the upsample once and another cascading the upsample layer for further refinement.
+To upsample the image the disparity map is first bilinearly upsampled to the output size. It then is passed through the refinement layer which consists of a single 3x3 convolution. This convolution is followed by 6 residual blocks with 3x3 dilated convolutions (to increase the receptive field), with dilation factors of 1,2,4,8, and 1 respectiveley. The final output is run through a 3x3 convolutional layer. The authors tried two different techniques, one running the upsample once and another cascading the upsample layer for further refinement. As the refinement method performed best, we chose this method in our experiments.
 ### Loss Function
-Loss is computed as the difference between the ground truth disparity and the predicted disparity at $k$, the given refinement level (k = 0 denoting output before any refinement) and is given by the following equation. In this case the function $p$ is the two parameter robust loss function from the "A more general loss function paper" [6].
+Loss is computed as the difference between the ground truth disparity and the predicted disparity at $k$, the given refinement level (k = 0 denoting output before any refinement) and is given by the following equation. In this case the function $p$ is the two parameter robust loss function from the "A more general loss function paper" [6]. This loss function is also used in HITNet as mentioned above.
 
 $$L = \sum_k p(d_i^k - \hat{d}_i)$$
 
@@ -363,9 +363,12 @@ You can find a link to our final presentation, our presentation video, and a dem
 
 [Final Presentation Slides](https://docs.google.com/presentation/d/1OSzT6G4szjOHHcMXQbv9oGyHX6hS3t-7HiQqEe3Iemg/edit?usp=sharing)
 
+[Final Video](https://youtu.be/fnlQhQQgHbY)
+
 [Evaluation Notebook](https://drive.google.com/file/d/1KxTGVt6ezBB9cNOEI2u1FRHzOxvREyia/view?usp=sharing)
 
 [Training Notebook](https://drive.google.com/file/d/1stENelnEyXD83FO2Y8FnyXJTuKFHhlRQ/view?usp=sharing)
+
 
 ## Reference
 
