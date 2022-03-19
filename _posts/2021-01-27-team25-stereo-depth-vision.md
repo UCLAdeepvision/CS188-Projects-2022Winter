@@ -176,6 +176,13 @@ The CNN model $$U$$ is made or resnet blocks followed by dilated convolutions. T
 ### Loss
 The network uses multiple different losses: an initialization loss, propagation loss, slant loss, and confidence loss. These values are all weighted equally and used to optimize the model.
 
+#### Initialization Loss
+
+#### Propagation Loss
+
+#### Slant Loss
+#### Confidence Loss
+
 ## StereoNet
 The main insight of StereoNet is that we can aggressively downsample the input disparity images so we can perform a much less costly alignment between two significantly reduced feature sizes. Unlike HITNet which saves computational costs by omitting 3D convolutions, StereoNet still makes these computations, just at a severely reduced resolution. The network uses a simple decoder encode approach, this time with a Siamese network (a neural network where there are
 two separate input vectors, connected to separate networks, but both of these networks have identical weights). Performing the cost volume computation on this vastly reduced representation of the input images allows the network to train/run much faster, but still attains quite good performance.
@@ -236,6 +243,8 @@ For evaluating results we used one of the metrics common to both papers: End-Poi
 
 We found that HITNet performed very well overall and we didn't have to make too many tweaks to its implementation to see results that qualitatively looked quite good.
 
+<!-- TODO(morleyd) Table showing EPE loss compared to original-->
+
 ![Train Accuracy]({{ '/assets/images/team25/train-epe.png' | relative_url }})
 
 
@@ -243,11 +252,12 @@ We found that HITNet performed very well overall and we didn't have to make too 
 #### Issues with Reflection
 As mentioned in the original StereoNet paper, the StereoNet model struggles a bit with relections as its refinement network doesn't have a good structure for solving the inpainting problem. As a window that has depth both behind it and at the window's surface has ambiguous depth, but the loss is computed based on whatever the lidar reports, the model can score a bit lower on evaluation metrics for actually trying to report depth of objects behind the window surface. The author's mention that some of the models that perform better than theirs likely learn to paint over this surface (inpainting) and thus ignore the object behind the window glass.
 
-<!-- Image illustrating the details of the reflection problem-->
+<!-- TODO(morleyd) Image illustrating the details of the reflection problem-->
 
 #### Issues with Unlabeled Sky
 In the Kitti 2015 dataset images point cloud often only extend to the upper half of the image. We found that this could be problematic for learning the depth map for the sky as this is a fairly textureless region and thus many possible disparity values are valid. This makes the softmax over the cost volume have many equal value paths, and the model seems to learn to favor a lower disparity in these cases, creating many artifacts in the sky. The ideal way to fix this would be to augment the sky with additional data points (likely labeling the sky as close to infinity) so the refinement network could learn to treat the sky differently than the rest of the model. As attaining additional labeled data is difficult, we instead proposed a different solution using some of the features from HITNet in an attempt to solve this issue.
 
+<!-- TODO(morleyd) Image demonstrating the unlabeled sky problem -->
 
 ### Experimental Contributions
 
@@ -268,16 +278,21 @@ self.feature_extractor_right = nn.Sequential(*self.feature_extractor_right)
 ```
 <center> Figure 6: Alterations to Implement Model as NonSiamese</center>
 
-<!--TODO(morleyd): Look into how to offset loss to account for the nonexisting pixels in the morph-->
-
 We quickly realized that this was not a good idea as the loss of the model went down much much more slowly and it became clear it wouldn't converge to anything relevant very quickly. Reflecting on this once more, this does make some sense, as we likely want the main features of hte left and right images to be the same, just with minor tweaks per model. It may make sense to finetune the siamese network allowing each side to train separately using this logic, but due to a limitation on remaining Google cloud credits, we decided not to test this hypothesis and move on to other ideas.
 
 #### Adam Optimizer+Adjusted Loss Params StereoNet
 In the original StereoNet paper the authors used RMSProp, which we found a bit strange as generally Adam seems to be the go to choice of optimizer. The authors' also make use of a robust loss function with params of $$\alpha = 1$$ and $$ c = 2$$, which we found adjusting slightly resulted in the model training a bit faster.
 
-<!-- Results for this model displayed here -->
+<!-- TODO(morleyd) Results for this model displayed here -->
+
+### Future Suggestions
+Below are a couple suggestions that we considered when training, but weren't able to actually experiment with as we ran out of Google Cloud Credits.
 
 #### HITNet Initialization in FineTuning Loss Optimization of StereoNet Refinement
+The main issue we noticed on training StereoNet on the Kitti 2015 dataset was its inability to identify the sky in the image as having infinite distance away from the cameras and instead predicting it was very close to the viewer. Although this is somewhat an issue of the dataset not labeling the sky making it difficult for the model to learn this feature we were hopeful that we could solve this problem in the edge detection (refinement) layer used in StereoNet. Our hope was that this refinement network could learn the position of the sky in the image and skew this value to have a small disparity (thus far away depth). In order to do this we took our already trained version of StereoNet and used the initialization model (with its already trained parameters from our training of HITNet) to add an additional loss to the refinement layer. As HITNet correctly classified the sky (and its initialization just gives a noisy version of correct classification), we hoped that adding this to our loss computation for StereoNet would bias the refinement layer to omit the sky from our final output.
+
+#### Artificial Texture
+Another idea we had for addressing the issue with the sky was adding an artificial texture to the images. By adding a series of dots on both images with a fixed disparity we could take the same idea from active stereo of the dot projection matrix and try to bias the disparities predicted for textureless regions. A downside of this approach is it would lead to an issue with potentially incorrect disparities on other regions with many pixels of same colors. This certainly isn't a perfect solution, but performing this change and only altering the images above 80% of the height of the image would likely be sufficient to target a rough approximation of the sky region as the Kitti dataset is biased to include sky regions in this approximate area.
 
 ## Reference
 Please make sure to cite properly in your work, for example:
