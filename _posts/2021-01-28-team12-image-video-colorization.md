@@ -7,11 +7,7 @@ date: 2022-01-28
 ---
 
 
-<<<<<<< HEAD
-> Historical videos like old movies are all black and white before the invention of colored cameras. However, have you wondered how the good old time looked like with colors? We will attempt to colorize old videos with the power of deep neural networks.
-=======
 > Historical videos like old movies are all black and white before the invention of colored cameras. However, have you wondered how the good old time looked like with colors? We will attempt to colorize old videos with the power of deep generative models.
->>>>>>> 7e7564ee762018539dc7f059328a7a2b544c8163
 
 <!--more-->
 {: class="table-of-content"}
@@ -81,7 +77,7 @@ $$f^{\tilde X}_j=f^X_j\circ W_F + \sum\limits_{i=1}^Nf^{\bar X_i}_j\circ \bar W^
 $$
 ![InstColor_Fusion]({{ '/assets/images/team12/instColor_Fusion.png' | relative_url }}){: style=" max-width: 80%;"}
 
-### 4.1 Blind Video Temporal Consistency via Deep Video Prior (2020)
+### 3.3 Blind Video Temporal Consistency via Deep Video Prior (2020)
 
 The loss function used in this paper is the smooth $$l_1$$ loss with $$\delta=1$$:
 $$
@@ -169,10 +165,77 @@ for epoch in range(1,maxepoch):
         optimizer.step()
 ```
 
+### 4.2 Deep Exemplar-based Video Colorization
+This work presents the first end-to-end network for exemplar-based video colorization, which deals with the temporal consistency problem when colorizing image. Exemplar-based colorization is where the colorization transfers the
+color from a preconfigured reference image in a similar content to the target grayscale image. But unlike previous exemplar based methods, this work unifies the common separated correspondence and color propagation network, and trained end-to-end to produce more coherent colorization results.
+
+In order to generate temporally consistent videos, DEVC colorize video frames based on the history. Formally, in LAB space, the output is generated as 
+
+$$\tilde x^{ab}_t=G_V(x^l_t|\tilde x^{lab}_{t-1}, y^{lab})$$
+
+![DEVC]({{ '/assets/images/team12/devc_framework.png' | relative_url }}){: style="max-width: 80%;"}
+![DEVCNetwork]({{ '/assets/images/team12/devc_network.png' | relative_url }}){: style="max-width: 80%;"}
+
+The figure above describes two-stage network architecture. It contains two sub networks.
+
+1. Correspondence Subnet generates two outputs: warped color and confidence map, where $$(W^{ab}, S)=N(x^l_t, y^{lab}; \theta_N)$$
+2. Colorization Subnet: The correspondence is not accurate everywhere, so we employ the colorization network C
+which is parameterized by $$\theta_C$$, to select the well-matched colors and propagate them properly. The output is formulated as:
+
+$$\tilde x^{ab}_t=C(x^l_t, W^{ab}, S | \tilde x^{lab}_{t-1}; \theta_C)$$
+
+Then along with the luminance channel $$x^l_t$$, we obtain the final colorized image $$\tilde x_t=\tilde x^{lab}_t$$
 
 
+DEVC has a quite complicated loss function consisting of 6 parts:
 
-## 5. Conclusion
+$$L_I=\lambda_{perc} L_{perc}+\lambda_{context} L_{context}+\lambda_{smooth} L_{smooth}+\lambda_{adv} L_{adv}+\lambda_{temporal} L_{temporal}+\lambda_{L_1} L_{L_1}$$
+
+1. Perceptural loss encourages the outputs to be percepturally plausible:
+$$L_{perc}=||\Phi^L_{\tilde x}-\Phi^L_x||^2_2$$
+
+2. Contextual loss encourages the output image to have similar colors with the reference image: 
+$$L_{context}=\sum\limits_l[-\log (\dfrac{1}{N_L}\sum\limits_i \max\limits_j(softmax_j(1-\dfrac{\tilde d^L(i,j)}{h})))]$$
+
+3. Smoothness loss encourages spatial smoothness across the image:
+$$ L_{smooth} = \dfrac{1}{N}\sum\limits_{c\in\{a,b\}}\sum\limits_i(\tilde x^C_t(i)-\sum\limits_{j\in N(i)}w_{imj}\tilde x^C_t(j)) $$
+
+4. Adversarial loss aims to constrain the colorization video frames to remain realistic. In this case, a video discriminator is used to evaluate consecutive video frames, and DEVC adopted a relativistic discriminator that estimates
+the extent in which the real frames look more realistic than the colorized ones.
+5. Temporal consistency loss encourages temporal consistency by penalizes the color change along the flow trajectory:
+$$L_{temporal} = ||m_{t-1}\circ W_{t-1, t}(\tilde x^{ab}_{t-1} - m_{t-1}\circ \tilde x^{ab}_{t-1})||$$
+
+6. L1 loss to finally encourage similarity between output and target image:
+$$L_{L_1}=||\tilde x^{ab}_t-x^{ab}_t||_1$$
+
+
+## 5. Metrics
+While human eyes are generally good measuring tools for the effect of colorization models, we still needs some deterministic metrics to quantitatively meaure and compare different models. Researchers have developed several metric t odeal with both colorization and temporal consistency. Here lists a few of them:
+
+### 5.1 PSNR
+PSNR stands for peak signal-to-noise ratio. This metric aims to measure the ratio between the maximum possible power of a signal and the power of corrupting noise that affects the fidelity of its representation. PSNR is commonly used to quantify reconstruction quality for images and video subject to lossy compression, which includes colorization. Given the mean square loss (MSE) between outputs and targets and the MAX possible pixel value of the input image $$MAX_I$$, PSNR is defined as:
+
+$$PSNR=10\cdot \log_{10}(\dfrac{MAX^2_I}{MSE})$$
+
+### 5.2 SSIM
+Then structural similarity index measure (SSIM) is used for measuring the similarity between two images. Given the original image/video and the colorized output, SSIM can be used to measure the fidelity of the color outputted. Given the average of input image $$\mu_y$$, and the average and variance of output image $$\mu_{\hat y}$$, $$\sigma_{\hat y}$$, SSIM is computed as:
+
+$$SSIM(y, \hat y)=\dfrac{(2\mu_y\mu_{\hat y}+c_1)(2\sigma_{y\hat y}+c_2)}{(\mu_y^2+\mu_{\hat y}^2+c_1)(\sigma_y^2+\sigma_{\hat y}^2+c_2)}$$
+
+Where $${\displaystyle c_{1}=(k_{1}L)^{2}, c_{2}=(k_{2}L)^{2}}$$ are two variables to stabilize the division with weak denominator. $$
+{\displaystyle k_{1}=0.01}$$  and $${\displaystyle k_{2}=0.03}$$ by default. $$L$$ is usually set to 1.
+
+### 5.3 LPIPS
+LPIPS measure the perceptual similarity between two image/videos. This work discovered that deep network activations work surprisingly well as a perceptual similarity metric. They therefore constructed deep network for calculating the metric. By linearly "calibrating" networks - adding a linear layer on top of off-the-shelf classification networks including AlexNet, VGG, and SqueezeNet, we can get the metric by directly feeding the outputs into the network.
+
+### 5.4 Warp Error
+Warp error is used to measure the temporal consistency of the colorized video. It measures the spatiotemporal consistency by computing the disparity between every warped previous frame and current frame. It is computed as:
+
+$$WE=\sum\limits_{t=2}^T\dfrac{hw}{hw-\sum(M_t)}M_t||v_t-W(O_{t-1\rightarrow t}, v_{t-1})||^2_2$$
+
+Where $$v_t$$ is the generated frame at $$t$$ and $$W(O_{t-1\rightarrow t}, v_{t-1})$$ is the warped previous frame. $$M_t$$ is a binary mask that considers both occlusion regions and motion boundaries.
+
+## 6. Conclusion
 We will complete this section once we have finished running our experiments.
 
 
