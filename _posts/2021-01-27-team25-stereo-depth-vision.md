@@ -57,7 +57,14 @@ class UpsampleBlock(nn.Module):
         x = torch.cat((x, sc), dim=1)
         x = self.merge_conv(x)
         return x
+```
 
+<center> Figure 1.1: U-Net Upsample </center>
+
+### Initialization
+The key idea of the initialization step of HITNet is the use of an encoder decoder network, with the model using the results of all the different resolution layers output by the decoder. The initialization phase builds on top of U-Net (such a decoder-encoder network) which is shown in Figure 1. After generating different resolution features for both $$I_R$$ and $$I_L$$ (the left and right images) we obtain two multiscale representations denoted $$ \epsilon^R $$ and $$\epsilon^L$$. Taking $$\epsilon^R$$ and $$\epsilon^L $$ we then attempt to align tiles of these images. The idea here is for each resolution, we want to tile that image and map tiles in $$\epsilon^L$$ to $$\epsilon^R$$. We denote the feature map for a specific resolution l as $$e_l$$.
+
+```python
 class FeatureExtractor(nn.Module):
     def __init__(self, C):
         super().__init__()
@@ -110,11 +117,9 @@ class FeatureExtractor(nn.Module):
         o4 = self.up_0(o3, x0)
         return o4, o3, o2, o1, o0
 ```
+<center> Figure 1.2: U-Net Feature Extractor</center>
 
-<center> Figure 1: Example U-Net Implementation </center>
-
-### Initialization
-The key idea of the initialization step of HITNet is the use of an encoder decoder network, with the model using the results of all the different resolution layers output by the decoder. The initialization phase builds on top of U-Net (such a decoder-encoder network) which is shown in Figure 1. After generating different resolution features for both $$I_R$$ and $$I_L$$ (the left and right images) we obtain two multiscale representations denoted $$ \epsilon^R $$ and $$\epsilon^L$$. Taking $$\epsilon^R$$ and $$\epsilon^L $$ we then attempt to align tiles of these images. The idea here is for each resolution, we want to tile that image and map tiles in $$\epsilon^L$$ to $$\epsilon^R$$. We denote the feature map for a specific resolution l as $$e_l$$. To get the tile features we run a 4x4 convolution on both $$\epsilon^L$$ and $$\epsilon^R$$, but there's a subtle point here: We want to cover our features with overlapping tiles, but we also want to minimize the number of disparity values we have to try. In order to solve this problem the authors introduce the following asymmetry, when applying the convolution on the selected tile regions from the feature map. For $$\epsilon^L$$ overlap the tiles in x direction and use a 4x4 stride on the convolution. For $$\epsilon^R$$ do not overlap the tiles, but instead use a 4x1 stride in the convolution so the tiles overlap in the convolution computation. This allows us to formulate our matching cost c for a specific location (x,y) with resolution l and disparity d as:
+ To get the tile features we run a 4x4 convolution on both $$\epsilon^L$$ and $$\epsilon^R$$, but there's a subtle point here: We want to cover our features with overlapping tiles, but we also want to minimize the number of disparity values we have to try. In order to solve this problem the authors introduce the following asymmetry, when applying the convolution on the selected tile regions from the feature map. For $$\epsilon^L$$ overlap the tiles in x direction and use a 4x4 stride on the convolution. For $$\epsilon^R$$ do not overlap the tiles, but instead use a 4x1 stride in the convolution so the tiles overlap in the convolution computation. This allows us to formulate our matching cost c for a specific location (x,y) with resolution l and disparity d as:
 $$c(l,x,y, d) = \lvert \lvert e_{l,x,y} - e_{l, 4x -d, y} \rvert \rvert_1$$
 We then compute the disparities for each (x,y) location and resolution l, where D is the max disparity, noting that our convolution trick allows us to try far fewer values for the disparity with the following:
 
@@ -128,6 +133,10 @@ The authors also add an additional parameter to the model which they denote the 
 
 <center> Figure 2: Details of Propagation and Initialization Steps </center>
 
+### Propagation
+
+#### Warping
+The second step of the model, propagation, uses input from all the different resolutions of the features. First we perform a warping between the individual tiles that are associated with each feature resolution using the computed disparity values from before. We warp the tiles in the right tile features $$e^R$$ to the left tile features $$e^L$$ (converting them into their original size on the feature map) using linear interpolation along the scan lines. To pass this information on to the next iteration of the algorithm a cost vector is also computed which takes the magnitude of the distance between all of the feature values in this 4x4 tile.
 
 ```python
 @functools.lru_cache()
@@ -157,10 +166,6 @@ def disp_up(d, dx, dy, scale, tile_expand):
 ```
 
 <center> Figure 3: Implementation of the Warp Step </center>
-### Propagation
-
-#### Warping
-The second step of the model, propagation, uses input from all the different resolutions of the features. First we perform a warping between the individual tiles that are associated with each feature resolution using the computed disparity values from before. We warp the tiles in the right tile features $$e^R$$ to the left tile features $$e^L$$ (converting them into their original size on the feature map) using linear interpolation along the scan lines. To pass this information on to the next iteration of the algorithm a cost vector is also computed which takes the magnitude of the distance between all of the feature values in this 4x4 tile.
 
 #### Update
 A CNN model $$U$$ then takes n tile hypotheses as input and predicts a change for the tile plus a confidence value $$w$$. This convolutional layer is useful as it allows the use of neighboring information from other tiles, along with the multidimensional inputs to be used in updating the tile hypothesis. The tile hypothesis is augmented with the matching costs $$\phi$$ computed during the warping step, with the warp costs stored for the current estimate and offset +-1 to give a local cost volume. In the paper the augmented tile map is denoted as follows:
@@ -177,11 +182,35 @@ The CNN model $$U$$ is made or resnet blocks followed by dilated convolutions. T
 The network uses multiple different losses: an initialization loss, propagation loss, slant loss, and confidence loss. These values are all weighted equally and used to optimize the model.
 
 #### Initialization Loss
+The ground truth disparity values are given with subpixel precision, but the model only generates integer disparities. To account for this the authors' used linear interpolation to compute the matching costs for subpixel disparities via the given equation (subscripts omitted for brevity).
 
+$$ \psi(d) = (d - \lfloor d \rfloor)\rho(\lfloor d \rfloor + 1) +(\lfloor d \rfloor + 1 - d) \rho(\lfloor d \rfloor) $$
+
+In order to compute the disparity cost at multiple resolutions the ground truth disparity maps are maxpooled to downsample them to the appropriate resolution. The goal is for the loss $\psi$ to be the smallest the ground truth disparity and greater everywhere else. The author's achieved this goal by using an $l_1$ contrastive loss as defined below.
+
+$$L^{init}(d^{gt}, d^{nm}) = \psi(d^{gt}) + \text{max}((\beta - \psi(d^{nm}), 0)$$
+
+Where $\beta > 0$ is a margin (the authors' use $\beta = 1$ in the paper), $d^{gt}$ is the ground truth disparity and:
+
+$$ d^{nm} = \text{argmin}_{d \in [0, D] \setminus \{d:d \in [d^{gt} - 1.5, d^{gt} 1.5]\}}\rho(d)$$
+
+where $$d^{nm}$$ is the disparity of the lowest cost match for a location. By defining the cost this way the lowest cost match approaches the margin and the ground truth cost approaches 0.
 #### Propagation Loss
+To apply loss on the tiles the authors' expand the tiles to the full resolution disparities. They also upsample the slant to full-resolution using nearest neighbors. The paper uses a general robust loss function (also used in stereo net) and defined as $\rho$ and apply a truncation to this loss with a threshold $A$.
+
+$$L^{prop}(d, dx, dy) = \rho(\text{min}(\lvert d^{d^{gt} - \hat d}\rvert, A), \alpha, c)$$
+
 
 #### Slant Loss
+The loss on the surface slant is defined as:
+
+$$L^{slant}(dx, dy) = \begin{Vmatrix}d_x^{gt} - d_x\\ d_y^{gt} - d_y \end{Vmatrix}_1 \chi \lvert d^{diff} \rvert < B$$
+
+Here $\chi$ is an indicator function returning the boolean value of whether $\lvert d^{diff} <B \rvert$.
 #### Confidence Loss
+Finally, the paper introduces a loss which increases the confidence $w$ of a prediction if the hypothesis is closer than some threshold $C_1$ to the hypothesis and decreases the confidence if the hypothesis is farther than a threshold $C_2$ from the ground truth.
+
+$$L^w(w) = \text{max}(1-w, 0)_{\chi_{\lvert d^{diff} \rvert < C_1}} + \text{max}(w, 0)_{\chi_{\lvert d^{diff} \rvert > C_2}}$$
 
 ## StereoNet
 The main insight of StereoNet is that we can aggressively downsample the input disparity images so we can perform a much less costly alignment between two significantly reduced feature sizes. Unlike HITNet which saves computational costs by omitting 3D convolutions, StereoNet still makes these computations, just at a severely reduced resolution. The network uses a simple decoder encode approach, this time with a Siamese network (a neural network where there are
@@ -229,37 +258,57 @@ The probabilistic loss function.
 ### Upsampling (Refinement)
 To upsample the image the disparity map is first bilinearly upsampled to the output size. It then is passed through the refinement layer which first consists 3x3 convolutiion. This is followed by 6 residual blocks with 3x3 dilated convolutions (to increase the receptive field), with dilation factors of 1,2,4,8, and 1 respectiveley. The final output is run through a 3x3 convolutional layer. The authors tried two different techniques, one running the upsample once and another cascading the upsample layer for further refinement.
 ### Loss Function
-Loss is computed as the difference between the ground truth disparity and the predicted disparity at $k$, the given refinement level (k = 0 denoting output before any refinement) and is given by the following equation.
+Loss is computed as the difference between the ground truth disparity and the predicted disparity at $k$, the given refinement level (k = 0 denoting output before any refinement) and is given by the following equation. In this case the function $p$ is the two parameter robust loss function from the "A more general loss function paper" [6].
 
 $$L = \sum_k p(d_i^k - \hat{d}_i)$$
 
+## Results
 
-### Implementation
 To train both HITNet and StereoLab models ourselves, we heavily relied upon the work of GitHub user zjjMaiMai in their
-repository TinyHITNet [6], which implements both models in PyTorch. As our models were (justifiably) smaller and not as well trained as those in the original papers (they used much more computational power and training time than we had available) we compared our results to those in the GitHub repo, while still giving a reference to those provided in the original paper. To offer a consistent baseline when comparing the two models we chose to use the Kitti 2015 dataset.
+repository TinyHITNet [6], which implements both models in PyTorch. As our models were (justifiably) smaller and not as well trained as those in the original papers (they used much more computational power and training time than we had available) our results didn't come close to their performance, but qualitatively they still look fairly reasonable. To offer a consistent baseline when comparing the two models we chose to use the Kitti 2015 dataset.
 
-### Results
 For evaluating results we used one of the metrics common to both papers: End-Point-Error (EPE). This metric is a measurement of the absolute distance in disparity space between the predicted output and the ground truth.
 
-We found that HITNet performed very well overall and we didn't have to make too many tweaks to its implementation to see results that qualitatively looked quite good.
 
-<!-- TODO(morleyd) Table showing EPE loss compared to original-->
+|Model                        |Train Time (hr)|Train Steps (k)|Train EPE|Train 1% Error|Train 3% Error|Val EPE|Val 1% Error|Val 3% Error|
+|-----------------------------|---------------|---------------|---------|--------------|--------------|-------|------------|------------|
+|HITNET                       |4.5            |30.5           |0.593    |89.3          |97.6          |1.076  |81.9        |94.3        |
+|StereoNet                    |8.5            |48             |0.523    |91.1          |98.3          |1.007  |79.1        |94.3        |
+|StereoNet (Separate Backbone)|5              |28             |0.536    |45.3          |83.3          |10.42  |8.9         |30.1        |
+|StereoNet (Our improvements) |2.5            |13             |2.016    |91            |98.3          |1.511  |80.0        |93.1        |
+|StereoNet (Author)           |NA             |150            |         |91            |NA            |NA     |95.17       |NA          |
 
-![Train Accuracy]({{ '/assets/images/team25/train-epe.png' | relative_url }})
 
+We can see that the implementation of StereoNet that we trained from the TinyHITNet repository performs significantly worse than the author's original paper, but we did only train for 1/3 of the steps the paper used to reach convergence. After changing the optimizer used in StereoNet to ADAM and modifying parameters to the loss function we found we were able to train a modified version of StereoNet to similar error percentages in a much shorter time. Our attempt to implement a Separate Backbone StereoNet (detailed below) did not work well at all and resulted in extremely low train 1% error of 45.3%. HITNet performed similarly to StereoNet in the observed metrics, but inspecting actual images, it seemed to do a much better job than the other network.
 
+![]({{ '/assets/images/team25/HITNet_val.png' | relative_url }})
+<center> Figure 6.1 HITNet Sample Validation Result </center>
+![]({{ '/assets/images/team25/StereoNetOrig.png' | relative_url }})
+<center> Figure 6.2 Original StereoNet Sample Validation Result </center>
+![]({{ '/assets/images/team25/StereoNetNew.png' | relative_url }})
+<center> Figure 6.3 New StereoNet Validation Result </center>
 
-#### Issues with Reflection
-As mentioned in the original StereoNet paper, the StereoNet model struggles a bit with relections as its refinement network doesn't have a good structure for solving the inpainting problem. As a window that has depth both behind it and at the window's surface has ambiguous depth, but the loss is computed based on whatever the lidar reports, the model can score a bit lower on evaluation metrics for actually trying to report depth of objects behind the window surface. The author's mention that some of the models that perform better than theirs likely learn to paint over this surface (inpainting) and thus ignore the object behind the window glass.
+We notice that all these images have some artifacts at the top of the image (likely due to the fact that KITTI 2015 doesn't provide point cloud cloud data for the upper portions of most images).
+
+### StereoNet Issues
+#### Reflection
+As mentioned in the original StereoNet paper, the StereoNet model struggles a bit with relections as its refinement network doesn't have a good structure for solving the inpainting problem. As a window that has depth both behind it and at the window's surface has ambiguous depth, but the loss is computed based on whatever the lidar reports, the model can score a bit lower on evaluation metrics for actually trying to report depth of objects behind the window surface. The author's mention that some of the models that perform better than theirs likely learn to paint over this surface (inpainting) and thus ignore the object behind the window glass. We can see in Figure 7 the model struggles to with the relections on the window of the store front.
 
 <!-- TODO(morleyd) Image illustrating the details of the reflection problem-->
+![]({{ '/assets/images/team25/Reflection.png' | relative_url }})
+<center> Figure 7: Canonical Example of the Reflection Problem </center>
 
-#### Issues with Unlabeled Sky
+#### Unlabeled Sky
 In the Kitti 2015 dataset images point cloud often only extend to the upper half of the image. We found that this could be problematic for learning the depth map for the sky as this is a fairly textureless region and thus many possible disparity values are valid. This makes the softmax over the cost volume have many equal value paths, and the model seems to learn to favor a lower disparity in these cases, creating many artifacts in the sky. The ideal way to fix this would be to augment the sky with additional data points (likely labeling the sky as close to infinity) so the refinement network could learn to treat the sky differently than the rest of the model. As attaining additional labeled data is difficult, we instead proposed a different solution using some of the features from HITNet in an attempt to solve this issue.
-
 <!-- TODO(morleyd) Image demonstrating the unlabeled sky problem -->
+![]({{ '/assets/images/team25/CanonicalSky.png' | relative_url }})
+<center> Figure 7: Canonical Example of the Unlabeled Sky Problem </center>
+
+#### Rough Object Boundaries
+We finally notice that some of our boundaries on objects in StereoNet are a bit rough. This is due to the model needing more training time on the refinement network and not an issue with the actual model design.
 
 ### Experimental Contributions
+
 
 #### NonSiamese StereoNet
 When looking at the StereoNet Model we were somewhat curious what the effect of using a Siamese network had on the model, over training separate models for both left and right images. We surmised that there may be some differences in images depending on the side they were taken on and it might make sense to learn a different representation for each of these pieces of the network. As the feature refinement part of the network as well as the cost matrix are likely very similar in function, we only trained separate features for both model sizes. While this does effectively reduce by half our quantity of training data per weight in the feature generation of our network(as we are no longer training the weights per iteration on both the left and right images) we were hopeful it might result in a slight performance gain.
@@ -276,7 +325,7 @@ self.feature_extractor_right += [nn.Conv2d(32, 32, 3, 1, 1)]
 self.feature_extractor_left = nn.Sequential(*self.feature_extractor_left)
 self.feature_extractor_right = nn.Sequential(*self.feature_extractor_right)
 ```
-<center> Figure 6: Alterations to Implement Model as NonSiamese</center>
+<center> Figure 7: Alterations to Implement Model as NonSiamese</center>
 
 We quickly realized that this was not a good idea as the loss of the model went down much much more slowly and it became clear it wouldn't converge to anything relevant very quickly. Reflecting on this once more, this does make some sense, as we likely want the main features of hte left and right images to be the same, just with minor tweaks per model. It may make sense to finetune the siamese network allowing each side to train separately using this logic, but due to a limitation on remaining Google cloud credits, we decided not to test this hypothesis and move on to other ideas.
 
@@ -294,8 +343,13 @@ The main issue we noticed on training StereoNet on the Kitti 2015 dataset was it
 #### Artificial Texture
 Another idea we had for addressing the issue with the sky was adding an artificial texture to the images. By adding a series of dots on both images with a fixed disparity we could take the same idea from active stereo of the dot projection matrix and try to bias the disparities predicted for textureless regions. A downside of this approach is it would lead to an issue with potentially incorrect disparities on other regions with many pixels of same colors. This certainly isn't a perfect solution, but performing this change and only altering the images above 80% of the height of the image would likely be sufficient to target a rough approximation of the sky region as the Kitti dataset is biased to include sky regions in this approximate area.
 
+## Useful Links
+You can find a link to our final presentation, our presentation video, and a demo notebook of our results here.
+
+[Final Presentation Slides](https://docs.google.com/presentation/d/1OSzT6G4szjOHHcMXQbv9oGyHX6hS3t-7HiQqEe3Iemg/edit?usp=sharing)
+[Final Project Notebook](https://drive.google.com/file/d/1KxTGVt6ezBB9cNOEI2u1FRHzOxvREyia/view?usp=sharing)
+
 ## Reference
-Please make sure to cite properly in your work, for example:
 
 [1] Zhuoran Shen, et al. ["Efficient Attention: Attention with Linear Complexities."](https://arxiv.org/pdf/1812.01243v9.pdf) *Winter Conference on Applications of Computer Vision*. 2021.
 
@@ -303,8 +357,11 @@ Please make sure to cite properly in your work, for example:
 
 [3] Jia-Ren Chang, et al. ["Pyramid Stereo Matching Network."](https://arxiv.org/abs/1803.08669) *Conference on Computer Vision and Pattern Recognition*. 2018.
 
-[4] Nikolai Smolyanskiy, et al. ["On the Importance of Stereo for Accurate Depth Estimation: An Efficient Semi-Supervised Deep Neural Network Approach."](https://arxiv.org/abs/1803.09719) *Conference on Computer Vision and Pattern Recognition*. 2018.
+[4] Nikolai Smolyanskiy, et al. ["On the Importance of Stereo for Accurate Depth Estimation: An Efficient Semi-Supervised Deep Neural
+Network Approach."](https://arxiv.org/abs/1803.09719) *Conference on Computer Vision and Pattern Recognition*. 2018.
 
 [5] Olaf Ronneberger, et al. ["U-Net: Convolutional Networks for Biomedical Image Segmentation"](https://arxiv.org/abs/1505.04597) *Conference on Computer Vision and Pattern Recognition*. 2015.
+
+[6] Barron, J.T. ["A more general robust loss function."](https://arxiv.org/abs/1701.03077) *Conference on Computer Vision and Pattern Recognition*. 2017.
 
 ---
