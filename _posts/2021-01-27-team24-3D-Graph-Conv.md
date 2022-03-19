@@ -350,10 +350,10 @@ We also see that the fusion network that utilizes attention graph convolution (A
 
 ## More
 
-Here's a link to our [Github](https://github.com/alexanderswerdlow/DGCNN_Material_Recognition) repository where our work can be found.
+Here's a link to our [Github](https://github.com/alexanderswerdlow/DGCNN_Material_Recognition) repository where our work can be found for those interested.
 
 Also, our video spotlight is below.
-<iframe width="560" height="315" src="https://www.youtube.com/embed/W4qs6hQ8DD4" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+<iframe width="750" height="420" src="https://www.youtube.com/embed/W4qs6hQ8DD4" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
 ## Reference
 
