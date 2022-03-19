@@ -35,7 +35,7 @@ Graph Neural Networks, or GNNs, are as the name suggests, neural networks that m
 *Fig 2. Convolutions are understood for structured data, but graphs pose a unique problem.* [16].
 
 # DGCNN
-Our first approach was a Graph Convolutional Network (GCN) that used the influential EdgeConv [1] operation for convolution. We follow in their approach in modifying our graph size at each layer, performing max pooling after each EdgeConv layer. We chose the Dynamic Graph CNN (DGCNN) approach since it keeps the maximum receptive field, but reduces the number of parameters required at each sucessive layer. We also describe the EdgeConv operation below for completeness.
+The first network we investigated was a Graph Convolutional Network making use of the EdgeConv convolution operation from [1]. The approach involves modifying the size of the graph at each layer and adding max pooling for each EdgeConv layer. The Dynamic Graph CNN (DGCNN) uses a similar approach, keeping the maximum receptive field, but has the benefit of using fewer parameters for successive layers. The EdgeConv operation is explored more in depth in the following section.
 
 ### EdgeConv
 In order to tackle the problem of maintaining a graph's permutation invariance while also exploiting the geometric relationship between nodes, Wang et al. proposed a novel differentiable approach called EdgeConv [1]. The method resembles that of typical convolutions in CNNs, where local neighborhood graphs are created for each point and convolution operations are applied on the edges in this neighborhood. Additionally, in contrast to the approaches employed by other graph based networks, these local neighborhoods change after every layer. More specifically, the graph is recomputed after each layer such that the nearest neighbors are now those closest in the feature space. These dynamic graph updates allow the embeddings to be updated globally, and the authors show that this distinction leads to the best results for point cloud classification and segmentation. 
@@ -84,14 +84,16 @@ In the original network architecture, shown in Fig 2, four EdgeConv layers are u
 
 # 2D-3D Fusion
 
-Our second network was also a GCN inspired by [11] that relies on a backbone for feature extraction but differs in both the data flow and convolution operation. Instead of using a single graph network that takes in the points and associated features, we create two separate graphs, one representing 3D geometric features, and the second represending 2D texture features. 
+In addition to DGCNNs, we looked into a second GCN approach inspired by [11] which uses a feature extraction backbone and takes a different approach in using 3D information with its own graph convolution method. The method creates separate graphs for 2D texture and 3D geometric features and uses a fusion technique for combining these features. 
 
 <!-- MUNEGC OVERALL NETWORK -->
 ![MUNEGCNet]({{ '/assets/images/team24/munegc.jpg' | relative_url }})
 {: style="width: 700px; max-width: 100%;"}
 *Fig 5. The MUNEGC network high level overview* [11].
 
-The 2D texture features are extracted from the backbone and paired with a downsampled point cloud. The 3D geometric features, on the other hand, are solely based on the point cloud and depth data and are the result of using Attention Graph Convolution (AGC) [10] for both the euclidean and feature neighborhoods. This AGC operation is similar to EdgeConv with an attention mechanism except that AGC only includes edge attributes in its attention mechanism and not the features themselves. This is distinct from graph attention networks (GAT) [9] which takes a more common form of attention in which the attention mechanism takes into account the features of both nodes (not only the difference between the features) and also includes a normalization of the attention coefficient. We use an aggregation of a euclidean and feature-based AGC, which [11] calls MUNEGC and is seen below.
+The feature backbone gives as output 2D texture features, which are then combined with a downsampled point cloud.
+The 3D features are created using the constructed pointcloud and depth information using Attention Graph Convolution (AGC) [10] for both the euclidean and feature neighborhoods. 
+Similar to EdgeConv, AGC has an attention mechanism, but differs in that it only takes edge attributes into account for attention weighting and not the features themselves. This also differs from graph attention networks (GAT) [9] which takes a more common form of attention in which node features as well as the difference between the features and also includes a normalization of the attention coefficient. [11] uses an aggregation of euclidean and feature based AGC called Multi Neighborhood Graph Convolution (MUNEGC). 
 
 $$
 \begin{equation}
@@ -109,7 +111,7 @@ $$
 {: style="width: 800px; max-width: 100%;"}
 *Fig 6. The Multi-Neighborhood Graph Convolution (MUNEGC) operation* [11].
 
-The pooling operation used alongside MUNEGC is a modification of traditional voxel pooling named Nearest Voxel Pooling (NVP) [11]. With standard voxel pooling, voxels of resolution $$r_p$$ are created and points from the point cloud inside each voxel are replaced with their centroid with a feature computed through either an average or maximum operation. NVP builds on this by then reassigning each point in the original point cloud to the nearest centroid, and grouping all points with the same centroid. Centroids without assigned points are removed, and each remaining centroid is given a new position equal to the average position of its group and feature equal to either the maximum or average of its group's features.
+The authors of [11] also propose a novel pooling method to be used in conjunction with MUNEGC layers called Nearest Voxel Pooling (NVP). With standard voxel pooling, voxels of resolution $$r_p$$ are created over the point cloud in 3D space and the points in each voxel are combined into a centroid with a feature computed through either an average or maximum operation. Nearest Voxel Pooling adds an additional step to address the issue of points in each voxel being closer to neighboring voxel centroids than their own. To do this, every point is grouped into clusters based on their nearest centroid, and any centroid without a corresponding cluster is discarded. Then, based on these groups, new centroids are created based on the position and features of the group.
 
 <!-- NVP -->
 ![NVP]({{ '/assets/images/team24/nvp.png' | relative_url }})
@@ -119,7 +121,7 @@ The pooling operation used alongside MUNEGC is a modification of traditional vox
 # GeoMat Dataset
 To assess the performance of our DGCNN and fusion networks on point cloud classification, and specifically material prediction, we chose the GeoMat dataset since it includes both RGB and Sparse Depth unlike many other RGB-only material datasets [7]. In addition to the RGBD data, the GeoMat dataset provides camera intrinsics and extrinsics, calculated surface normals, as well as the position of the image patch in the larger image. We use the provided camera intrinsics and sparse depth to project the 2D image points into 3D space and generate a point cloud. 
 
-We also pre-processed the image data to improve training by normalizing the RGB images by channel. We also augment the 2D image data by performing random flips and rotations. After projecting the depth map to a 3D point cloud, we normalize the positions of each point to the interval (-1, 1). When training to obtain the 3D geometric features, we augmented the point cloud and depth features by performing random dropout, randomly rotating about the z-axis between 0 and 180 degrees, and randomly flipping horizontally. In addition, we employ a random 3D cropping method proposed by [11], in which a random point is chosen from the point cloud and a cropping radius is found which includes only a specified fraction $$f$$ of the original number of points.
+To improve training performance, we pre-process the image by normalizing the RGB channels for each image. Additionally, we augment the 2D image data by performing random flips and rotations. We also normalize the positions of each point to the interval (-1, 1). When extracting 3D geometric features during training, we augmented the 3D data with random dropout of points, rotating about the z-axis between 0 and 180 degrees, and flipping horizontally. We also employ a random 3D cropping method proposed by [11], in which a random point is chosen from the point cloud and a cropping radius is found which includes only a specified fraction $$f$$ of the original number of points.
 
 The dataset consists of a total of 19 different materials, with each category consisting of 400 training and 200 testing examples. Training examples from the Cement - Granular, Grass, and Brick classes along with their constructed 3D point clouds are shown in Fig 3. 
 
