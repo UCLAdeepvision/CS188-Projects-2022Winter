@@ -331,8 +331,21 @@ self.feature_extractor_right = nn.Sequential(*self.feature_extractor_right)
 
 We quickly realized that this was not a good idea as the loss of the model went down much much more slowly and it became clear it wouldn't converge to anything relevant very quickly. Reflecting on this once more, this does make some sense, as we likely want the main features of hte left and right images to be the same, just with minor tweaks per model. It may make sense to finetune the siamese network allowing each side to train separately using this logic, but due to a limitation on remaining Google cloud credits, we decided not to test this hypothesis and move on to other ideas.
 
-#### Adam Optimizer+Adjusted Loss Params StereoNet
-In the original StereoNet paper the authors used RMSProp, which we found a bit strange as generally Adam seems to be the go to choice of optimizer. The authors' also make use of a robust loss function with params of $$\alpha = 1$$ and $$ c = 2$$, which we found adjusting slightly resulted in the model training a bit faster.
+#### Optimizer and Loss Function Tweaks
+In the original StereoNet paper and in the implementation we based ours off the authors used RMSProp.
+We thought we could speed up the training process by choosing a different optimizer, so we changed it to Adam with $\lambda = 4\times10^{-4}$.
+The authors' also make use of the robust loss function presented in [6] with $$\alpha = 1$$ and $$ c = 2$$, which we found adjusting to $ \alpha=0.5 $ and $ c = 0.8 $ resulted in the model training a bit faster.
+Also, in the implementation of StereoNet we based our code off of, it used plain ReLU activation everywhere.
+This contradicts the original StereoNet paper, and in theory is more susceptible to vanishing gradients, so in our version we changed to
+LeakyReLU activation.
+
+#### Model Structure
+In StereoNet, after computing the 3D cost volume it filters it with 5 layers of 3D convolutions with kernel size 3.
+In theory this should allow for learning to correct inaccuracies in the cost volume, but it also means that the model must learn
+to not lose the original cost volume features.
+We theorized that the model would train faster by placing 3D convolutions in ResNet blocks with shortcuts.
+In our results, we indeed see that the model trains much faster, achieving the same train accuracy in one quarter of the time,
+while attaining nearly the same validation accuracy.
 
 <!-- TODO(morleyd) Results for this model displayed here -->
 
