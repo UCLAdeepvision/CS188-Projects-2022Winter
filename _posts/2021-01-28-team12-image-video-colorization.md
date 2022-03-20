@@ -240,10 +240,17 @@ Video colorization is a field that has increasing attention these days. From our
 
 
 
+## 7. Demos
 
-## 6. Reference
-Please make sure to cite properly in your work, for example:
+### Video Demo
 
+[![Video Demo](https://img.youtube.com/vi/I-5joclT7Oc/0.jpg)](https://youtu.be/I-5joclT7Oc)
+
+### Colab Demo
+
+You can go checkout the colab demo at our github repo [Colorizer](https://github.com/Vince-Ai/Colorizer).
+
+## 8. Reference
 [1] Liu, Yihao, et al. "Temporally Consistent Video Colorization with Deep Feature Propagation and Self-regularization Learning." arXiv preprint arXiv:2110.04562 (2021).  
 [2] Anwar, Saeed, et al. "Image colorization: A survey and dataset." arXiv preprint arXiv:2008.10774 (2020).  
 [3] Zhang, Bo, et al. "Deep exemplar-based video colorization." Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition. 2019.  
