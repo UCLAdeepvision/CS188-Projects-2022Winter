@@ -19,7 +19,7 @@ date: 2022-01-27
 Stereo matching is the process of aligning two images taken by distinct cameras of the same object. In the very simple case,
 with perfect images, and one object at constant depth, one can compute the disparity (pixel alignment offset) required to align both the left and right camera images. This information can be used, along with the distance between the two cameras, to compute a distance estimation for this object. In the real world case, this problem becomes much more complicated. Many objects reside in the scene with different textures, shadows, etc, and performing an alignment between all these points is difficult, making it more challenging to estimate distance than in the simple case.
 
-There are two different forms of stereo matching: active and passive. In the active case, one simplifies the problems of alignment by projecting light (ofter via a laser dot matrix) and using other adaptive mechanisms to make it easier to align the two camera images. This hardware is much more expensive however and thus not as likely to see widespread use. Passive stereo imaging just involves two statically placed cameras and thus is a much harder problem that we will explore for our final project.
+There are two different forms of stereo matching: active and passive. In the active case, one simplifies the problems of alignment by projecting light (often via a laser dot matrix) and using other adaptive mechanisms to make it easier to align the two camera images. This hardware is much more expensive however and thus not as likely to see widespread use. Passive stereo imaging just involves two statically placed cameras and thus is a much harder problem that we will explore for our final project.
 
 A natural question that also might be asked, is why not use a single camera for depth estimation? There are some models that explore this, but it is much more difficult to get accurate depth measurements, and there is a large gap between depth accuracies (as shown in [4]).
 
@@ -129,7 +129,7 @@ $$d_{l,x,y}^{init} = argmin_{d \in [0,D]}c(l,x,y,d)$$
 
 This search is exhaustive over all potential disparity values.
 
-The authors also add an additional parameter to the model which they denote the tile feature descriptor $$p_{l,x,y}^{init}$$ for each point (x,y) and resolution l. This is a value which is the output of a perceptron and leaky ReLU fed the costs of the best matching disparity d, and the embedding for that specific feature at that point. The idea of this feature is to pass along the confidence of the match to the network laters.
+The authors also add an additional parameter to the model which they denote the tile feature descriptor $$p_{l,x,y}^{init}$$ for each point (x,y) and resolution l. This is a value which is the output of a perceptron and leaky ReLU fed the costs of the best matching disparity d, and the embedding for that specific feature at that point. The idea of this feature is to pass along the confidence of the match to the network layers.
 
 ![HITNet]({{ '/assets/images/team25/HITNet.png' | relative_url }})
 
@@ -178,17 +178,17 @@ Our model then outputs deltas for each of the n tile hypothesis maps and new con
 
 $$(\Delta h_l^1, w^1, \cdots, \Delta h_l^n, w^n) = U_l(a_l^1, \cdots, a_l^n; \theta_{U_l})$$
 
-The CNN model $$U$$ is made or resnet blocks followed by dilated convolutions. The update is performed starting at lowest resolution feature, moving up, so at the second resolution feature there are now two inputs, and then three, and so on and so forth. This action can be seen in Figure 2. Tiles are upsampled as they move up layers to ensure they all stay the appropriate dimension. At each location the hypothesis with the largest confidence is selected until the starting resolution is reached. The model is then run one additional time on the optimal tiles for further refinement and the final output is the disparity map result.
+The CNN model $$U$$ is made of ResNet blocks followed by dilated convolutions. The update is performed starting at lowest resolution feature, moving up, so at the second resolution feature there are now two inputs, and then three, and so on and so forth. This action can be seen in Figure 2. Tiles are upsampled as they move up layers to ensure they all stay the appropriate dimension. At each location the hypothesis with the largest confidence is selected until the starting resolution is reached. The model is then run one additional time on the optimal tiles for further refinement and the final output is the disparity map result.
 
 ### Loss
 The network uses multiple different losses: an initialization loss, propagation loss, slant loss, and confidence loss. These values are all weighted equally and used to optimize the model.
 
 #### Initialization Loss
-The ground truth disparity values are given with subpixel precision, but the model only generates integer disparities. To account for this the authors' used linear interpolation to compute the matching costs for subpixel disparities via the given equation (subscripts omitted for brevity).
+The ground truth disparity values are given with subpixel precision, but the model only generates integer disparities. To account for this the authors used linear interpolation to compute the matching costs for subpixel disparities via the given equation (subscripts omitted for brevity).
 
 $$ \psi(d) = (d - \lfloor d \rfloor)\rho(\lfloor d \rfloor + 1) +(\lfloor d \rfloor + 1 - d) \rho(\lfloor d \rfloor) $$
 
-In order to compute the disparity cost at multiple resolutions the ground truth disparity maps are maxpooled to downsample them to the appropriate resolution. The goal is for the loss $\psi$ to be the smallest the ground truth disparity and greater everywhere else. The author's achieved this goal by using an $l_1$ contrastive loss as defined below.
+In order to compute the disparity cost at multiple resolutions the ground truth disparity maps are maxpooled to downsample them to the appropriate resolution. The goal is for the loss $\psi$ to be the smallest for the ground truth disparity and greater everywhere else. The authors achieved this goal by using an $l_1$ contrastive loss as defined below.
 
 $$L^{init}(d^{gt}, d^{nm}) = \psi(d^{gt}) + \text{max}((\beta - \psi(d^{nm}), 0)$$
 
@@ -198,7 +198,7 @@ $$ d^{nm} = \text{argmin}_{d \in [0, D] \setminus \{d:d \in [d^{gt} - 1.5, d^{gt
 
 where $$d^{nm}$$ is the disparity of the lowest cost match for a location. By defining the cost this way the lowest cost match approaches the margin and the ground truth cost approaches 0.
 #### Propagation Loss
-To apply loss on the tiles the authors' expand the tiles to the full resolution disparities. They also upsample the slant to full-resolution using nearest neighbors. The paper uses a general robust loss function (also used in stereo net) and defined as $\rho$ and apply a truncation to this loss with a threshold $A$.
+To apply loss on the tiles the authors expand the tiles to the full resolution disparities. They also upsample the slant to full-resolution using nearest neighbors. The paper uses a general robust loss function (also used in StereoNet) and defined as $\rho$ and apply a truncation to this loss with a threshold $A$.
 
 $$L^{prop}(d, dx, dy) = \rho(\text{min}(\lvert d^{d^{gt} - \hat d}\rvert, A), \alpha, c)$$
 
@@ -223,7 +223,7 @@ two separate input vectors, connected to separate networks, but both of these ne
 <center>Figure 4: The overall structure of StereoNet</center>
 
 ### Feature Network
-The Siamese network first aggressively downsamples the two input images using a series of K 5x5 convolutions with a stride of 2 and 32 channels. Residual blocks with 3x3 convolutions, batch-normalization, and Leaky ReLus are then applied, followed by a 3x3 convolution layer, without any activation or activation. This outputs a 32-dim vector representation for each down sampled point. Through this representation there is a low dimensional representation of the input that stil has a fairly large receptive field.
+The Siamese network first aggressively downsamples the two input images using a series of K 5x5 convolutions with a stride of 2 and 32 channels. Residual blocks with 3x3 convolutions, batch-normalization, and Leaky ReLus are then applied, followed by a 3x3 convolution layer, without any activation. This outputs a 32-dim vector representation for each downsampled point. Through this representation there is a low dimensional representation of the input that still has a fairly large receptive field.
 
 ### Cost Volume
 After downsampling, like most conventional deep learning disparity models, the network computes a cost volume along scan lines (evaluates every possible offset in the x direction up to the value of the maximum disparity). The cost volume is then aggregated with four 3D convolutions of size 3x3x3, and once more batch-normalization + leaky ReLu activations. Finally, an additional 3x3x3 layer without batch normalization + leaky ReLu is applied.
@@ -245,7 +245,7 @@ def make_cost_volume(left, right, max_disp):
 <center> Figure 5: Implementation of Cost Volume Computation </center>
 
 ### Differentiable Arg Min
-Optimally the disparity with the mininum cost for each pixel would be selected but such a selection is not differentiable. The two approaches tried in the paper are a softmax combination of the selected disparity values and a probabilistic sampling during training over the softmax distribution to approximate the softmax function. This probabilistic approach performed much worse in the author's results, so we stuck with the first selection instead.
+Optimally the disparity with the mininum cost for each pixel would be selected but such a selection is not differentiable. The two approaches tried in the paper are a softmax combination of the selected disparity values and a probabilistic sampling during training over the softmax distribution to approximate the softmax function. This probabilistic approach performed much worse in the authors' results, so we stuck with the first selection instead.
 
 The first (and much better performing) loss function.
 
@@ -258,7 +258,7 @@ The probabilistic loss function.
 <center> $$d \sim \sum_{d=1}^D d \cdot \frac {\text{exp}(-C_i(d))} {\sum_{d'} \text{exp}(-C_i(d'))}$$</center>
 
 ### Upsampling (Refinement)
-To upsample the image the disparity map is first bilinearly upsampled to the output size. It then is passed through the refinement layer which consists of a single 3x3 convolution. This convolution is followed by 6 residual blocks with 3x3 dilated convolutions (to increase the receptive field), with dilation factors of 1,2,4,8, and 1 respectiveley. The final output is run through a 3x3 convolutional layer. The authors tried two different techniques, one running the upsample once and another cascading the upsample layer for further refinement. As the refinement method performed best, we chose this method in our experiments.
+To upsample the image the disparity map is first bilinearly upsampled to the output size. It then is passed through the refinement layer which consists of a single 3x3 convolution. This convolution is followed by 6 residual blocks with 3x3 dilated convolutions (to increase the receptive field), with dilation factors of 1,2,4,8, and 1 respectively. The final output is run through a 3x3 convolutional layer. The authors tried two different techniques, one running the upsample once and another cascading the upsample layer for further refinement. As the refinement method performed best, we chose this method in our experiments.
 ### Loss Function
 Loss is computed as the difference between the ground truth disparity and the predicted disparity at $k$, the given refinement level (k = 0 denoting output before any refinement) and is given by the following equation. In this case the function $p$ is the two parameter robust loss function from the "A more general loss function paper" [6]. This loss function is also used in HITNet as mentioned above.
 
@@ -266,7 +266,7 @@ $$L = \sum_k p(d_i^k - \hat{d}_i)$$
 
 ## Results
 
-To train both HITNet and StereoLab models ourselves, we heavily relied upon the work of GitHub user zjjMaiMai in their
+To train both the HITNet and StereoNet models ourselves, we heavily relied upon the work of GitHub user zjjMaiMai in their
 repository TinyHITNet [6], which implements both models in PyTorch. As our models were (justifiably) smaller and not as well trained as those in the original papers (they used much more computational power and training time than we had available) our results didn't come close to their performance, but qualitatively they still look fairly reasonable. To offer a consistent baseline when comparing the two models we chose to use the Kitti 2015 dataset.
 
 For evaluating results we used one of the metrics common to both papers: End-Point-Error (EPE). This metric is a measurement of the absolute distance in disparity space between the predicted output and the ground truth.
@@ -281,7 +281,7 @@ For evaluating results we used one of the metrics common to both papers: End-Poi
 |StereoNet (Author)           |NA             |150            |         |91            |NA            |NA     |95.17       |NA          |
 
 
-We can see that the implementation of StereoNet that we trained from the TinyHITNet repository performs significantly worse than the author's original paper, but we did only train for 1/3 of the steps the paper used to reach convergence. After changing the optimizer used in StereoNet to ADAM and modifying parameters to the loss function we found we were able to train a modified version of StereoNet to similar error percentages in a much shorter time. Our attempt to implement a Separate Backbone StereoNet (detailed below) did not work well at all and resulted in extremely low train 1% error of 45.3%. HITNet performed similarly to StereoNet in the observed metrics, but inspecting actual images, it seemed to do a much better job than the other network.
+We can see that the implementation of StereoNet that we trained from the TinyHITNet repository performs significantly worse than the authors' original paper, but we did only train for 1/3 of the steps the paper used to reach convergence. After changing the optimizer used in StereoNet to ADAM and modifying parameters to the loss function we found we were able to train a modified version of StereoNet to similar error percentages in a much shorter time. Our attempt to implement a Separate Backbone StereoNet (detailed below) did not work well at all and resulted in extremely low train 1% error of 45.3%. HITNet performed similarly to StereoNet in the observed metrics, but inspecting actual images, it seemed to do a much better job than the other network.
 
 ![]({{ '/assets/images/team25/HITNet_val.png' | relative_url }})
 <center> Figure 6.1 HITNet Sample Validation Result </center>
@@ -294,7 +294,7 @@ We notice that all these images have some artifacts at the top of the image (lik
 
 ### StereoNet Issues
 #### Reflection
-As mentioned in the original StereoNet paper, the StereoNet model struggles a bit with relections as its refinement network doesn't have a good structure for solving the inpainting problem. As a window that has depth both behind it and at the window's surface has ambiguous depth, but the loss is computed based on whatever the lidar reports, the model can score a bit lower on evaluation metrics for actually trying to report depth of objects behind the window surface. The author's mention that some of the models that perform better than theirs likely learn to paint over this surface (inpainting) and thus ignore the object behind the window glass. We can see in Figure 7 the model struggles with the reflections on the window of the store front.
+As mentioned in the original StereoNet paper, the StereoNet model struggles a bit with relections as its refinement network doesn't have a good structure for solving the inpainting problem. As a window that has depth both behind it and at the window's surface has ambiguous depth, but the loss is computed based on whatever the lidar reports, the model can score a bit lower on evaluation metrics for actually trying to report depth of objects behind the window surface. The authors mention that some of the models that perform better than theirs likely learn to paint over this surface (inpainting) and thus ignore the object behind the window glass. We can see in Figure 7 the model struggles with the reflections on the window of the store front.
 
 <!-- TODO(morleyd) Image illustrating the details of the reflection problem-->
 ![]({{ '/assets/images/team25/Reflection.png' | relative_url }})
@@ -332,9 +332,9 @@ self.feature_extractor_right = nn.Sequential(*self.feature_extractor_right)
 We quickly realized that this was not a good idea as the loss of the model went down much much more slowly and it became clear it wouldn't converge to anything relevant very quickly. Reflecting on this once more, this does make some sense, as we likely want the main features of the left and right images to be the same, just with minor tweaks per model. It may make sense to finetune the Siamese network allowing each side to train separately using this logic, but due to a limitation on remaining Google cloud credits, we decided not to test this hypothesis and move on to other ideas.
 
 #### Optimizer and Loss Function Tweaks
-In the original StereoNet paper and in the implementation we based ours off the authors used RMSProp.
+In the original StereoNet paper, and in the implementation we based ours off, the authors used RMSProp.
 We thought we could speed up the training process by choosing a different optimizer, so we changed it to Adam with $\lambda = 4\times10^{-4}$.
-The authors' also make use of the robust loss function presented in [6] with $$\alpha = 1$$ and $$ c = 2$$, which we found adjusting to $ \alpha=0.5 $ and $ c = 0.8 $ resulted in the model training a bit faster.
+The authors also make use of the robust loss function presented in [6] with $$\alpha = 1$$ and $$ c = 2$$, which we found adjusting to $ \alpha=0.5 $ and $ c = 0.8 $ resulted in the model training a bit faster.
 Also, in the implementation of StereoNet we based our code off of, it used plain ReLU activation everywhere.
 This contradicts the original StereoNet paper, and in theory is more susceptible to vanishing gradients, so in our version we changed to
 LeakyReLU activation.
