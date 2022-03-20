@@ -36,7 +36,7 @@ To colorize a video, we need to know how to colorize an image first, as a video 
 
 ### 3.1 Colorful Image Colorization (2016)
 Introduction paragraph
-First, we take a look at Zhang's paper: *Colorful Image Colorization* [8]. In this paper, the author frames the task of image colorization as finding a mapping $$F: \mathbb{R}^{H\times W \times 1} \to \mathbb{R}^{H \times W \times 2}$$. The author uses [CIE LAB color space](https://en.wikipedia.org/wiki/CIELAB_color_space), thereby eliminating the need for predicting a third channel.  
+First, we take a look at Zhang's paper: *Colorful Image Colorization* [9]. In this paper, the author frames the task of image colorization as finding a mapping $$F: \mathbb{R}^{H\times W \times 1} \to \mathbb{R}^{H \times W \times 2}$$. The author uses [CIE LAB color space](https://en.wikipedia.org/wiki/CIELAB_color_space), thereby eliminating the need for predicting a third channel.  
 
 The task of colorization requires a special optimization objective. It's true that the sky is almost always blue, the grass is mostly green, but objects like a beach ball can be of any color. Due to the multimodal nature, using L2 loss leads to the model picking the mean of the modes. This doesn't result in a good result when the space of plausible coloring is non-convex. Thus, to acquire the colorings, Zhang takes a very convoluted approach.
 
@@ -61,7 +61,7 @@ $$
 
 
 ### 3.2 Instance Aware Image Colorization (2020)
-In 2020, Su proposed another way of approaching image colorization [9]. Before the introduction of this paper, image colorization is mostly done in the whole image-level. Previous methods leverage the deep neural network to map input grayscale images to plausible color outputs directly. Arguing that without a clear figure-ground separation, one cannot effectively locate and learn meaningful semantics at object level, this paper proposed a novel network architecture that leverages off-the-shelf models to detect the object, and learn from large-scale data to extract image features at the instance and full-image level, and to optimize the feature fusion to obtain the smooth colorization results. The key insight is that a clear figure-ground separation can dramatically improve colorization performance.
+In 2020, Su proposed another way of approaching image colorization [6]. Before the introduction of this paper, image colorization is mostly done in the whole image-level. Previous methods leverage the deep neural network to map input grayscale images to plausible color outputs directly. Arguing that without a clear figure-ground separation, one cannot effectively locate and learn meaningful semantics at object level, this paper proposed a novel network architecture that leverages off-the-shelf models to detect the object, and learn from large-scale data to extract image features at the instance and full-image level, and to optimize the feature fusion to obtain the smooth colorization results. The key insight is that a clear figure-ground separation can dramatically improve colorization performance.
 
 The model consists of three parts, which is shown in figure below:
 
@@ -69,7 +69,7 @@ The model consists of three parts, which is shown in figure below:
 
 1. an off-the-shelf pretrained Mask R-CNN model to detect object instances and produce cropped object images.
 
-2. two backbone networks trained end-to-end for instance, and full-image colorization. The paper adopted the main colorization network introduced in Zhang et al. [7] as the backbone network.
+2. two backbone networks trained end-to-end for instance, and full-image colorization. The paper adopted the main colorization network introduced in Zhang et al. [8] as the backbone network.
 
 3. a fusion module to selectively blend features extracted from different layers of the two colorization networks as shown below. Formally, given a full-image feature  $$f^X_j$$ and a number of $$N$$ of instance features and corresponding object bounding boxes $$\{f^{X_i}_j,B_i\}^N_{i=1}$$, we use 2 3-layer CNNs to get full image weight map $$W_F$$ and per instance weight map $$W^i_I$$ respectively, resize them using the bounding box $$B_i$$ to get $$f^{\bar X_i}_j$$ and $$\bar W^i_I$$, and compute the outputs 
 
@@ -90,7 +90,7 @@ Coloring each pixel individually using an image colorization technique often res
 
 ### 4.1 Blind Video Temporal Consistency via Deep Video Prior (2020)
 
-In 2020, Lei and Xing [4] proposed a novel method to address temporal inconsistency. Unlike Lai's approach [6], their network does not compute optical flow to establish correspondence. They claimed that the correspondences between frames can be captured implicitly by the visual prior coming from the CNN architecture. As corresponding patches should have similar appearances temporally, they should result in similar CNN outputs.  
+In 2020, Lei and Xing [3] proposed a novel method to address temporal inconsistency. Unlike Lai's approach [2], their network does not compute optical flow to establish correspondence. They claimed that the correspondences between frames can be captured implicitly by the visual prior coming from the CNN architecture. As corresponding patches should have similar appearances temporally, they should result in similar CNN outputs.  
 Moreover, their approach does not require training on massive datasets and can be trained directly on the test video.
 
 The authors approached the problem of temporal inconsistency by first classifying the inconsistency problem into two types:  
@@ -100,7 +100,7 @@ The authors approached the problem of temporal inconsistency by first classifyin
 To attack the first problem, the authors designed the network shown in Figure 1  
 ![Model-architecture]({{ '/assets/images/team12/Consistency_2.png' | relative_url }}){: style="height: 400px; max-width: 100%;"}  
 *Fig 1. Lei and Xing's Method*.    
-In each epoch, the model takes in each original black and white frame of the video and passes the frame through both an image colorization algorithm $$f$$ and a convolutional autoencoder $$\hat{g}$$. The authors used a U-Net[5] for this particular task, and the architectual details are shown in Figure 2. For the purpose of this study, we will explore some other CNN architectures and their efficacy later.  
+In each epoch, the model takes in each original black and white frame of the video and passes the frame through both an image colorization algorithm $$f$$ and a convolutional autoencoder $$\hat{g}$$. The authors used a U-Net[6] for this particular task, and the architectual details are shown in Figure 2. For the purpose of this study, we will explore some other CNN architectures and their efficacy later.  
 ![Model-architecture]({{ '/assets/images/team12/U-net.drawio.png' | relative_url }}){: style="height: 400px; max-width: 100%;"}
 *Fig 2. Network design*. 
 
@@ -166,8 +166,7 @@ for epoch in range(1,maxepoch):
 ```
 
 ### 4.2 Deep Exemplar-based Video Colorization
-This work presents the first end-to-end network for exemplar-based video colorization, which deals with the temporal consistency problem when colorizing image. Exemplar-based colorization is where the colorization transfers the
-color from a preconfigured reference image in a similar content to the target grayscale image. But unlike previous exemplar based methods, this work unifies the common separated correspondence and color propagation network, and trained end-to-end to produce more coherent colorization results.
+This work presents the first end-to-end network for exemplar-based video colorization [7], which deals with the temporal consistency problem when colorizing image. Exemplar-based colorization is where the colorization transfers the color from a preconfigured reference image in a similar content to the target grayscale image. But unlike previous exemplar based methods, this work unifies the common separated correspondence and color propagation network, and trained end-to-end to produce more coherent colorization results.
 
 In order to generate temporally consistent videos, DEVC colorize video frames based on the history. Formally, in LAB space, the output is generated as 
 
@@ -248,17 +247,20 @@ Video colorization is a field that has increasing attention these days. From our
 
 ### Colab Demo
 
-You can go checkout the colab demo at our github repo [Colorizer](https://github.com/Vince-Ai/Colorizer).
+You can go checkout the colab demo at our github repo [Colorizer](https://github.com/Vince-Ai/Colorizer).   
+
 
 ## 8. Reference
-[1] Liu, Yihao, et al. "Temporally Consistent Video Colorization with Deep Feature Propagation and Self-regularization Learning." arXiv preprint arXiv:2110.04562 (2021).  
-[2] Anwar, Saeed, et al. "Image colorization: A survey and dataset." arXiv preprint arXiv:2008.10774 (2020).  
-[3] Zhang, Bo, et al. "Deep exemplar-based video colorization." Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition. 2019.  
-[4] Lei, Chenyang, Yazhou Xing, and Qifeng Chen. "Blind video temporal consistency via deep video prior." Advances in Neural Information Processing Systems 33 (2020): 1083-1093.
-[5] Ronneberger, Olaf, Philipp Fischer, and Thomas Brox. "U-net: Convolutional networks for biomedical image segmentation." International Conference on Medical image computing and computer-assisted intervention. Springer, Cham, 2015.  
-[6] Lai, Wei-Sheng, et al. "Learning blind video temporal consistency." Proceedings of the European conference on computer vision (ECCV). 2018.
-[7] Richard Zhang, Jun-Yan Zhu, Phillip Isola, Xinyang Geng, Angela S. Lin, Tianhe Yu, and Alexei A. Efros. Realtime user-guided image colorization with learned deep priors. ACM TOG (Proc. SIGGRAPH), 36(4):119:1–119:11, 2017
+[1] Anwar, Saeed, et al. "Image colorization: A survey and dataset." arXiv preprint arXiv:2008.10774 (2020).      
+[2] Lai, Wei-Sheng, et al. "Learning blind video temporal consistency." Proceedings of the European conference on computer vision (ECCV). 2018.    
+[3] Lei, Chenyang, Yazhou Xing, and Qifeng Chen. "Blind video temporal consistency via deep video prior." Advances in Neural Information Processing Systems 33 (2020): 1083-1093.      
+[4] Liu, Yihao, et al. "Temporally Consistent Video Colorization with Deep Feature Propagation and Self-regularization Learning." arXiv preprint arXiv:2110.04562 (2021).    
+[5] Ronneberger, Olaf, Philipp Fischer, and Thomas Brox. "U-net: Convolutional networks for biomedical image segmentation." International Conference on Medical image computing and computer-assisted intervention. Springer, Cham, 2015.    
+[6] Su, Jheng-Wei, Hung-Kuo Chu, and Jia-Bin Huang. "Instance-aware image colorization." *Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition*. 2020.    
+[7] Zhang, Bo, et al. "Deep exemplar-based video colorization." Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition. 2019.      
+[8] Zhang, Richard, et al. "Real-time user-guided image colorization with learned deep priors." arXiv preprint arXiv:1705.02999 (2017).    
+[9] Zhang, Richard, Phillip Isola, and Alexei A. Efros. "Colorful image colorization." European conference on computer vision. Springer, Cham, 2016.
 
-[8] Zhang, Richard, Phillip Isola, and Alexei A. Efros. "Colorful image colorization." European conference on computer vision. Springer, Cham, 2016.
 
-[9] Su, Jheng-Wei, Hung-Kuo Chu, and Jia-Bin Huang. "Instance-aware image colorization." *Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition*. 2020.
+
+
