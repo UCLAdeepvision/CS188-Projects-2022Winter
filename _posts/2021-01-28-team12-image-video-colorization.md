@@ -7,11 +7,7 @@ date: 2022-01-28
 ---
 
 
-<<<<<<< HEAD
 > Historical videos like old movies are all black and white before the invention of colored cameras. However, have you wondered how the good old time looked like with colors? We will attempt to colorize old videos with the power of deep neural networks.
-=======
-> Historical videos like old movies are all black and white before the invention of colored cameras. However, have you wondered how the good old time looked like with colors? We will attempt to colorize old videos with the power of deep generative models.
->>>>>>> 7e7564ee762018539dc7f059328a7a2b544c8163
 
 <!--more-->
 {: class="table-of-content"}
