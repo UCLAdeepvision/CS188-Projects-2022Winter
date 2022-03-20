@@ -206,8 +206,10 @@ The difference between model 2 and model 3 is almost nonexistent. As illustrated
 
 Future work on this topic is being pursued by Lvmin Zhang and his group [4]. However, we are still unable to recreate the results promised by his paper from 2017, where rich colorization and effective style transferring is possible. There are still many parameters that are still unexplored during training such as increasing the magnitude of $$\lambda$$ in the loss function (i.e. punishing the model more when the pixels are different). Learning rate decay can also be explored to see if it can lower the loss even more. Furthermore, one can also explore using better style extractors. Both VGG and Inception are networks that are trained using ImageNet for classification, so the features extracted by these networks would intuitively be more focused on the semantics rather than the color scheme. As such, one can consider finetuning the pretrained VGG and Inception v3 (rather than freezing them like rigth now) to get a more colorful representation of the input images.
 
-## Demo
+## Demo and Highlight Video
 The link to the project is here: https://drive.google.com/drive/folders/1Cx3XkDEC53U4vfb4ZdJp8-FBDsENqoBb?usp=sharing. You can find the demo Colab notebook titled "Demo" there.
+
+The highlight video can also be found here: https://drive.google.com/file/d/1FOws3vS4QxQe_gpuK07pDYWxG5k4nb4y/view?usp=sharing.
 
 ## Reference
 
