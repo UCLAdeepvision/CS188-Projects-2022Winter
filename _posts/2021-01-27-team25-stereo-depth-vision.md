@@ -267,7 +267,7 @@ $$L = \sum_k p(d_i^k - \hat{d}_i)$$
 ## Results
 
 To train both the HITNet and StereoNet models ourselves, we heavily relied upon the work of GitHub user zjjMaiMai in their
-repository TinyHITNet [6], which implements both models in PyTorch. As our models were (justifiably) smaller and not as well trained as those in the original papers (they used much more computational power and training time than we had available) our results didn't come close to their performance, but qualitatively they still look fairly reasonable. To offer a consistent baseline when comparing the two models we chose to use the Kitti 2015 dataset.
+repository TinyHITNet [7], which implements both models in PyTorch. As our models were (justifiably) smaller and not as well trained as those in the original papers (they used much more computational power and training time than we had available) our results didn't come close to their performance, but qualitatively they still look fairly reasonable. To offer a consistent baseline when comparing the two models we chose to use the Kitti 2015 dataset.
 
 For evaluating results we used one of the metrics common to both papers: End-Point-Error (EPE). This metric is a measurement of the absolute distance in disparity space between the predicted output and the ground truth.
 
@@ -384,5 +384,7 @@ Network Approach."](https://arxiv.org/abs/1803.09719) *Conference on Computer Vi
 [5] Olaf Ronneberger, et al. ["U-Net: Convolutional Networks for Biomedical Image Segmentation"](https://arxiv.org/abs/1505.04597) *Conference on Computer Vision and Pattern Recognition*. 2015.
 
 [6] Barron, J.T. ["A more general robust loss function."](https://arxiv.org/abs/1701.03077) *Conference on Computer Vision and Pattern Recognition*. 2017.
+
+[7] zjjMaiMai on GitHub. [TinyHITNet](https://github.com/zjjMaiMai/TinyHITNet) *GitHub*. 2021.
 
 ---
