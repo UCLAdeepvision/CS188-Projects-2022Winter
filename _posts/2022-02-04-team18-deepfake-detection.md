@@ -54,7 +54,7 @@ Since the deepfake generation process produces considerable noise, a microscopic
 
 ### Experiments
 
-We took a transfer learning approach to the deepfake detection task. Namely, we utilize the pretrained weights from the MesoNet architecture on the FaceForesnics++ Dataset, allowing us to get the best of both worlds, with both an architecture and a dataset that perform extremely well in Deepfake Detection. The researchers who devised the FaceForensics++ dataset devised their own benchmark, XceptionNet, to test the performance of the dataset. This consists of a basic CNN architecutre that was trained on ImageNet for 3 epochs, before final layer is trained on the highest performing model on the validation set, for a total of 15 epochs (FACE FORENSICS) . Table 1 compares the accuracy of the XceptionNet trained on the FaceForensics++ dataset with the MesoNet architecture, considered state of the art for the task at hand. 
+We took a transfer learning approach to the deepfake detection task. Namely, we utilize the pretrained weights from the MesoNet architecture trained the FaceForesnics++ Dataset, allowing us to get the best of both worlds, with both an architecture and a dataset that perform extremely well in Deepfake Detection. We then finetuned this pretrained model on the Deepfake Detection Challenge dataset. The researchers who devised the FaceForensics++ dataset devised their own benchmark, XceptionNet, to test the performance of the dataset. This consists of a basic CNN architecutre that was trained on ImageNet for 3 epochs, before final layer is trained on the highest performing model on the validation set, for a total of 15 epochs (FACE FORENSICS) . Table 1 compares the accuracy of the XceptionNet trained on the FaceForensics++ dataset with the MesoNet architecture, considered state of the art for the task at hand. 
 
 | Model (15 Epochs)          |      Accuracy     |
 | :------------------------- | :---------------: |
@@ -108,17 +108,21 @@ Additionally, we implemented layer locking to ensure the integrity of the pretra
 
 _Table 2._
 
-Table 2 above displays the results of these experiments. The accuracy was 0.93 which was the same  accuracy that the pre trained weights from MesoNet achieved without training on the FaceForensics++ dataset. This shows that the pretrained MesoNet architecture does perform extremely well in deepfake detection as is. When reaching such accuracy as 93%, even a 0.5% boost in accuracy would be a major accomplishment, which is why methods such as transfer learning and data augmentation were applied. 
+Table 2 above displays the results of these experiments. The accuracy was 0.93 which was the same  accuracy that the pre trained weights from MesoNet achieved without training on the Deepfake Detection Challenge dataset. This shows that the pretrained MesoNet architecture does perform extremely well in deepfake detection as is. When reaching such accuracy as 93%, even a 0.5% boost in accuracy would be a major accomplishment, which is why methods such as transfer learning and data augmentation were applied. 
 
 ### Takeaways
 
-We can see that applying transfer learning to the FaceForensics++ dataset had minimal impact on the performance of our model. The MesoNet paper gave us a state of the art architecture to detect deepfakes, utilizing information about the way they were generated (via GANs) to identify noise in image data. Training further to even 100 epochs did not improve the accuracy. It is clear then that there is little information that the model is able to learn beyond the information it already has from the pretrained weights of MesoNet. One reasonable conclusion for this and a pathway for future work is that the 1000 video subset that we used was simply not sufficient. Future work could include utilizing a much larger percentage (we used about 1% due to limitations in storage and computational capacity) of the dataset when training. This will require a lot of time and/or computational power, but methods to optimize this process can be a part of this future work. See below for a demo.
+We can see that applying transfer learning to the DFDC dataset had minimal impact on the performance of our model. The MesoNet paper gave us a state of the art architecture to detect deepfakes, utilizing information about the way they were generated (via GANs) to identify noise in image data. Training further to even 100 epochs did not improve the accuracy. It is clear then that there is little information that the model is able to learn beyond the information it already has from the pretrained weights of MesoNet with the FaceForensics++ Dataset. One reasonable conclusion for this and a pathway for future work is that the 1000 video subset that we used was simply not sufficient. Future work could include utilizing a much larger percentage (we used about 1% due to limitations in storage and computational capacity) of the dataset when training. This will require a lot of time and/or computational power, but methods to optimize this process can be a part of this future work. See below for a demo.
 
 ### Demo
 
 A link to a Colab demo can be found here: https://colab.research.google.com/drive/1MicgU8F5lmu-LwB54BWma60mmcr_cFNW?usp=sharing
 
 A repository containing code to train and evaluate the model can be found here: https://github.com/arnavgarg/deepfake-detection-demo
+
+A link to a video presentation can be found here: 
+https://ucla.zoom.us/rec/share/iPl4d4wThA9ySEFsq7mnMDQriRNvnWPSks0vw6nmslGKjUIXF__WcgWsn_sOTI-7.2RMmcj6fVogItMqK?startTime=1647746764000
+Password to view: b1F#VZN#
 
 ## References
 
