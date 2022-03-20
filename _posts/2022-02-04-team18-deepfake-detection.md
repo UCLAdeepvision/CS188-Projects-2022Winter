@@ -120,6 +120,10 @@ A link to a Colab demo can be found here: https://colab.research.google.com/driv
 
 A repository containing code to train and evaluate the model can be found here: https://github.com/arnavgarg/deepfake-detection-demo
 
+A link to a video presentation can be found here: 
+https://ucla.zoom.us/rec/share/iPl4d4wThA9ySEFsq7mnMDQriRNvnWPSks0vw6nmslGKjUIXF__WcgWsn_sOTI-7.2RMmcj6fVogItMqK?startTime=1647746764000
+Password to view: b1F#VZN#
+
 ## References
 
 [1] Andreas Rössler, Davide Cozzolino, Luisa Verdoliva, Christian Riess, Justus Thies, Matthias Nießner: “FaceForensics++: Learning to Detect Manipulated Facial Images”
