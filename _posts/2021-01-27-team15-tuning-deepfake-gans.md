@@ -131,7 +131,7 @@ While we used a Pix2PixGAN that was trained soley on hand drawn and colored imag
 
 ![sample of results from Pix2PixGAN]({{ '/assets/images/team15/Pix2PixGAN_results.png' | relative_url }})
 {: style="width: 100%; max-width: 100%;"}
-*Fig 8. Sample of results from Pix2PixGAN*
+*Fig . Sample of results from Pix2PixGAN*
 
 
 
@@ -155,6 +155,8 @@ In particular, we will examine [StyleRig](https://vcai.mpi-inf.mpg.de/projects/S
 [4] Tero Karras, Samuli Laine, Miika Aittala, Janne Hellsten,
 Jaakko Lehtinen, and Timo Aila, “[Analyzing and improving
 the image quality of stylegan](https://arxiv.org/pdf/1912.04958.pdf),” in CVPR, 2020.
+
+[5] link to our [code](https://drive.google.com/drive/folders/1G6FQN8rGMRQhf81KWwpw4CMt75KVzLIG?usp=sharing)
 
 <!-- Tero Karras, Samuli Laine, and Timo Aila, “[A style-based
 generator architecture for generative adversarial networks](https://arxiv.org/pdf/1812.04948.pdf),” in
