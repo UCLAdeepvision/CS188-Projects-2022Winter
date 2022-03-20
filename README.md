@@ -1,5 +1,7 @@
 # UCLA DLCV Course Project
 
+Project page: https://ucladeepvision.github.io/CS188-Projects-2022Winter/
+
 ## Instruction for running this site locally
 
 1. Follow the first 2 steps in [pull-request-instruction](pull-request-instruction.md)
