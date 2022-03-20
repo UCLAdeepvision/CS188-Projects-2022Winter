@@ -111,7 +111,31 @@ SeFa still has several limitations. First, the top $$k$$ parameters do not neces
 ## Demos and Results
 A demo created by the authors of SeFa is available [here](https://genforce.github.io/sefa/) with Colab notebook [here](https://colab.research.google.com/github/genforce/sefa/blob/master/docs/SeFa.ipynb). The code for SeFa is also available [here](https://github.com/genforce/sefa). Because all these details are already open source, it did not make sense to reproduce this work. As a result, we examine an application of tunable GANs.
 
-Specifically, we can use tunable GANs like StyleGAN to produce supervised training data for downstream tasks like image colorization. 
+Specifically, we can use tunable GANs like StyleGAN to see how they would processed for downstream tasks like image colorization. 
+
+## Pix2PixGAN
+The Pix2PixGAN is useful in many ways, but the GAN we trained in this project was soley in order to turn a black and white image of a face into to an RGB colored image.
+
+The architecture of a Pix2PixGAN consists of a PatchGAN discriminator and U-net generator. The Unet generator was special at its time because it is composed of two paths, the contracting path and the expanding path. For the original paper, the authors made the contracting path of many blocks each composed of conv_layer1 -> conv_layer2 -> max_pooling -> dropout. After the contracting Path the authors made the expanding path of many blocks composed of conv_2d_transpose -> concatenate -> conv_layer1 -> conv_layer2.
+
+![PIx2PixGAN architecture]({{ '/assets/images/team15/Pix2PixGAN_arch.jpeg' | relative_url }})
+{: style="width: 100%; max-width: 100%;"}
+*Fig 7. Architecture of Pix2PixGAN*
+
+This was used with a PatchGAN discriminator. The reason why the PatchGAN disciminator is effective is because it will convolve the image and try to classify each N by N pixel in an image as real or fake, and those results would then be averaged.
+
+This results in a fairly good generator useful for an image to image translation task.
+
+## Results
+While we used a Pix2PixGAN that was trained soley on hand drawn and colored images, we were able to obtain desirable results when we fed our styleGAN output into the Pix2PixGAN. This suggests that tunable GANS will produce an output that is not only indistinguishable to the human eye, but also to a GAN trained on human created images. attatched is a [link](https://colab.research.google.com/drive/1JIn-osvs2utb42cYKI5dPkDVea3l3RQA?usp=sharing) to a demo that allows you to input an image of a face and get the corresponding results.
+
+![sample of results from Pix2PixGAN]({{ '/assets/images/team15/Pix2PixGAN_results.png' | relative_url }})
+{: style="width: 100%; max-width: 100%;"}
+*Fig 8. Sample of results from Pix2PixGAN*
+
+
+
+
 
 <!-- @DANIEL put your colab here and explain -->
 
