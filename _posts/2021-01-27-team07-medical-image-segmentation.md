@@ -469,7 +469,7 @@ Although still not perfect, we observe the nontrivial differences between predic
 ## Demo
 - Code Base: [Drive for VNet](https://drive.google.com/drive/folders/1uUNNbixXDdgpa9GIWPccQO8RGyPLAviw)
 - Code Base: [Drive for ResUNet++](https://drive.google.com/drive/folders/1XQdLjOZTigXzbWVwxJYaWC7QPWGc0z0R?usp=sharing)
-- Video: [Youtube](https://drive.google.com/drive/folders/1uUNNbixXDdgpa9GIWPccQO8RGyPLAviw)
+- Video: [Youtube](https://youtu.be/BzsA5YKzDm8)
 
 ## References
 [1] Milletari, Fausto, Nassir Navab, en Seyed-Ahmad Ahmadi. “V-Net: Fully Convolutional Neural Networks for Volumetric Medical Image Segmentation”. arXiv [cs.CV] 2016. 
