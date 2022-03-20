@@ -15,6 +15,15 @@ date: 2022-03-19
 * TOC
 {:toc}
 
+## Demo
+
+### Video Demo
+<iframe width="560" height="315" src="https://www.youtube.com/embed/eh1yQQzO1QI" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+### Colab Demo
+[Colab Demo](https://colab.research.google.com/drive/1rDC6DmOA0-PpKL-m0GOiRL2nifoW-9fL?usp=sharing)
+
+
 ## Introduction
 Our work is a continuation of [Learning to drive from a world on rails](https://dotchen.github.io/world_on_rails/) which uses dynamic programming to learn an agent from past driving logs and then applies it to generate action values. This work is also very closely related to [Learning by Cheating](https://github.com/dotchen/LearningByCheating) which uses a similar two-stage approach to tackle the learning problem. At the same time, we will compare our work with a few others that use a totally different approach such as [ChauffeurNet: Learning to Drive by Imitating the Best and Synthesizing the Worst](https://github.com/aidriver/ChauffeurNet) that learns to drive by synthesizing images to deal with the worst case scenario. In our work, we will try to solve the drawbacks of "Learning to drive from a world on rails" which doesn't use the most accurate Lidar data and has a high pedestrian friction rate problem.
 
@@ -408,10 +417,6 @@ This is how the model performs under rainy condition
 This is how the model performs under heady traffic
 ![Artificial neural network]({{ '/assets/images/team10/auto_drive_3.gif' | relative_url }}){: style="width: 500px; max-width: 100%;"}
 
-
-
-## Demo
-<iframe width="560" height="315" src="https://www.youtube.com/embed/1kX7bcJ5cY0" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
 
 ## Reference
