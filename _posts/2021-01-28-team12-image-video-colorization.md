@@ -45,18 +45,22 @@ The task of colorization requires a special optimization objective. It's true th
 ![CIELAB a* b* channels]({{ '/assets/images/team12/CIELAB.png' | relative_url }}){: style="max-width: 80%;"}
 
 First, using a deep CNN, the author maps the black and white image $$X$$ to a possible discrete distribution of the a* b* channels $$\hat{Z}$$. The ground truth image $$Y$$ is also converted to this space ($$Z$$) using soft-encoding: for each pixel, pick the five closest quantized bins in the a* b* space and weight them proportionally to their distance from the ground truth color. Finally, using a multinomial cross entropy loss, we have our optimization objective:  
+
 $$
 L(\hat{Z}, Z) = - \sum_{h, w} v(Z_{h, w}) \sum_{h, w, q} \log(\hat{Z}_{h, w, q})
-$$
+$$  
+
 Here, $$v$$ returns a weight for each of the possible bins of color. As boring colors are very dominant in ImageNet images, to encourage the model to use vibrant colors, the author assigns a weight that is approximately inversely proportional to the probability of that color in the ImageNet dataset. More formally, for a given color $$q$$, the weight $$w \propto ((1-\lambda) P(q) + \frac{\lambda}{Q})^{-1}$$, where $$\lambda$$ is a parameter and $$Q$$ is the number of discrete values in the a* b* space.  
 
-Finally, after acquiring a predicted distribution $$\hat{Z}$$ in the a* b* space, we need to map it back to $$\mathbb{R}^{H\times W \times 2}$$ to find the a* and b* values. For each pixels, picking one of the modes often result in spatial inconsistency, while taking the mean results in a less vibrant result. The author attempts to achieve the best of both worlds by taking an annealed-mean of the distribution:  
+Finally, after acquiring a predicted distribution $$\hat{Z}$$ in the a* b* space, we need to map it back to $$\mathbb{R}^{H\times W \times 2}$$ to find the a* and b* values. For each pixels, picking one of the modes often result in spatial inconsistency, while taking the mean results in a less vibrant result. The author attempts to achieve the best of both worlds by taking an annealed-mean of the distribution:    
+
 $$
 \begin{align*}
 \mathcal{H}(Z_{h, w}) &= \mathbb{E}[f_T(Z_{h,w})]\\
 f_T(z) &= \frac{e^{log(z)/T}}{\sum_{q} e^{log(z_q)/T}}
 \end{align*}
-$$
+$$  
+
 ![Annealed-mean examples]({{ '/assets/images/team12/annealedmean.png' | relative_url }}){: style="max-width: 80%;"}
 
 
@@ -71,18 +75,21 @@ The model consists of three parts, which is shown in figure below:
 
 2. two backbone networks trained end-to-end for instance, and full-image colorization. The paper adopted the main colorization network introduced in Zhang et al. [8] as the backbone network.
 
-3. a fusion module to selectively blend features extracted from different layers of the two colorization networks as shown below. Formally, given a full-image feature  $$f^X_j$$ and a number of $$N$$ of instance features and corresponding object bounding boxes $$\{f^{X_i}_j,B_i\}^N_{i=1}$$, we use 2 3-layer CNNs to get full image weight map $$W_F$$ and per instance weight map $$W^i_I$$ respectively, resize them using the bounding box $$B_i$$ to get $$f^{\bar X_i}_j$$ and $$\bar W^i_I$$, and compute the outputs 
+3. a fusion module to selectively blend features extracted from different layers of the two colorization networks as shown below. Formally, given a full-image feature  $$f^X_j$$ and a number of $$N$$ of instance features and corresponding object bounding boxes $$\{f^{X_i}_j,B_i\}^N_{i=1}$$, we use 2 3-layer CNNs to get full image weight map $$W_F$$ and per instance weight map $$W^i_I$$ respectively, resize them using the bounding box $$B_i$$ to get $$f^{\bar X_i}_j$$ and $$\bar W^i_I$$, and compute the outputs  
 
 $$f^{\tilde X}_j=f^X_j\circ W_F + \sum\limits_{i=1}^Nf^{\bar X_i}_j\circ \bar W^i_I
-$$
+$$  
+
 ![InstColor_Fusion]({{ '/assets/images/team12/instColor_Fusion.png' | relative_url }}){: style=" max-width: 80%;"}
 
 ### 3.3 Blind Video Temporal Consistency via Deep Video Prior (2020)
 
-The loss function used in this paper is the smooth $$l_1$$ loss with $$\delta=1$$:
+The loss function used in this paper is the smooth $$l_1$$ loss with $$\delta=1$$:  
+
 $$
 L_\delta(x, y) = \frac{1}{2}(x-y)^2 1_{\{|x-y|<\delta\}}+\delta(x-y-\frac{1}{2}\delta)1_{\{|x-y|\geq\delta\}}
-$$
+$$  
+
 During the training process, the model is first trained on the full-image colorization, and the weights are transfered to the instance network as initialization, which is then trained. Lastly, both the full iamge and object colorization model are freezed, and the fusion model is trained. 
 
 ## 4. Temporal Consistency
@@ -106,17 +113,20 @@ In each epoch, the model takes in each original black and white frame of the vid
 
 For the frame $$I_t$$ at time step $$t$$, we compute $$P_t = f(I_t), O_t = \hat{g}$$ and calculate the L1 distance between them. Then, we apply gradient descent to minimize the L1 distance. As we go through the video, the neural net $$\hat{g}$$ will approach $$f$$. As long as we stop before the neural net overfits, the unimodal inconsistency can be reduced very nicely.  
 
-This approach, however, does not solve multimodal inconsistency. As the pixel values cluster around two or more centers, the trained network $$\hat{g}$$ would output a value in between all centers (modes). If the modes are far apart, the resulting output color would be far from any of the modes, resulting in a wrong coloring of the frame. To solve this issue, the authors proposed Iteratively Reweighted Training (IRT). Instead of producing one output image from the network, we can produce two output frames, one representing the main mode we want ($$O^{main}_t$$), while the other one represents the other modes that we want to eliminate (outlier frame, $$O^{rest}_t$$). We compute a confidence mask $$C_t$$, determining whether a specific pixel on the main frame resembles $$P_t$$ more closely than the corresponding pixel on the outlier frame.  
+This approach, however, does not solve multimodal inconsistency. As the pixel values cluster around two or more centers, the trained network $$\hat{g}$$ would output a value in between all centers (modes). If the modes are far apart, the resulting output color would be far from any of the modes, resulting in a wrong coloring of the frame. To solve this issue, the authors proposed Iteratively Reweighted Training (IRT). Instead of producing one output image from the network, we can produce two output frames, one representing the main mode we want ($$O^{main}_t$$), while the other one represents the other modes that we want to eliminate (outlier frame, $$O^{rest}_t$$). We compute a confidence mask $$C_t$$, determining whether a specific pixel on the main frame resembles $$P_t$$ more closely than the corresponding pixel on the outlier frame.    
+
 $$
 C_t =  \begin{cases} 
 1, & \text{main frame is closer}\\
 0, & \text{otherwise}
 \end{cases}
-$$
-Define loss function $$L$$ as the follows:
+$$  
+
+Define loss function $$L$$ as the follows:  
+
 $$
 L = L_1(O^{main}_t \odot C_t, P_t \odot C_t) + L_1(O^{rest}_t \odot (1-C_t), P_t \odot (1-C_t))
-$$
+$$  
 
 The added degree of freedom allows us to optimize $$O^{main}$$ while not compromising correctness to fit multiple modes. In order for the network to actually converge to one of the modes, in practice, we need to go through multiple iterations on the first frame, allowing the network to "grow to like" the mode, and proceed with the rest of the frames.
 
@@ -190,21 +200,26 @@ DEVC has a quite complicated loss function consisting of 6 parts:
 
 $$L_I=\lambda_{perc} L_{perc}+\lambda_{context} L_{context}+\lambda_{smooth} L_{smooth}+\lambda_{adv} L_{adv}+\lambda_{temporal} L_{temporal}+\lambda_{L_1} L_{L_1}$$
 
-1. Perceptural loss encourages the outputs to be percepturally plausible:
+1. Perceptural loss encourages the outputs to be percepturally plausible:  
+
 $$L_{perc}=||\Phi^L_{\tilde x}-\Phi^L_x||^2_2$$
 
-2. Contextual loss encourages the output image to have similar colors with the reference image: 
+2. Contextual loss encourages the output image to have similar colors with the reference image:   
+
 $$L_{context}=\sum\limits_l[-\log (\dfrac{1}{N_L}\sum\limits_i \max\limits_j(softmax_j(1-\dfrac{\tilde d^L(i,j)}{h})))]$$
 
-3. Smoothness loss encourages spatial smoothness across the image:
+3. Smoothness loss encourages spatial smoothness across the image:  
+
 $$ L_{smooth} = \dfrac{1}{N}\sum\limits_{c\in\{a,b\}}\sum\limits_i(\tilde x^C_t(i)-\sum\limits_{j\in N(i)}w_{imj}\tilde x^C_t(j)) $$
 
 4. Adversarial loss aims to constrain the colorization video frames to remain realistic. In this case, a video discriminator is used to evaluate consecutive video frames, and DEVC adopted a relativistic discriminator that estimates
 the extent in which the real frames look more realistic than the colorized ones.
-5. Temporal consistency loss encourages temporal consistency by penalizes the color change along the flow trajectory:
+5. Temporal consistency loss encourages temporal consistency by penalizes the color change along the flow trajectory:  
+
 $$L_{temporal} = ||m_{t-1}\circ W_{t-1, t}(\tilde x^{ab}_{t-1} - m_{t-1}\circ \tilde x^{ab}_{t-1})||$$
 
-6. L1 loss to finally encourage similarity between output and target image:
+6. L1 loss to finally encourage similarity between output and target image:  
+
 $$L_{L_1}=||\tilde x^{ab}_t-x^{ab}_t||_1$$
 
 
@@ -221,8 +236,7 @@ Then structural similarity index measure (SSIM) is used for measuring the simila
 
 $$SSIM(y, \hat y)=\dfrac{(2\mu_y\mu_{\hat y}+c_1)(2\sigma_{y\hat y}+c_2)}{(\mu_y^2+\mu_{\hat y}^2+c_1)(\sigma_y^2+\sigma_{\hat y}^2+c_2)}$$
 
-Where $${\displaystyle c_{1}=(k_{1}L)^{2}, c_{2}=(k_{2}L)^{2}}$$ are two variables to stabilize the division with weak denominator. $$
-{\displaystyle k_{1}=0.01}$$  and $${\displaystyle k_{2}=0.03}$$ by default. $$L$$ is usually set to 1.
+Where $${\displaystyle c_{1}=(k_{1}L)^{2}, c_{2}=(k_{2}L)^{2}}$$ are two variables to stabilize the division with weak denominator. $${\displaystyle k_{1}=0.01}$$  and $${\displaystyle k_{2}=0.03}$$ by default. $$L$$ is usually set to 1.
 
 ### 5.3 LPIPS
 LPIPS measure the perceptual similarity between two image/videos. This work discovered that deep network activations work surprisingly well as a perceptual similarity metric. They therefore constructed deep network for calculating the metric. By linearly "calibrating" networks - adding a linear layer on top of off-the-shelf classification networks including AlexNet, VGG, and SqueezeNet, we can get the metric by directly feeding the outputs into the network.
