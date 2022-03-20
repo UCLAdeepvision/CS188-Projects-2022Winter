@@ -20,6 +20,8 @@ date: 2022-03-17
 ## <ins>**1. Introduction**</ins>
 Our project is based on previous work [End-to-End Object Detection with Transformers](https://arxiv.org/pdf/2005.12872.pdf) and [MetaFormer is Actually What You Needed for Vision](https://arxiv.org/pdf/2111.11418.pdf). In this project, our goal is to present the DETR, a network proposed by FaceBook Research that performs Anchor-Free Detection, and also incorporate the idea from the second paper. We will construct the PoolFormer proposed in the second paper, and replace the Transformer blocks inside DETR with our PoolFormer, and eventually compare the performances of the two architectures. Because of limitations on computational power, we will not train the network for 300 epochs like stated in the DETR repo, which will take roughly 6 days on an 8-GPU machine, instead we will train both network for fewer epochs. If the performance of the PoolFormer-based DETR is comparable with the performance of the original DETR, then we can do instance segmentation more efficiently because Pooling operation is obviously less computationally expensive comparing to [Multihead Attention](https://arxiv.org/pdf/1706.03762v5.pdf).
 
+An introductory video overview can be found [here](https://drive.google.com/file/d/1CNf-l5wBArF-sGpBrEgO55Nt63wbevr_/view?usp=sharing)
+
 ## <ins>**2. Technical Details**<ins>
 
 Our implementation of the following algorithms (Multihead Attention, MLP Mixer, Metaformer) can be found in this [Google Colab Notebook.](https://colab.research.google.com/drive/1OCKHvZa6Mf6tQWztIbCpckudYB9GO2bS?usp=sharing)
