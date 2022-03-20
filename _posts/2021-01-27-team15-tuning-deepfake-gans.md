@@ -22,6 +22,10 @@ date: 2022-01-27
 
 Today, GAN-based deep learning models like StyleGAN and StyleGAN2 are able to generate hyperrealistic images of fake people as shown above. Despite this success, customizing qualities of output images like pose, lighting, and expression is an open question. One of the major challenges in this field is the lack of sufficient training data especially if utilizing 3D face models as training input or if requiring labeled data. The proposed solutions all seek to address this issue by attempting to decrease the reliance on labeled or hard-to-obtain data and moving towards self-supervised or unsupervised learning techniques instead. In this article, we will examine [StyleRig](https://vcai.mpi-inf.mpg.de/projects/StyleRig/data/paper.pdf), [DiscoFaceGAN](https://github.com/microsoft/DiscoFaceGAN), and [SeFa](https://genforce.github.io/sefa/) and then discuss an application of tunable GANs.
 
+A demo of our work in the applications of tunable GANs can be found [here](https://colab.research.google.com/drive/1JIn-osvs2utb42cYKI5dPkDVea3l3RQA?usp=sharing).
+
+Our video can be found [here](https://drive.google.com/file/d/1RoHJtsKwNsT8Mpi9M5-LZHz3gg1bvaCG/view?usp=sharing).
+
 ## StyleRig
 ### Motivation
 There have historically been several ways to represent the data encoding a face in deep learning models. The first was to create a 3D rig of a face with different controllable parameters like identity, expression, or lighting. However, this approach is severely limited by a lack of training data, as it is necessary to perform a 3D scan of faces to obtain a single data sample, which is incredibly expensive as compared to other data collection techniques. This technique is able to provide a high degree of control over the output as desired, but because of the limited training data, output images are often not very realistic.
