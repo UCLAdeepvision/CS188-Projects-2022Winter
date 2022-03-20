@@ -239,9 +239,13 @@ If you want a quick demo without having to code, github user valhalla has gracio
 OpenAi also released a colab file to play around with their filtered smaller model [here](https://github.com/openai/glide-text2im/blob/main/notebooks/text2im.ipynb).
 
 
+
+In addition, we have tried to compare the upsampler model used in the original papaer (augmented ADM model) with another upsampler model, Enhanced Deep Residual Networks (EDSR), using OpenCV.
+While EDSR has been commonly used to enhance resolution, it is limited to enhance the resolution by up to 4 times. And comparing the results upsampled by ADM and EDSR, we see that the ADM model has achieved better results, as the image is sharp and have high resolution. On the other hand, the EDSR model processes the image faster.
+
+OpenAi also released a colab file to play around with their filtered smaller model here. Based on this colab file, we've created a somewhat more beginner-friendly colab file, integrated with the EDSR model. You can try it [here](https://colab.research.google.com/drive/1jgd6Ben6G9sGe8Jd3RF6a5_euuIzMGWU?usp=sharing). In this demo, we used EDSR model that can enhance resolution by 3 times.
+
 Here is a google colab [file](https://colab.research.google.com/drive/1hB2CznykUtMb5MYcEOoTjGgqKC0jPc8o?usp=sharing) we assembled using the OpenAi file and a community recreated version for DALL-E. OpenAi has not released their DALL-E model either for ethical reasons, but the community has tried to reproduce smaller versions of it.  The purpose of putting both in our colab file is to easily compare the outputs of filtered GLIDE vs recreated DALL-E. Both GLIDE and DALL-E are the current state of the art zero-shot image generation models, known for their photorealism and diverisity in image generation.
-
-
 
 <!--
 Using this released colab file from openai and a 
