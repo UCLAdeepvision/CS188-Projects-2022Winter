@@ -26,6 +26,7 @@ Our team explores the applications of CV in healthcare; specifically, notable st
 *Fig 1. Automatic Segmentation of Pulmonary Lobes* [1].
 
 ### [V-Net](https://arxiv.org/abs/1606.04797)
+
 Convolutional neural networks have been popular for solving problems in medical image analysis. Most of the developed image segmentation approaches only operate on 2D images. However, medical imaging often consists of 3D volumes, which gives opportunity to the development of CNNs in 3D image segmentation. In their paper V-Net: Fully Convolutional Neural Networks for Volumetric Medical Image Segmentation, Milletari et al propose the V-Net: a volumetric, fully convolutional neural network trained on 3D MRI scans of the prostate to predict segmentation for the entire volume.
 
 Importance: "Segmentation is a highly relevant task in medical image analysis. Automatic delineation of organs and structures of interest is often necessary to perform tasks such as visual augmentation [10], computer assisted diagnosis [12], interventions [20] and extraction of quantitative indices from images [1]. In particular, since diagnostic and interventional imagery often consists of 3D images, being able to perform volumetric segmentations by taking into account the whole volume content at once, has a particular relevance."
@@ -483,6 +484,4 @@ Although still not perfect, we observe the nontrivial differences between predic
 [5] D. o. Heresbach, “Miss rate for colorectal neoplastic polyps: a prospec- tive multicenter study of back-to-back video colonoscopies,” Endoscopy, vol. 40, no. 04, pp. 284–290, 2008.
 
 [6] Zimmermann-Fraedrich et al., “Right-sided location not associated with missed colorectal adenomas in an individual-level reanalysis of tandem colonoscopy studies,” Gastroenterology, vol. 157, no. 3, pp. 660–671, 2019.
-
-
 ---
