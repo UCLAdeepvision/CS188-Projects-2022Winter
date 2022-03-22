@@ -16,30 +16,33 @@ date: 2022-02-28
 {:toc}
 
 ## Introduction
-The rise of deep learning in recent years has allowed many fields of AI to flourish. Medical image segmentation existed before deep learning was around, but utilizing deep learning allowed the resourcefulness and accuracy of such segmentation to flourish. There have been several main issues with medical image segmentation that previously limited the process' abilities: variability within medical images, variability within human tissue, noise between image pixels, and inherent uncertainty due to limitations of knowledge within the medical world. Though these issues may remain indefinitely, deep learning has allowed the process of image segmentation to achieve better results than ever, and its potential is far more promising than the algorithms that came before it.
+
+The rise of deep learning in recent years has allowed many fields of AI to flourish. Medical image segmentation existed before deep learning was around, but the introduction of deep learning led the resourcefulness and accuracy of such segmentation to flourish. There have been several main issues with medical image segmentation that previously limited the process' abilities: variability within medical images, variability within human tissue, noise between image pixels, and inherent uncertainty due to limitations of knowledge within the medical world. Though these issues may remain indefinitely, deep learning has allowed the process of image segmentation to achieve better results than ever, and its potential is far more promising than the algorithms that came before it.
 
 ## What is Medical Image Segmentation?
-Medical image segmentation is the process of identifying main features within medical images by labeling each pixel with an object class such as 'heart', 'tumor', 'artery', etc. With deep learning, we can train models to automatically assign labels to pixels with high accuracy. These advancements have allowed the performance of automatic image segmentation to match that of professionally trained radiologists [1].
+Medical image segmentation is the process of identifying main features within medical images by labeling each pixel with an object class such as 'heart', 'tumor', 'artery', etc. With deep learning, we are able to train models in order to automatically assign labels to pixels with high accuracy. These advancements have allowed the performance of automatic image segmentation to match that of professionally trained radiologists [2].
 
 ![SegmentationExample]({{ '/assets/images/team05/figure1.png' | relative_url }})
 {: style="width: 600px; max-width: 100%;"}
-*Fig 1. An example of manual & automatic segmentation on lesions (green) within a liver (red)* [3].
+*Fig 1. An example of manual & automatic segmentation on lesions (green) within a liver (red)* [4].
 
-As seen in Figure 1, the outputs of both manual and automatic segmentation of a liver with lesions are quite similar. And of course, the benefits of automatically segmenting these medical screenings include quicker interpretation times, less room for user error, and a second layer of analysis (first via the deep learning model, and second by a medical professional to confirm the accuracy of a scan's results).
+As seen in Figure 1, the outputs of both manual and automatic segmentations of a liver with lesions are quite similar. And of course, the benefits of automatically segmenting these medical screenings include quicker interpretation times, less room for user error, and a second layer of analysis (first via the deep learning model, and second by a medical professional to confirm the accuracy of a scan's results).
 
 ## U-Net
-U-Net is a type of convolutional neural network (CNN) used specifically for medical image segmentation. It is a very popular CNN due to its ability to train with fewer samples while still producing more accurate segmentations on testing data. It utilizes four encoders and four decoders which generates a U-shaped architecture, hence why the network got its name.
+U-Net is a type of convolutional neural network (CNN) used specifically for medical image segmentation. It is a very popular CNN due to its ability to train with fewer samples while still producing more accurate segmentations on testing data. It utilizes four encoders and four decoders which generates a U-shaped architecure, hence why the network got its name.
 
 ![UNetArchitecture]({{ '/assets/images/team05/figure2.png' | relative_url }})
 {: style="width: 600px; max-width: 100%;"}
-*Fig 2. U-Net architecture consisting of four decoders, four encoders, and a bridge to connect the two. The blue boxes are feature maps, and the channel counts for each are listed above each box* [4].
+*Fig 2. U-Net architecture consisting of four decoders, four encoders, and a bridge to connect the two. The blue boxes are feature maps, and the channel counts for each are listed above each box* [5].
 
-A simple implementation of what Figure 2 illustrates can be seen in [Pytorch-UNet](https://github.com/milesial/Pytorch-UNet), a Python framework developed by the GitHub user [milesial](https://github.com/milesial). It utilizes PyTorch to create encoder and decoder functions that process the features within each image and ultimately outputs a segmentation map that attempts to identify important characteristics within each image.
+A simple implementation of what Figure 2 illustrates can be seen in [Pytorch-UNet](https://github.com/milesial/Pytorch-UNet), a Python framework developed by the GitHub user [milesial](https://github.com/milesial). It utilizes PyTorch to create encoder and decoder functions that process the features within each image and ultimately outputs a segmentation map which attempts to identify important characteristics within each image.
+
 
 ### Encoding in U-Net
 Encoders are networks that take an input and convert it to a feature map that identifies various important features within the original input. U-Net utilizes upsampling as its form of encoding which means each layer of encoding increases the output resolution. This allows high-resolution features to map more precisely following each convolution layer.
 
 Within each encoder, we have two 3x3 convolutions followed by a Rectified Linear Unit (ReLU) activation function which helps prevent linearity as the model analyzes training data. After each block, we use a 2x2 max-pooling function which reduces the height & width of the feature map by 1/2 in order to maximize efficiency and minimize the cost of computation.
+
 
 The encoder for U-Net resembles that of most convolutional neural networks [4]. Within each layer of downsampling described above, we double the number of features.
 
