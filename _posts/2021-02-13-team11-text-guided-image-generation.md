@@ -18,6 +18,9 @@ date: 2022-01-18
 
 ## Introduction
 
+### Video
+<iframe width="560" height="315" src="https://www.youtube.com/embed/6FFo76Nzsd8?start=4" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
 Text-guided image generation is a natural fusion of computer vision and natural language processing. Advancements in text-guided image generation serve as important benchmarks in the development of both fields. Text-guided image generation seeks to create photorealistic images from a natural language text prompt. Such a tool would allow further creation of rich and diverse visual content at an unprecidented rate. Recently, diffusion models have shown great promise towards the creation of photorealistic images. Our project will be a detailed overview of [GLIDE: Towards Photorealistic Image Generation and Editing with Text-Guided Diffusion Models](https://arxiv.org/pdf/2112.10741.pdf). 
 
 GLIDE stands for 'Guided Language to Image Diffusion for Generation and Editing.' The article examines both a classifier guidance diffusion model using CLIP guidance and a classifier-free guidance diffusion model. It finds that the classifier-free guidance outperforms the CLIP guided model.The classifier-free guidance model they trained was found to be favored over the previous best text-guided image generation model [DALL-E](https://arxiv.org/abs/2102.12092) 87% of the time when evaluated for photorealism, and 69% of the time when evaluated for caption similarity. The GLIDE model supports both zero-shot generation along with text-guided editing capabilites that allow for image inpainting. In this blog article, we will focus on zero-shot image generation: text-guided image generation from a diffusion model without editing. 
@@ -30,7 +33,7 @@ GLIDE stands for 'Guided Language to Image Diffusion for Generation and Editing.
 ## Background Architecture
 The GLIDE model begins by encoding the text prompt. It first encodes the input text into a sequence of K tokens which are fed into a Transformer model to generate token embeddings. The final token embedding is then fed into an augmented ADM model in place of class embeddings, and the last layer of token embeddings (K feature embeddings) is separately projected to the dimensionality of each attention layer throughout the ADM model, and then concatenated to the attention context at each layer. ADM stands for ablated diffusion model.
 
-The original text prompt is also fed into a smaller transformer model which generates a new set of token embeddings. These embeddings and the 64x64 output of the adapted ADM model are then fed into an upsampling diffusuin model with similar residual embedding connections, which will output a 256x256 model generated image.
+The original text prompt is also fed into a smaller transformer model which generates a new set of token embeddings. These embeddings and the 64x64 output of the adapted ADM model are then fed into an upsampling diffusion model with similar residual embedding connections, which will output a 256x256 model generated image.
 
 ### Transformer Model for Text to Token Encoder
 
@@ -40,7 +43,7 @@ The original text prompt is also fed into a smaller transformer model which gene
 
 Before inputting out natural language prompt into our transformer model, we must first tokenize it. HuggingFace is by far the market leader for tokenizer applications. Tokenization is the process of encoding a string of text into transformer-readable token ID integers. These token ID integers can be seen as indexes into our total vocabulary list. Once we have this tokenized text input, we then input this into a transformer model in order to generate token embeddings for each input token. These embeddings are a numerical representation of the meaning of the word given both the context and token id. As words can have multiple different meanings in different contexts and may refer to concepts in previous or future parts of the input text, we must develop a sophisticated model to ensure our token embeddings are accurate.
 
-Transformer Models rose to fame for this application following the paper [Attention is All You Need](https://arxiv.org/pdf/1706.03762.pdf). Transformers fall under the category of sequence-to-sequence models, in which one sequence, our tokenized input, is translated into a different sequence, our token embeddings. The transformer model can be broken into two stages, an encoder and a decoder. 
+Transformer Models with an attention mechanism through and encoder and decoder rose to fame for this application following the paper [Attention is All You Need](https://arxiv.org/pdf/1706.03762.pdf). Transformers fall under the category of sequence-to-sequence models, in which one sequence, our tokenized input, is translated into a different sequence. We can train our model for token embeddings by masking some inputs and predicting the masked words in the decoder block or through next sentence prediction. The transformer model can be broken into two stages, an encoder and a decoder. After training, we can use the encoder block to generate out token embeddings simply by taking the output of the encoder stack. 
 
 ![Encoder]({{ 'assets/images/team11/encoder1.png' | relative_url }})
 {: style="width: 500px; max-width: 100%;"}
@@ -52,13 +55,15 @@ The encoder is a stack of encoder modules that sequentially feed into each other
 {: style="width: 500px; max-width: 100%;"}
 *Fig 1. Example of multi-head attention*.
 
-Each word will query every other word based on their keys to decide its attention on the words. The query and key vectors for each tokenized input word will then be multiplied and normalized by the square of its size and softmaxed to generate a probability distribution. This is then seen as a score per word of the same length of the input question. This score can be seen has how much that word should pay attention to every other word to inform its embedding meaning. We then multiply this score to the value vector for that word to focus on the words we want to attend to and ignore the others. Our original embedding is then added back to this output to emphasize the word to focus more on itself through a residual skip connection.
+Each word will query every other word based on their keys to decide its attention on the words. The query and key vectors for each tokenized input word will then be multiplied and normalized by the square of its size and softmaxed to generate a probability distribution. This is then seen as a score per word of the same length of the input question. This score can be seen has how much that word should pay attention to every other word to inform its embedding meaning. We then multiply this score to the value vector for that word to focus on the words we want to attend to and ignore the others. Our previous input is then added back to this output to emphasize the word to focus more on itself through a residual skip connection.
 
 The initial input into our encoder is our masked tokenized input along with a positional encoding. This positional encoding can be modeled in different ways, and is added to our initial tokenized input to create our transformer input.
 
-After the encoder is finished, a final Key(K) and value(V) matrix is generated and sent to each encode-decode block in the decoder. The self-attention for the decoder blocks is similar to the encoder but used on the target sequence. The target sequence in this case would be our unmasked tokenized input. It uses the encoder output in its first itteration to generate the next input into the decoder based on what is most probable. The Encoder-Decoder Attention is therefore getting a representation of both the target sequence (from the Decoder Self-Attention) and a representation of the input sequence from our encoder final K and V matrices. It produces a representation with the attention scores for each target sequence word that captures the influence of the attention scores from the input sequence. As this passes through all the Decoders in the stack, each Self-Attention and each Encoder-Decoder Attention also add their own attention scores into each word’s representation. We then compare the predicted ouputs for our masked tokenized words to the true ones and reupdate the model.
+After the encoder is finished, a final Key(K) and value(V) matrix is generated and sent to each encode-decode block in the decoder. After training we can throw away the decoder block and keep the endoer block. We then put our use captions that were tokenized into the encoder stack and take the value matrix (NxV) as our token embeddings. The self-attention for the decoder blocks is similar to the encoder but attempts to predict our masked caption. The output of each decoder itteration is fed shifted as input back into the decoder, so it is able to pay attention to all previous outputs when estimating the next word. It has a self-attention layer identical to our encoder blocks, followed by an encoder attention layer, in which it uses a similar process on the K and V matrices from the encoder block to pay attention to the previous caption input.
 
-After this is trained, we can exctract the word embeddings and map our input sentences into these pre-generated word embeddings.
+The Encoder-Decoder Attention is therefore getting a representation of both the target sequence (from the Decoder Self-Attention) and a representation of the input sequence from our encoder final K and V matrices. It produces a representation with the attention scores for each target sequence word that captures the influence of the attention scores from the input sequence. As this passes through all the Decoders in the stack, each Self-Attention and each Encoder-Decoder Attention also add their own attention scores into each word’s representation. We then compare the predicted ouputs for our masked tokenized words to the true ones and reupdate the model. A similar training stage can be done with next sentence prediction rather than a masked tokenized input.
+
+After this is trained, we use the encoder block on out tokenized caption input to extract token embeddings that will be fed into our downsampling then upsampling diffusion models.
 
 For the text encoding Transformer, GLIDE uses 24 residual blocks of width 2048, resulting in roughly 1.2 billion parameters.
 
@@ -142,7 +147,7 @@ So the natural language prompt is first tokenized and encoded. Then the image ba
 
 ## Training
 
-In the training process, we first trained a text-conditional model with CLIP guidance. Then the base model is fine-tuned for classifier-free guidance.
+In the training process, we first trained a text-conditional model. Then the base model is fine-tuned for classifier-free guidance.
 Model Architecture:
 
 1. ADM 64x64
@@ -166,7 +171,7 @@ Model Architecture:
 
 ### Dataset
 
-Dataset used by DALL-E.
+The GLIDE paper simply uses the same dataset used by DALL-E. According to the openai DALL-E [github](https://github.com/openai/DALL-E/blob/master/model_card.md), "The model was trained on publicly available text-image pairs collected from the internet. This data consists partly of Conceptual Captions and a filtered subset of YFCC100M." [Conceptual Captions](https://ai.google.com/research/ConceptualCaptions/) is a google dataset with 3.3 million images and annotation. [YFCC100M](http://projects.dfki.uni-kl.de/yfcc100m/about) is a list of photos and videos. The exact dataset used by both DALL-E and GLIDE has not been released.
 
 ### Training Process
 
@@ -222,17 +227,28 @@ From quantative metrics, we can see that there is a trade-off between the three 
 
 
 ## Demo
-OpenAI has released a smaller public glide model that filtered out people, faces, and nsfw content. Below are code examples of how to download, initalize, and test their smaller released model. 
+OpenAI has released a smaller public glide model that filtered out people, faces, and nsfw content. 
 
 ![GLIDECOMPARISON]({{ '/assets/images/team11/full_vs_filtered_glide.JPG' | relative_url }})
 {: style="width: 800px; max-width: 100%;"}
 *Fig 1. Comparison of full GLIDE model vs Filtered* [1].
 
-Feel free to follow the code blocks below to play with the released smaller model.
 If you want a quick demo without having to code, github user valhalla has graciously created an interactive website you can try.
  [Interactive Website Link(no coding required, but slower runtime)](https://huggingface.co/spaces/valhalla/glide-text2im) 
 
-OpenAi also released a collab file to play around with their filteres smaller model [here](https://github.com/openai/glide-text2im/blob/main/notebooks/text2im.ipynb).
+OpenAi also released a colab file to play around with their filtered smaller model [here](https://github.com/openai/glide-text2im/blob/main/notebooks/text2im.ipynb).
+
+
+
+In addition, we have tried to compare the upsampler model used in the original papaer (augmented ADM model) with another upsampler model, Enhanced Deep Residual Networks (EDSR), using OpenCV.
+While EDSR has been commonly used to enhance resolution, it is limited to enhance the resolution by up to 4 times. And comparing the results upsampled by ADM and EDSR, we see that the ADM model has achieved better results, as the image is sharp and have high resolution. On the other hand, the EDSR model processes the image faster.
+
+OpenAi also released a colab file to play around with their filtered smaller model here. Based on this colab file, we've created a somewhat more beginner-friendly colab file, integrated with the EDSR model. You can try it [here](https://colab.research.google.com/drive/1jgd6Ben6G9sGe8Jd3RF6a5_euuIzMGWU?usp=sharing). In this demo, we used EDSR model that can enhance resolution by 3 times.
+
+Here is a google colab [file](https://colab.research.google.com/drive/1hB2CznykUtMb5MYcEOoTjGgqKC0jPc8o?usp=sharing) we assembled using the OpenAi file and a community recreated version for DALL-E. OpenAi has not released their DALL-E model either for ethical reasons, but the community has tried to reproduce smaller versions of it.  The purpose of putting both in our colab file is to easily compare the outputs of filtered GLIDE vs recreated DALL-E. Both GLIDE and DALL-E are the current state of the art zero-shot image generation models, known for their photorealism and diverisity in image generation.
+
+<!--
+Using this released colab file from openai and a 
 
 ### Download their codebase from github
 
