@@ -1048,7 +1048,7 @@ For links to our code and Colab demo, please refer to [here](https://drive.googl
 
 For link to the Colored Interactive Framework/Backbone Results Table where you can sort and group_by different labels, please refer to [here](https://flame-seagull-f98.notion.site/16c306237a464cc4bb0b962a2f06b9e4?v=cca8a0635dde4e809f7e91a7d2cc4bc0).
 
-For our recorded spotlight video, please refer to [this folder](https://drive.google.com/drive/folders/1aG7XoBuu-0CFYoxJT3P6jvVz4aBjR7RF?usp=sharing)
+For our recorded spotlight video, please refer to [here](https://drive.google.com/file/d/1AmjcXscGohAAzaP4JImvDi7yoo6x6T2C/view)
 
 
 ## Reference
