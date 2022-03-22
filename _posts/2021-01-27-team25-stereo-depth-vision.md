@@ -1,7 +1,7 @@
 ---
-layout: postmathjax
+layout: post
 comments: true
-title: Depth From Stereo Vision
+title: Depth From Stereo Visions
 author: Alex Mikhalev, David Morley
 date: 2022-01-27
 ---

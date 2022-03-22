@@ -19,8 +19,8 @@ Main Content
 About iGibson
 ----------------
 <br>iGibson has been a leader in 3D simulation environments for several years now, and the recent release of version 2 has added on to what's possible with embodied AI.  There are three datasets in all including iGibson Scenes, BEHAVIOR Object, and BEHAVIOR Activity dataset.  In addition to the 15 scenes in the iGibson dataset, there is also compatibility with CubiCasa5K and 3D-Front enabling over 12000 scenes to interact in.  The BEHAVIOR Object dataset has a multitude of objects annotated with physical and semantic properties (ranging from food items, furniture, and generic household items) and the Activity dataset provides definitions in BDDL logic language which specifies initial scene configuration and valid final goal states of various activities.  New to version 2.0 is a set of physical properties: {temperature, wetness, cleanliness}.  Objects are labeled has heat sources or heat sinks, and a max temperature reached history is maintained for image display accuracy (burnt objects will still looked burned even if temperature drops).  Contact with water droplets can also change physical appearance, and two different dirt types, dust or stain, determine whether they can be removed with dry or wet cloths.  Also newly implemented in version 2 is the ability to use virtual reality to collect human demonstrations for robot learning [2].
-<br>
-![Scenes](../assets/images/team14/scenes.png)
+
+![Scenes]({{ '/assets/images/team14/scenes.png' | relative_url }})
 {: style="width: 400px; max-width: 100%;"}
 *Fig 1. Various scenes from iGibson Dataset* [2].
 
@@ -34,23 +34,23 @@ Robot Navigation in Constrained Pedestrian Environments using Reinforcement Lear
 This study used iGibson textured meshes to develop waypoints of motion for robots to move within their environment.  They also incorporated virtual Lidar sensors in conjunction with simulated pedestrian movement provided by Optimal Reciprocal Collision Avoidance (ORCA) as input for real-time decision making.  The Neural Network is mapped out below with Fully connected Goal and Waypoints concatenated with Lidar processed through a chain of CNNs that are then fully connected to a Policy Network that determines next step in global trajectory [5].
 
 
-![pedestrian](../assets/images/team14/pedestrian.png)
+![pedestrian]({{ '/assets/images/team14/pedestrian.png' | relative_url }})
 {: style="width: 400px; max-width: 100%;"}
 *Fig 1. Reinforcement Learning Neural Network* [5].
 
 The Soft Actor-Critic algorithm is used to learn the value function and policy.
 
-![SAC alg.](../assets/images/team14/SAC-Algorithm.png)
+![SAC alg.](({{ '/assets/images/team14/SAC-Algorithm.png' | relative_url }})
 {: style="width: 400px; max-width: 100%;"}
 [5].
 
 Integrating Simulated and Real Data into Deep Reinforcement Learning for Vision-Based Autonomous Flight
 ---------------------------
-This study combined data gained from the simulated model via iGibson, and realtime date received from a drone in order to apply reinforcement learning for autonomous flight. 
+This study combined data gained from the simulated model via iGibson, and realtime date received from a drone in order to apply reinforcement learning for autonomous flight.
 A Q-function is trained through a multitude of simulated environments which enables an action-conditioned reward prediction model.  In this model the perception layers are used to process the input image's state.  This model is then loaded into a drone which receives real world data via cameras that continue to train the action model, but parameters are frozen from the Q-function learned in simulation.  With this methodology, the model is able to perform better in unknown environments [4].
 
 
-![Q-function](../assets/images/team14/flight.png)
+![Q-function]({{ '/assets/images/team14/flight.png' | relative_url }})
 {: style="width: 400px; max-width: 100%;"}
 *Fig 3. Dual Neural Network* [4].
 
@@ -82,7 +82,7 @@ https://arxiv.org/pdf/2108.03272.pdf
 arXiv:1910.11432v1 24 Oct 2019
 https://arxiv.org/pdf/1910.11432.pdf
 
-[4] Kang, Katie et al, "Generalization through Simulation: Integrating Simulated and Real Data into Deep Reinforcement Learning for Vision-Based Autonomous Flight" 
+[4] Kang, Katie et al, "Generalization through Simulation: Integrating Simulated and Real Data into Deep Reinforcement Learning for Vision-Based Autonomous Flight"
 arXiv:1902.03701v1, 11 Feb 2019
 https://arxiv.org/pdf/1902.03701.pdf
 

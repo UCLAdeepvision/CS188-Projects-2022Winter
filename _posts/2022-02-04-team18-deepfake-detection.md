@@ -1,13 +1,12 @@
 ---
 layout: post
 comments: true
-title: Proposal
-
-author: UCLAdeepvision
+title: Deepfake Detection
+author: Arnav Garg
 date: 2022-02-04
 ---
 
-> 
+>
 
 
 <!--more-->
@@ -25,17 +24,17 @@ date: 2022-02-04
 
 ## Introduction
 
-With the rise of portable smartphone camera technology and the growth of digital media, content has transitioned from being primarily text-based to being centered around images and videos. With this has come increasingly sophisticated techniques to forge digital content that is indiscernable from authentic content, also known as a deepfake. There are several harmless, and even fun, applications for deepfakes, but they can also be used detrimentally to generate fake political or social content, creating a need to be able to effectively detect fake content. 
+With the rise of portable smartphone camera technology and the growth of digital media, content has transitioned from being primarily text-based to being centered around images and videos. With this has come increasingly sophisticated techniques to forge digital content that is indiscernable from authentic content, also known as a deepfake. There are several harmless, and even fun, applications for deepfakes, but they can also be used detrimentally to generate fake political or social content, creating a need to be able to effectively detect fake content.
 
 Both creating and detecting deepfakes is still an active area of research, but several advanced techniques have been developed that allow for the generation of high-quality deepfakes. The content produced by these methods is still lossy and may contain artifacts that, while not visible to the human eye, seperate it from an authentic camera image. In this article, we try to improve on the performance of existing models that attempt to characterize and identify these faults in deepfakes in order to classify them. [3]
 
 ## Deepfake Generation
 
-To truly understand deepfake detection, we must first understand how they are generated. The most common technique is to use paired autoencoders. Autoencoders contain two stages, the encoder and the decoder. The encoder tries to reduce the dimensionality of the image such that the most pertinent features are preserved, while the decoder attempts to use these features to recreate the input image. The generated image is then compared to the input image to compute the L2 loss, which is backpropogated to train both the decoder and the encoder. 
+To truly understand deepfake detection, we must first understand how they are generated. The most common technique is to use paired autoencoders. Autoencoders contain two stages, the encoder and the decoder. The encoder tries to reduce the dimensionality of the image such that the most pertinent features are preserved, while the decoder attempts to use these features to recreate the input image. The generated image is then compared to the input image to compute the L2 loss, which is backpropogated to train both the decoder and the encoder.
 
 To generate a deepfake, we start with two sets of input images, A and B, with pictures of two different people whose faces we want to swap. We then train the autoencoders E<sub>A</sub> and E<sub>B</sub> on their respective set of images. Both autoencoders share the same encoder, but have seperate decoders. This allows the encoder to capture the most general information about a face, such as position and orientation, while the decoder can reconstruct the face given certain unique characteristics. When implemented correctly, this technique can produce high-quality results that often cannot be easily discerned from a real image. [3]
 
-## Deepfake Datasets 
+## Deepfake Datasets
 
 ### FaceForensics++
 
@@ -47,14 +46,14 @@ The Deepfake Detection Challenge Dataset, developed by Facebook AI, is a collect
 
 ## MesoNet
 
-MesoNet is a set of architextures proposed by Afchar et. al with several properties that make it especially well suited for Deepfake Detection applications. For our applications, we made use of the Meso-4 architexture, which stacks four convolutional layers, followed by two fully-connected layers for classification. Each convuluational layer is followed by a batch normalization layer and a 4x4 max pooling layer. Furthermore, the model employs dropout regularization in the fully-connected layers for robustness during classification. 
+MesoNet is a set of architextures proposed by Afchar et. al with several properties that make it especially well suited for Deepfake Detection applications. For our applications, we made use of the Meso-4 architexture, which stacks four convolutional layers, followed by two fully-connected layers for classification. Each convuluational layer is followed by a batch normalization layer and a 4x4 max pooling layer. Furthermore, the model employs dropout regularization in the fully-connected layers for robustness during classification.
 
-Since the deepfake generation process produces considerable noise, a microscopic apporach to feature extraction tends to be ineffective. However, since the images are of high-enough quality to be indistinguishable to the human eye, looking only at high-level features fails to provide a good mechanism for classifiying deepfakes. The moderate size of Meso-4 allows it to look at the intermediate-level (or mesoscopic) features of the images. Furthermore, the low number of trainable features makes both training and evaluating the model relatively inexpensive. The researchers have provided models pretrained on the FaceForensics++ dataset [3]. 
+Since the deepfake generation process produces considerable noise, a microscopic apporach to feature extraction tends to be ineffective. However, since the images are of high-enough quality to be indistinguishable to the human eye, looking only at high-level features fails to provide a good mechanism for classifiying deepfakes. The moderate size of Meso-4 allows it to look at the intermediate-level (or mesoscopic) features of the images. Furthermore, the low number of trainable features makes both training and evaluating the model relatively inexpensive. The researchers have provided models pretrained on the FaceForensics++ dataset [3].
 
 
 ### Experiments
 
-We took a transfer learning approach to the deepfake detection task. Namely, we utilize the pretrained weights from the MesoNet architecture trained the FaceForesnics++ Dataset, allowing us to get the best of both worlds, with both an architecture and a dataset that perform extremely well in Deepfake Detection. We then finetuned this pretrained model on the Deepfake Detection Challenge dataset. The researchers who devised the FaceForensics++ dataset devised their own benchmark, XceptionNet, to test the performance of the dataset. This consists of a basic CNN architecutre that was trained on ImageNet for 3 epochs, before final layer is trained on the highest performing model on the validation set, for a total of 15 epochs (FACE FORENSICS) . Table 1 compares the accuracy of the XceptionNet trained on the FaceForensics++ dataset with the MesoNet architecture, considered state of the art for the task at hand. 
+We took a transfer learning approach to the deepfake detection task. Namely, we utilize the pretrained weights from the MesoNet architecture trained the FaceForesnics++ Dataset, allowing us to get the best of both worlds, with both an architecture and a dataset that perform extremely well in Deepfake Detection. We then finetuned this pretrained model on the Deepfake Detection Challenge dataset. The researchers who devised the FaceForensics++ dataset devised their own benchmark, XceptionNet, to test the performance of the dataset. This consists of a basic CNN architecutre that was trained on ImageNet for 3 epochs, before final layer is trained on the highest performing model on the validation set, for a total of 15 epochs (FACE FORENSICS) . Table 1 compares the accuracy of the XceptionNet trained on the FaceForensics++ dataset with the MesoNet architecture, considered state of the art for the task at hand.
 
 | Model (15 Epochs)          |      Accuracy     |
 | :------------------------- | :---------------: |
@@ -97,7 +96,7 @@ loss = classifier.model.evaluate(
 )
 ```
 
-Additionally, we implemented layer locking to ensure the integrity of the pretrained weights from MesoNet. Layers outside of the dense were locked. The utilization of data augmentation and transfer learning on the pretrained MesoNet weights is where the innovation lies in our deepfake detection task. We trained this architecture on 15 epochs like our benchmarks. 
+Additionally, we implemented layer locking to ensure the integrity of the pretrained weights from MesoNet. Layers outside of the dense were locked. The utilization of data augmentation and transfer learning on the pretrained MesoNet weights is where the innovation lies in our deepfake detection task. We trained this architecture on 15 epochs like our benchmarks.
 
 | Epochs                     |      Accuracy     |
 | :------------------------- | :---------------: |
@@ -108,7 +107,7 @@ Additionally, we implemented layer locking to ensure the integrity of the pretra
 
 _Table 2._
 
-Table 2 above displays the results of these experiments. The accuracy was 0.93 which was the same  accuracy that the pre trained weights from MesoNet achieved without training on the Deepfake Detection Challenge dataset. This shows that the pretrained MesoNet architecture does perform extremely well in deepfake detection as is. When reaching such accuracy as 93%, even a 0.5% boost in accuracy would be a major accomplishment, which is why methods such as transfer learning and data augmentation were applied. 
+Table 2 above displays the results of these experiments. The accuracy was 0.93 which was the same  accuracy that the pre trained weights from MesoNet achieved without training on the Deepfake Detection Challenge dataset. This shows that the pretrained MesoNet architecture does perform extremely well in deepfake detection as is. When reaching such accuracy as 93%, even a 0.5% boost in accuracy would be a major accomplishment, which is why methods such as transfer learning and data augmentation were applied.
 
 ### Takeaways
 
@@ -120,7 +119,7 @@ A link to a Colab demo can be found here: https://colab.research.google.com/driv
 
 A repository containing code to train and evaluate the model can be found here: https://github.com/arnavgarg/deepfake-detection-demo
 
-A link to a video presentation can be found here: 
+A link to a video presentation can be found here:
 https://ucla.zoom.us/rec/share/iPl4d4wThA9ySEFsq7mnMDQriRNvnWPSks0vw6nmslGKjUIXF__WcgWsn_sOTI-7.2RMmcj6fVogItMqK?startTime=1647746764000
 Password to view: b1F#VZN#
 

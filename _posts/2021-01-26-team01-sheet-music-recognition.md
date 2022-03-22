@@ -9,7 +9,12 @@ date: 2022-01-26
 
 > Sheet Music Recognition is a difficult task. [Zaragoza et al.](URL 'https://www.mdpi.com/2076-3417/8/4/606') devised a method for recognizing monophonic scores (one staff). We extend this functionality for piano sheet music with multiple staves (treble and bass). https://github.com/NingWang1729/tf-end-to-end
 
-## Table of contents
+<!--more-->
+{: class="table-of-content"}
+* TOC
+{:toc}
+
+<!-- ## Table of contents
 * [Main Content](https://github.com/NingWang1729/CS188-Projects-2022Winter/blob/main/_posts/2021-01-26-team01-sheet_music_recognition.md#main-content)
 * [OMR Introduction](https://github.com/NingWang1729/CS188-Projects-2022Winter/blob/main/_posts/2021-01-26-team01-sheet_music_recognition.md#an-end-to-end-approach-to-optical-music-recognition)
 * [Primus Dataset](https://github.com/NingWang1729/CS188-Projects-2022Winter/blob/main/_posts/2021-01-26-team01-sheet_music_recognition.md#a-deep-learning-solution)
@@ -17,10 +22,10 @@ date: 2022-01-26
 * [Results](https://github.com/NingWang1729/CS188-Projects-2022Winter/blob/main/_posts/2021-01-26-team01-sheet_music_recognition.md#results)
 * [Conclusions](https://github.com/NingWang1729/CS188-Projects-2022Winter/blob/main/_posts/2021-01-26-team01-sheet_music_recognition.md#overall-conclusions)
 * [Demonstration](https://github.com/NingWang1729/CS188-Projects-2022Winter/blob/main/_posts/2021-01-26-team01-sheet_music_recognition.md#demonstration)
-* [Reference](https://github.com/NingWang1729/CS188-Projects-2022Winter/blob/main/_posts/2021-01-26-team01-sheet_music_recognition.md#reference)
+* [Reference](https://github.com/NingWang1729/CS188-Projects-2022Winter/blob/main/_posts/2021-01-26-team01-sheet_music_recognition.md#reference) -->
 
 ## Main Content
-This project was inspired by [Zaragoza et al.](URL 'https://www.mdpi.com/2076-3417/8/4/606'). We extend the monophonic score reader by parsing grand staves from piano sheet music. Thus, we add a stage in the pipeline to first identify any grand staves before separating them into treble and bass. Each individual staff is then fed into the current pipeline. 
+This project was inspired by [Zaragoza et al.](URL 'https://www.mdpi.com/2076-3417/8/4/606'). We extend the monophonic score reader by parsing grand staves from piano sheet music. Thus, we add a stage in the pipeline to first identify any grand staves before separating them into treble and bass. Each individual staff is then fed into the current pipeline.
 
 
 # An End-to-End Approach to Optical Music Recognition
@@ -93,14 +98,14 @@ Sequential data usually fails to come in set widths. As an analogy, suppose we h
 
 How can we fix this? Note that the main problem here is the lack of alignment; a single letter might span two boxes. If we were to independently read each box without the context of the other, we would be unable to make out the greater letter. Thus we need to find some way to span contexts.
 
-*Connectionist temporal classification* (CTC) accomplishes just this in the context of RNNs. Unlike traditional networks, CTC networks continue predicting the same token when the current context is not yet finished; for instance, in our example above, given 
+*Connectionist temporal classification* (CTC) accomplishes just this in the context of RNNs. Unlike traditional networks, CTC networks continue predicting the same token when the current context is not yet finished; for instance, in our example above, given
 
 ![TripleSplit]({{ '/assets/images/team01/TripleSplit.png' | relative_url }})
 {: style="width: 200px; max-width: 100%;"}
 
 , a network might learn to predict ```AAA```, because the network correctly recognizes that the latter two boxes still span the A.
 
-Note that with this current system, we are unable to distinguish whether ```AAA``` corresponds to `A`, `AA`, or a true `AAA`. With CTC, the solution is to add a special "blank" character `-` that delimits tokens. Therefore given 
+Note that with this current system, we are unable to distinguish whether ```AAA``` corresponds to `A`, `AA`, or a true `AAA`. With CTC, the solution is to add a special "blank" character `-` that delimits tokens. Therefore given
 
 ![AA]({{ '/assets/images/team01/AA.png' | relative_url }})
 {: style="width: 400px; max-width: 100%;"}
@@ -200,6 +205,6 @@ https://youtu.be/uD7JU61pI_U
 
 [3] Alfaro-Contreras M., Calvo-Zaragoza J., Iñesta J.M. (2019) Approaching End-to-End Optical Music Recognition for Homophonic Scores. In: Morales A., Fierrez J., Sánchez J., Ribeiro B. (eds) Pattern Recognition and Image Analysis. IbPRIA 2019. Lecture Notes in Computer Science, vol 11868. Springer, Cham.
 
-[4] Graves, Alex & Fernández, Santiago & Gomez, Faustino & Schmidhuber, Jürgen. (2006). Connectionist temporal classification: Labelling unsegmented sequence data with recurrent neural 'networks. ICML 2006 - Proceedings of the 23rd International Conference on Machine Learning. 2006. 369-376. 10.1145/1143844.1143891. 
+[4] Graves, Alex & Fernández, Santiago & Gomez, Faustino & Schmidhuber, Jürgen. (2006). Connectionist temporal classification: Labelling unsegmented sequence data with recurrent neural 'networks. ICML 2006 - Proceedings of the 23rd International Conference on Machine Learning. 2006. 369-376. 10.1145/1143844.1143891.
 
 ---

@@ -38,7 +38,7 @@ Our implementation of the following algorithms (Multihead Attention, MLP Mixer, 
 The above image is the overall computation pipeline of the Scaled Dot-Product Attention framework, where Q (query), K (key), V (value) and output are all vectors. The input to each attention block will be query and key of dimension k, and value of dimension v. The reason why we have three key value inputs is as follow: when we are looking at a certain pixel or element, we use its "query" to query other elements' "keys"; and we need the value vector to hold the results. First we will compute the dot products of the query to all the keys (query step), normalize by $$\sqrt{d_k}$$, and pass the result through a softmax layer. The normalization step here is to avoid the scenario where $$d_k$$ is very large and thus pusing the softmax function to a region with extremely small gradient, making optimization hard. Eventually we multiply the softmax result with v to get the output. In practice, usually people stack the query, key, and value vectors together into matrices Q, K, and V, and compute the attention result as:
 
 $$
-Attention(Q, K, V) = softmax(\frac{QK^T}{\sqrt{d_k}})V 
+Attention(Q, K, V) = softmax(\frac{QK^T}{\sqrt{d_k}})V
 $$
 
 
@@ -50,20 +50,20 @@ $$
 In practice, it is also beneficial to linearly project the query, key, and value vector through different learning mappings. After computing the attention in each channel, we concatenate the final output and project to the final output dimension, allowing the model to jointly attent to information from different representation subspaces at different positions. The computation is as follow:
 
 
-$$ 
+$$
 MultiHeadAttention(Q, K, V) = Cat(output_1, ... output_n)W^O  
 $$
 
-where 
+where
 
 $$
-output_i = Attention(QW_i^Q, KW_i^K, VW_i^V) 
-$$ 
+output_i = Attention(QW_i^Q, KW_i^K, VW_i^V)
+$$
 
-and projections are matrices 
+and projections are matrices
 
 $$
- W_i^Q \in R^{d_{model} \times d_k}, W_i^K \in R^{d_{model} \times d_k} , W_i^V \in R^{d_{model} \times d_v} , W^O \in R^{hd_v \times d_{model}} 
+ W_i^Q \in R^{d_{model} \times d_k}, W_i^K \in R^{d_{model} \times d_k} , W_i^V \in R^{d_{model} \times d_v} , W^O \in R^{hd_v \times d_{model}}
 $$
 
 
@@ -79,15 +79,15 @@ $$
 
 MLP-Mixer is an light image architecture designed by Google that does not use any complex techniques including convolutions and self-attention. It is purely based on multi-layer preceptrons(MLPs) with only matrix multiplications, transpositions of data, and nonlinearity operation. It applies the MLP layer cross spatial locations and feature channels repeatedly and sequentially.
 
-In details, for each incoming image, it firstly divides it into multiple same-sized, smaller image patches (also refered as tokens) and reshape the original incoming data accordingly. Then a pre-patch FC(fully-connected) layer is applied to each patch to process the raw data. 
+In details, for each incoming image, it firstly divides it into multiple same-sized, smaller image patches (also refered as tokens) and reshape the original incoming data accordingly. Then a pre-patch FC(fully-connected) layer is applied to each patch to process the raw data.
 
-With these operations on the input image, MLP-Mixer further apply token-mixing MLP and channel-mixing MLP. The token-mixing MLP is channel-independent and gives communications between different patches across spatial locations. In reverse, the channel-mixing MLP gives communications cross channels with features, and it is token-independent. Then two types of MLPs are applied interleavedly with skip-connections transpositions of data. 
+With these operations on the input image, MLP-Mixer further apply token-mixing MLP and channel-mixing MLP. The token-mixing MLP is channel-independent and gives communications between different patches across spatial locations. In reverse, the channel-mixing MLP gives communications cross channels with features, and it is token-independent. Then two types of MLPs are applied interleavedly with skip-connections transpositions of data.
 
-Inside each MLP, the core is two FC layers with a GELU nonlinearity in between. The first FC expands the dimension to richer the features, the second FC reduces it back to the same number to select those useful features and maintain the dimensionality. In addition, there are also dropout(for avoid overfitting) and LayerNorm(for normalization) applied to each MLP. 
+Inside each MLP, the core is two FC layers with a GELU nonlinearity in between. The first FC expands the dimension to richer the features, the second FC reduces it back to the same number to select those useful features and maintain the dimensionality. In addition, there are also dropout(for avoid overfitting) and LayerNorm(for normalization) applied to each MLP.
 
 For final output, a GAP(Global Average Pooling) layer and a FC layer is applied in sequential.
 
-With JFT-300M pretrained Vision Transformer, Resnet, and MLP-Mixer tested with top-1 accuracy on ImageNet, the performace of MLP-Mixer is better than Resnet and comparable to Vision Transformer. However, MLP-Mixer is much faster when training and testing. The author of the paper proves that simple architecture can be as good as complex state-of-the-art methods. 
+With JFT-300M pretrained Vision Transformer, Resnet, and MLP-Mixer tested with top-1 accuracy on ImageNet, the performace of MLP-Mixer is better than Resnet and comparable to Vision Transformer. However, MLP-Mixer is much faster when training and testing. The author of the paper proves that simple architecture can be as good as complex state-of-the-art methods.
 
 ### **2.3 MetaFormer**
 
@@ -139,13 +139,13 @@ $$
 in which the Bounding Box Loss is defined as a linear combination of the $$\mathcal{l}_1$$ loss and [Generalized IoU loss (GIoU)](https://giou.stanford.edu/):
 
 $$
-\mathcal{L}_{box} = \lambda_{GIoU}\mathcal{L}_{GIoU}(b_i, \hat{b_{\sigma(i)}})+\lambda_{L1}||b_i-\hat{b_{\sigma(i)}}||_1 
-$$ 
+\mathcal{L}_{box} = \lambda_{GIoU}\mathcal{L}_{GIoU}(b_i, \hat{b_{\sigma(i)}})+\lambda_{L1}||b_i-\hat{b_{\sigma(i)}}||_1
+$$
 
 where $$\lambda_{GIoU},\lambda_{L1} \in \mathbb{R}$$ are hyperparameters.
 
 
-#### <ins>2.4.2 DETR Architecture and Module We are Interested In</ins> 
+#### <ins>2.4.2 DETR Architecture and Module We are Interested In</ins>
 
 
 <!-- ![DETR](../assets/images/team17/Detailed_EncDec.png) -->
@@ -178,7 +178,7 @@ For Training, we modified the original github repository of [DETR](https://githu
 ![Pool_mAP0595]({{ '/assets/images/team17/Pool_mAP0595.png' | relative_url }})
 <div align="center">Fig 8. Pooling Version DETR mAP</div>
 
-From the above training results, we can see that although we exchanged the self-attention modules of the DETR model with Pooling, we can still gain comparative training losses in the first 20 epochs. Moreover, the mAP of the Pooling DETR is also continuously increasing (reaching 0.25+ in first 20 epochs). We are not able to get access to the training mAP statistics of the original DETR, so do not have an evaluation of the resulting mAP currently. From this experiment, it is reasonable to hypothesize that, if we are able to train the Pooling DETR using faster machines, and train for more epochs, the Pooling DETR is likely to achieve similar results to the original DETR. 
+From the above training results, we can see that although we exchanged the self-attention modules of the DETR model with Pooling, we can still gain comparative training losses in the first 20 epochs. Moreover, the mAP of the Pooling DETR is also continuously increasing (reaching 0.25+ in first 20 epochs). We are not able to get access to the training mAP statistics of the original DETR, so do not have an evaluation of the resulting mAP currently. From this experiment, it is reasonable to hypothesize that, if we are able to train the Pooling DETR using faster machines, and train for more epochs, the Pooling DETR is likely to achieve similar results to the original DETR.
 
 However, we also put a question mark on the performance of the Pooling DETR if we train further because as we can see from the graphs, although both models are trained from scratch, the losses and errors of our Pooling DETR flutuates a lot, whereas the curves for original DETR are smooth. we noticed that one of the strengths of attention is capturing long-term dependencies, meaning that attention module is able to calculate the relation between every two image patches through its querying mechanism, whereas pooling operation restricts the information exchange in a much local scale. We think this difference may be a factor contributing to the fluctuation demonstrated in the curves.
 
@@ -186,7 +186,7 @@ Note: We provided a toy demo in this [Google Colab Notebook](https://colab.resea
 
 ## <ins>**4. Conclusion**<ins>
 
-In this project, we have investigated the DETR model proposed by Carion et al, especially its structure and the attention mechanism which it relies on. We also combined the idea of Metaformer adopted in Weihao et al's paper into the DETR model by changing the attention module to other so called Token Mixers (Pooling, possibly MLP in the future), training the modified model, and comparing performances in the first 20 epochs. We can see that although Pooling DETR achieves a similar loss and error decrease in the first 20 epochs, there are much more fluctuations in the training curver, which posts question mark on the performance if we train the model for more epochs. 
+In this project, we have investigated the DETR model proposed by Carion et al, especially its structure and the attention mechanism which it relies on. We also combined the idea of Metaformer adopted in Weihao et al's paper into the DETR model by changing the attention module to other so called Token Mixers (Pooling, possibly MLP in the future), training the modified model, and comparing performances in the first 20 epochs. We can see that although Pooling DETR achieves a similar loss and error decrease in the first 20 epochs, there are much more fluctuations in the training curver, which posts question mark on the performance if we train the model for more epochs.
 
 
 ## <ins>**5. Future Work**<ins>
