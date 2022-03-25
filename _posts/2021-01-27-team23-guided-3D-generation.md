@@ -1,13 +1,13 @@
 ---
 layout: post
 comments: true
-title: Scene Generation With NeRF
+title: NeRF Exploration
 author: Felix Zhang
-date: 2022-02-24
+date: 2022-03-19
 ---
 
 
-> This blog will contain updates and technical explanations for Felix Zhang's CS188 Project. The focus of project is to explore various approaches to generating 3-D scenes with Neural Radiance Fields. We are planning on utilize NeRF to generate 3-D scenes with novel view points. We are currently exploring the possiblity of leverage the Infinite Nature model, but are experimenting with GPU requirements.
+> The focus of project is to explore various approaches to generating 3-D scenes with Neural Radiance Fields. we utilize NeRF and NeRF variants to model Royce Hall and generate and generate novel viewpoints using prior images. 
 
 <!--more-->
 {: class="table-of-content"}
@@ -18,16 +18,74 @@ date: 2022-02-24
 
 ### Group Members: Felix Zhang
 
+
+## Demo
+<iframe width="560" height="315" src="https://www.youtube.com/embed/rdeaTFhYlQ8" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+github link (credit to nerfmm authors for implementation: [here](https://github.com/fzbuzz/CS188-NeRF--Royce-Explore)
+
 ### 3D Scene Generation (involving Generative Neural Radiance Fields)
 
-There has been a recent surge in using exploring image generation in three dimensions due to the adoption of virtual, augmented, and mixed reality devices, as well as the possibility of using scenes to power downstream task datasets for agents. We explore in this project 3D Scene Generation, especially focusing on a recent interesting development of Generation with Neural Radiance Fields.
+There has been a recent surge in using exploring image generation centered in three dimensions due to the adoption of virtual, augmented, and mixed reality devices, as well as the possibility of using scenes to power downstream task datasets for agents. Volume-based representations have been at the forefront of innovation, with recent techniques like Neural Radiance Fields (NeRFs) [Mildenhall et al.](https://www.matthewtancik.com/nerf) 
+being a hot topic due to its ability to synthesize high fidelity lifelike renders.
 
-## Neural Radiance Fields (NeRF)
+## Introduction to Neural Radiance Fields (NeRF)
 
-Neural Radiance Fields are a recent development introduced by [Mildenhall et al.](https://www.matthewtancik.com/nerf) for 3d image synthesis by optimizing a volumetric function with a multi-layer perceptron network. The achieve impressive results compared to traditional generative techniques. 
+Neural Radiance Fields are a recent development introduced by [Mildenhall et al.](https://www.matthewtancik.com/nerf) for 3d image synthesis by optimizing a volumetric function with a multi-layer perceptron network. They achieve impressive results compared to traditional generative techniques. 
 
-NeRF works by estimating 3-D RGB data from 5-D data of coordinates, radiance, and viewpoint. It uses a simple MLP to estimate the volumetric color data and then uses volume rendering techniques to generate 2-D images from the cooresponding 3-D points. This is then able to generalize well to novel viewpoints. The following figure demonstrates the NeRF process.
+NeRF works by estimating the density and 3-D RGB data from the position *x* (x,y,z) and viewpoint *d* (theta, phi). It uses a simple MLP to do this estimation.
 
+$$ (\theta,\phi), (x,y,z) -> (r,g,b), (\sigma)$$
+
+
+```
+
+class Nerf(nn.Module):
+    def __init__(self, pos_in_dims, dir_in_dims, D):
+        self.pos_in_dims = pos_in_dims
+        self.dir_in_dims = dir_in_dims
+
+        self.layers0 = nn.Sequential(
+            nn.Linear(pos_in_dims, D), nn.ReLU(),
+            nn.Linear(D, D), nn.ReLU(),
+            nn.Linear(D, D), nn.ReLU(),
+            nn.Linear(D, D), nn.ReLU(),
+        )
+
+        self.skip = nn.Linear(D + pos_in_dims, D)
+
+        self.layers1 = nn.Sequential(
+            nn.Linear(D, D), nn.ReLU(),
+            nn.Linear(D, D), nn.ReLU(),
+            nn.Linear(D, D), nn.ReLU(),
+            nn.Linear(D, D), nn.ReLU(),
+        )
+
+
+
+        self.fc_density = nn.Linear(D, 1)
+        self.fc_feature = nn.Linear(D, D)
+        self.rgb_layers = nn.Sequential(nn.Linear(D + dir_in_dims, D//2), nn.ReLU())
+        self.fc_rgb = nn.Linear(D//2, 3)
+
+        self.fc_density.bias.data = torch.tensor([0.1]).float()
+        self.fc_rgb.bias.data = torch.tensor([0.02, 0.02, 0.02]).float()
+```
+
+### Generating the image and Loss
+
+ In order to generate an image, NeRF first takes a single image and splits it up per pixel. Each pixel has a corresponding angle and viewpoint, and points are sampled along the path of the ray given by the angle and viewpoint. They are weighted accordingly to the distance on the ray. Note that **the camera intrinsics and extrinsics are assumed to be known** in the NeRF paper. We will touch upon later on. The points are then accumulated and summed to create the pixel using the accumulated transmittance with the rendering equation below.
+
+![NERF_EQ]({{ '/assets/images/team23/rendering.png' | relative_url }})
+{: style="width: 800px; max-width: 100%;"}
+
+ In order to sample the points, the NeRF paper has two different networks, a coarse network that does an initial sample, and a fine network that samples based on a probability distribution created from the coarse network's results. This ensures that the model spends more time sampling points in more detailed areas rather than empty space. Due to GPU constraints, we only use the coarse network to generate results.
+
+ One key factor that the authors discovered were able to dramatically increase render quality was embed the position into a vector of sin/cos functions. This allowed the network to encode much higher frequencies, and greatly increases the detail.
+
+ Each pixel is compared to the ground truth pixel via a simple reconstruction loss. This whole process is differentiable, so we are able to optimize our MLP to internally represent our 3-D scene.
+ 
+ The following figure demonstrates the NeRF process.
 
 ![NERF_TRACTOR]({{ '/assets/images/team23/nerf_tractor.png' | relative_url }})
 {: style="width: 800px; max-width: 100%;"}
@@ -41,101 +99,104 @@ We can see that NeRF is able to successfully render realistic new viewpoints.
 
 We specifically utilize the open source PyTorch implementation of NeRF located at [NeRF-Torch]. We have attached the NeRF model below, and use various helper functions as implemented to render the rays and reconstruction of the 2-D image from the 3-D volume.
 
-```
-# Model
-class NeRF(nn.Module):
-    def __init__(self, D=8, W=256, input_ch=3, input_ch_views=3, output_ch=4, skips=[4], use_viewdirs=False):
-        """ 
-        """
-        super(NeRF, self).__init__()
-        self.D = D
-        self.W = W
-        self.input_ch = input_ch
-        self.input_ch_views = input_ch_views
-        self.skips = skips
-        self.use_viewdirs = use_viewdirs
-        
-        self.pts_linears = nn.ModuleList(
-            [nn.Linear(input_ch, W)] + [nn.Linear(W, W) if i not in self.skips else nn.Linear(W + input_ch, W) for i in range(D-1)])
-        
-        ### Implementation according to the official code release (https://github.com/bmild/nerf/blob/master/run_nerf_helpers.py#L104-L105)
-        self.views_linears = nn.ModuleList([nn.Linear(input_ch_views + W, W//2)])
+### Problem in Wonderland
 
-        ### Implementation according to the paper
-        # self.views_linears = nn.ModuleList(
-        #     [nn.Linear(input_ch_views + W, W//2)] + [nn.Linear(W//2, W//2) for i in range(D//2)])
-        
-        if use_viewdirs:
-            self.feature_linear = nn.Linear(W, W)
-            self.alpha_linear = nn.Linear(W, 1)
-            self.rgb_linear = nn.Linear(W//2, 3)
-        else:
-            self.output_linear = nn.Linear(W, output_ch)
+One main assumption in the NeRF model is that we know the camera intrinsics and extrinsics. The camera intrinsics are the focal length fxfy, and the camera extrinsics are the position **x** and viewpoint **d**. This however, is obviously broken in real life scenarios and our situation with pictures of Royce. To solve this, the authors of NeRF use Structure From Motion in order to estimate the camera parameters. When we tried to do this on our set of pictures, it ended up failing to converge.
 
-    def forward(self, x):
-        input_pts, input_views = torch.split(x, [self.input_ch, self.input_ch_views], dim=-1)
-        h = input_pts
-        for i, l in enumerate(self.pts_linears):
-            h = self.pts_linears[i](h)
-            h = F.relu(h)
-            if i in self.skips:
-                h = torch.cat([input_pts, h], -1)
-
-        if self.use_viewdirs:
-            alpha = self.alpha_linear(h)
-            feature = self.feature_linear(h)
-            h = torch.cat([feature, input_views], -1)
-        
-            for i, l in enumerate(self.views_linears):
-                h = self.views_linears[i](h)
-                h = F.relu(h)
-
-            rgb = self.rgb_linear(h)
-            outputs = torch.cat([rgb, alpha], -1)
-        else:
-            outputs = self.output_linear(h)
-
-        return outputs
-```
-
-## Infinite Nature
-
-For the 3-D Scene Generation portion of the model, we are consider the Infinite Nature paper by Liu et. al. The authors propose a model that is able to generate long-range novel view points of scenes by using a render-refine-repeat process. The render portion uses the disparty maps, then the refine portion infills the novel regions, and the repeat process is then able to generate more ad infinitum.
-
-
-![INFINITE_NATURE]({{ '/assets/images/team23/infinite_nature.png' | relative_url }})
+![renderfail]({{ '/assets/images/team23/renderfail.png' | relative_url }})
 {: style="width: 800px; max-width: 100%;"}
 
-We resolved the dependencies and run the demo given.
-[Given Demo](https://colab.research.google.com/github/google-research/google-research/blob/master/infinite_nature/infinite_nature_demo.ipynb#scrollTo=08MXs7cBPDwO) 
+We verify the accuracy of our SOFM (colmap) package by checking on the test set.
+
+![testsuccess]({{ '/assets/images/team23/testsuccess.png' | relative_url }})
+{: style="width: 800px; max-width: 100%;"}
 
 
-We are currently exploring enforcing NeRF onto infinite nature but running into GPU difficulties. We believe that NeRF should be able to help generate more convincing scene generations, and combined with Infinite Nature, should allow able to generate 3-D imagery on demand.
+### Jointly Optimizing Camera Parameters (NeRF--)
 
-<!-- 
-![YOLO]({{ '/assets/images/UCLAdeepvision/object_detection.png' | relative_url }})
-{: style="width: 400px; max-width: 100%;"}
-*Fig 1. YOLO: An object detection method in computer vision* [1]. -->
-<!-- 
-## Main Content
-Your survey starts here. You can refer to the [source code](https://github.com/lilianweng/lil-log/tree/master/_posts) of [lil's blogs](https://lilianweng.github.io/lil-log/) for article structure ideas or Markdown syntax. We've provided a [sample post](https://ucladeepvision.github.io/CS188-Projects-2022Winter/2017/06/21/an-overview-of-deep-learning.html) from Lilian Weng and you can find the source code [here](https://raw.githubusercontent.com/UCLAdeepvision/CS188-Projects-2022Winter/main/_posts/2017-06-21-an-overview-of-deep-learning.md)
+NeRF-- ([Wang et al.]()) addresses this issue and demonstrates the combining of the inference of camera extrinsics and intrinsics with the MLP. They also show that the joint optimization is able to increase the capacity of the model.
 
-### Code Block
-```
-# This is a sample code block
-import torch
-print (torch.__version__)
-```
+NeRF-- achieves this by considering the camera parameters as another part of the differentiable pipeline. It parameterizes the focal lengths below as a simple pinhole.
 
 
-### Formula
-Please use latex to generate formulas, such as:
+![intrinsics]({{ '/assets/images/team23/intrinsics.png' | relative_url }})
+{: style="width: 800px; max-width: 100%;"}
 
-$$
-\tilde{\mathbf{z}}^{(t)}_i = \frac{\alpha \tilde{\mathbf{z}}^{(t-1)}_i + (1-\alpha) \mathbf{z}_i}{1-\alpha^t}
-$$
+it also sets the rotation and translation (x,d) as a transformation matrix.
 
-or you can write in-text formula $$y = wx + b$$. -->
+
+![transformaiton]({{ '/assets/images/team23/transformation.png' | relative_url }})
+{: style="width: 800px; max-width: 100%;"}
+
+![rotation]({{ '/assets/images/team23/rotation.png' | relative_url }})
+{: style="width: 800px; max-width: 100%;"}
+
+We proceed to use the NeRF-- model (provided generously by the authors [NeRF--](https://github.com/ActiveVisionLab/nerfmm)). Because the intrinsics, position, and angle are jointly optimized, we don't need run colmap to get structure from motion.
+
+Following the general instruction from the github and cola, we explore tiny, normal, and big NeRF models varying the sizes of the stacked linear layers and adding shortcuts until performance has plateau'ed. The code is available below and [Here](https://github.com/fzbuzz/CS188-NeRF--Royce-Explore).
+
+We take pictures of Royce Hall at several vantage points and attempt to reconstruct a circle around similar to the original paper.
+
+The output after 1000 epochs for each are below.
+
+tiny:
+
+![tiny]({{ '/assets/images/team23/uploadtiny_img.gif' | relative_url }})
+{: style="width: 800px; max-width: 200%;"}
+
+normal:
+
+![tiny]({{ '/assets/images/team23/uploadnormal_img.gif' | relative_url }})
+{: style="width: 800px; max-width: 200%;"}
+
+big:
+
+
+![tiny]({{ '/assets/images/team23/uploadbig_img.gif' | relative_url }})
+{: style="width: 800px; max-width: 200%;"}
+
+
+We observe that tiny seems to have the least amount of artifacts, but also doesn't produce any detailing on the sides. As we increase the model sizing, we get more artifacts but more of the sides are preserved.
+
+Note that the authors of NeRF-- run a refinement model (keeping camera parameters but re-running NeRF). Due to GPU limitations, we don't but note it could increase performance. We also only use a coarse model.
+
+### Database Cleaning
+
+We note that the model itself has quite a bit of artifacts, and do an investigation of the database itself. Here are the pictures we use for the initial dataset.
+
+Dataset:
+
+![db]({{ '/assets/images/team23/uploaddatabaseimg.png' | relative_url }})
+{: style="width: 800px; max-width: 100%;"}
+
+We note one image with a severe occlusion, and try to train again without the occlusion.
+
+New Dataset:
+
+![cleandb]({{ '/assets/images/team23/uploaddatabasecleanimg.png' | relative_url }})
+{: style="width: 800px; max-width: 100%;"}
+
+Clean Tiny NeRF--:
+
+![cleandb]({{ '/assets/images/team23/uploadcleantiny_img.gif' | relative_url }})
+{: style="width: 800px; max-width: 200%;"}
+
+Clean Normal NeRF--:
+
+![cleandb]({{ '/assets/images/team23/uploadclean_img.gif' | relative_url }})
+{: style="width: 800px; max-width: 200%;"}
+
+
+## Conclusions
+
+We note that the results after reducing some features such as coarse-fine sampling and the refinement layer is not as high quality as hoped. We believe these limitations could be addressed with more GPU power and the features as well as more pictures around Royce itself. 
+
+We were hoping to look into NeRF-W [Brualla et al](), but could not due to GPU limitations. This model creates an embedding for each image, and is able to model transient parts of the image (such as the tree we removed). It also incorporates an appearance embedding which allows it to model different lighting settings such as sunrise and day.
+
+NeRF++ also could be interesting, but since Royce is so large, we don't need a second "sphere" of modeling for the background.
+
+Another promising line of work is HashNeRF, which stores the pixels inside a progressively increasing hash-table for lookup, increasing run-time by a tremendous amount. For future extension, this is a good possible step forward while maintaing our GPU resources.
+
 
 ## Reference
 
@@ -155,6 +216,9 @@ or you can write in-text formula $$y = wx + b$$. -->
 
 [8] Aditya Ramesh, Mikhail Pavlov, Gabriel Goh, Scott Gray, Chelsea Voss, Alec Radford, Mark Chen, Ilya Sutskever. "DALL-E: Zero-Shot Text-to-Image Generation" 2021.
 
+[9] Zirui Wang, Shangzhe Wu, Weidi Xie, Min Chen, Victor Adrian Prisacariu. "NeRF−−: Neural Radiance Fields Without Known Camera Parameters" 2021.
+
+[10] Ricardo Martin Brualla, Noha Radwan, Mehdi S.M Sajjadi, Jonathan T. Barron, Alexey Dosovitskiy Daniel Duckworth. "NeRF in the Wild: Neural Radiance Fields for Unconstrained Photo Collections" 2021.
 ## Code Repos and Pages
 
 [1] [NeRF](https://github.com/bmild/nerf)
@@ -164,3 +228,7 @@ or you can write in-text formula $$y = wx + b$$. -->
 [3] [Giraffe](https://github.com/autonomousvision/giraffe)
 
 [4] [NeRF-Torch](https://github.com/yenchenlin/nerf-pytorch)
+
+[5] [NeRF--](https://github.com/ActiveVisionLab/nerfmm)
+
+[6] [Exploration](https://github.com/fzbuzz/CS188-NeRF--Royce-Explore)
