@@ -32,7 +32,7 @@ Stemming from image classification and object localization, Object Detection is 
 
 
 
-Object Detection                                                      |  Adversiarial Attack
+Object Detection                                                      |  Adversarial Attack
 :--------------------------------------------------------------------:|:-------------------------:
 ![]({{'/assets/images/team09/bruinwalk1_zoom_in.png'|relative_url}})  |![]({{'/assets/images/team09/bruinwalk2_zoom_in.png'|relative_url}})
 {: style="width: 1000px; max-width: 100%; display:block; margin-left:auto; margin-right:auto"}
