@@ -11,6 +11,11 @@ date: 2022-02-20
 
 
 
+<iframe width="738" height="417" src="https://www.youtube.com/embed/JmYcAVcnSIg" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+*Video 1. Spotlight Overview*.
+{: style="text-align: center;"}
+
+
 
 <!--more-->
 {: class="table-of-content"}
@@ -24,6 +29,16 @@ date: 2022-02-20
 ---
 
 Stemming from image classification and object localization, Object Detection is one of the core up-stream descriminative tasks in computer vision. Object Detection forms the basis of many other down-stream tasks such as semantic segmentation, instance segmentation, and image captioning. Therefore making it one of the fundamental building blocks towards modern applications including Face Detection and Autonomous Driving. Due to its high level of generality and wide applications, object detection has become one of the most well-studied topics in computer vision over the past 20 years. To assist researchers in evaluating and applying state of the art object detection algorithms, The MMDetection library was created as a gereral toobox library that contains a rich set of object detection and instance segmentation methods as well as related components and modules. Derived from its flexible-modular implementation in PyTorch, it is considered a great improvement over the previous caffe-based Facebook Detectron Library both in its model zoo size and overall performance.
+
+
+
+Object Detection                                                      |  Adversarial Attack
+:--------------------------------------------------------------------:|:-------------------------:
+![]({{'/assets/images/team09/bruinwalk1_zoom_in.png'|relative_url}})  |![]({{'/assets/images/team09/bruinwalk2_zoom_in.png'|relative_url}})
+{: style="width: 1000px; max-width: 100%; display:block; margin-left:auto; margin-right:auto"}
+
+
+
 
 
 ## 2. MMdetection Setup and Data Preparation
@@ -1009,28 +1024,28 @@ The static images results are almost the same as the outputs of Mask_RCNN + ResN
 <!-- https://www.youtube.com/shorts/7VnTJPWubTo -->
 
 <iframe width="740" height="417" src="https://www.youtube.com/embed/7VnTJPWubTo" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-*Fig 6. Experiment 16: Streets Video SWIN-S*.
+*Video 2. Experiment 16: Streets Video SWIN-S*.
 {: style="text-align: center;"}
 
 #### Experiment 17: Cooking Video SWIN-S
 
 <iframe width="740" height="417" src="https://www.youtube.com/embed/IuktAavc8A" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-*Fig 6. Experiment 17: Cooking Video SWIN-S*.
+*Video 3. Experiment 17: Cooking Video SWIN-S*.
 {: style="text-align: center;"}
 
 #### Experiment 18: Bruinwalk Video_1 SWIN-S
 <iframe width="740" height="417" src="https://www.youtube.com/embed/5vnvMAk3M3E" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-*Fig 6. Experiment 18: Bruinwalk Video_1 SWIN-S*.
+*Video 4. Experiment 18: Bruinwalk Video_1 SWIN-S*.
 {: style="text-align: center;"}
 
 #### Experiment 19: Bruinwalk Video_2 SWIN-S
 <iframe width="740" height="417" src="https://www.youtube.com/embed/aOCYYOk2dg0" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-*Fig 6. Experiment 19: Bruinwalk Video_2 SWIN-S*.
+*Video 5. Experiment 19: Bruinwalk Video_2 SWIN-S*.
 {: style="text-align: center;"}
 
 #### Experiment 20: Bruinwalk Video_3 SWIN-S
 <iframe width="740" height="417" src="https://www.youtube.com/embed/KAxQC_j6QyU" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-*Fig 6. Experiment 20: Bruinwalk Video_3 SWIN-S*.
+*Video 6. Experiment 20: Bruinwalk Video_3 SWIN-S*.
 {: style="text-align: center;"}
 
 For the streets view video, the Mask-RCNN + SWIN-S detector finds an additional stop sign that is not detected by the Mask-RCNN + ResNet-50, but it also wrongly labeled a non-existent umbrella at the end of the video. For other video results, we find no significant difference from Mask-RCNN + ResNet-50.
